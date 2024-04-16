@@ -1,13 +1,219 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + Vue</title>
-  </head>
-  <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.js"></script>
-  </body>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LogDog</title>
+    <script src="https://unpkg.com/vue@3.2.31"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+        }
+        #app {
+            display: flex;
+            height: 100vh;
+        }
+        .sidebar {
+            width: 300px;
+            padding: 14px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+        }
+        .main {
+            flex: 1;
+            padding: 14px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .rule-item {
+            margin-bottom: 10px;
+            padding: 4px 8px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            box-shadow: 0 1px 3px rgba(0,0,0,.2);
+        }
+        .rule-name {
+            margin: 0;
+        }
+        .delete-btn {
+            float: right;
+            color: #dc3545;
+            font-size: 14px;
+            line-height: 1;
+            cursor: pointer;
+        }
+        .delete-btn:hover {
+            color: #b02a37;
+            float: right;
+            color: #dc3545;
+            font-size: 14px;
+            cursor: pointer;
+            vertical-align: bottom;
+        }
+        .log-panel {
+            height: 50%;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 20px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <div class="sidebar">
+            <h5>文本文件输入</h4>
+            <input type="file" @change="readFile" accept=".txt" class="form-control mb-4">
+            <hr>
+            <h5>高亮规则</h4>
+            <div v-for="rule in rules" :key="rule.id" class="rule-item" 
+                 @dblclick="editRule(rule)"
+                 :style="{ color: rule.foreColor, backgroundColor: rule.backColor }">
+                <p class="rule-name">{{ rule.name }}</p>
+                <span @click.stop="deleteRule(rule)" class="delete-btn">&times;</span>
+            </div>
+            <h5>{{ isEditing ? '编辑' : '新增' }}</h5>
+            <div class="mb-3">
+                <label class="form-label">规则名称</label>
+                <input v-model="editedRule.name" placeholder="规则名称" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">过滤条件（正则表达式）</label>  
+                <input v-model="editedRule.regex" placeholder="正则表达式" class="form-control">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">前景色</label>
+                <input v-model="editedRule.foreColor" type="color" class="form-control form-control-color">
+            </div>
+            <div class="mb-3">
+                <label class="form-label">背景色</label>
+                <input v-model="editedRule.backColor" type="color" class="form-control form-control-color">
+            </div>
+            <button @click="saveRule" :disabled="!isValidRule" class="btn btn-primary me-2">
+                {{ isEditing ? '保存' : '添加' }}
+            </button>
+            <button v-if="isEditing" @click="cancelEdit" class="btn btn-secondary">取消</button>
+        </div>
+
+        <div class="main">
+            
+            <div class="log-panel" v-html="formattedContent"></div>
+
+            <div class="input-group mb-3">
+                <input type="text" v-model="searchTerm" @keyup.enter="searchLogs" class="form-control" placeholder="输入搜索关键词">
+                <button @click="searchLogs" class="btn btn-primary">搜索</button>
+            </div>
+            <div class="log-panel" v-html="searchResult"></div>
+        </div>
+    </div>
+
+    <script>
+        const app = Vue.createApp({
+            data() {
+                return {
+                    fileContent: '',
+                    rules: [
+                        { id: 1, name: '错误', regex: /error/gi, foreColor: '#ffffff', backColor: '#f8d7da' },
+                        { id: 2, name: '警告', regex: /warning/gi, foreColor: '#ffffff', backColor: '#fff3cd' },
+                        { id: 3, name: '信息', regex: /info/gi, foreColor: '#ffffff', backColor: '#cff4fc' }
+                    ],
+                    editedRule: { id: null, name: '', regex: '', foreColor: '#000000', backColor: '#ffffff' },
+                    isEditing: false,
+                    searchTerm: '',
+                    searchResult: ''
+                };
+            },
+            computed: {
+                formattedContent() {
+                    let formatted = this.fileContent;
+                    this.rules.forEach(rule => {
+                        formatted = formatted.replace(
+                            new RegExp(rule.regex, 'gi'), 
+                            match => `<span style="color: ${rule.foreColor}; background-color: ${rule.backColor};">${match}</span>`
+                        );
+                    });
+                    return formatted.split('\n').join('<br>');
+                },
+                isValidRule() {
+                    return this.editedRule.name && this.editedRule.regex;
+                }
+            },
+            methods: {
+                readFile(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.fileContent = e.target.result;
+                        };
+                        reader.readAsText(file);
+                    }
+                },
+                saveRule() {
+                    if (this.isEditing) {
+                        const index = this.rules.findIndex(r => r.id === this.editedRule.id);
+                        if (index !== -1) {
+                            this.rules[index] = { ...this.editedRule };
+                        }
+                    } else {
+                        this.editedRule.id = Date.now();
+                        this.rules.push({ ...this.editedRule });
+                    }
+                    this.saveRulesToStorage();
+                    this.resetForm();
+                },
+                editRule(rule) {
+                    this.editedRule = { ...rule };
+                    this.isEditing = true;
+                },
+                deleteRule(rule) {
+                    const index = this.rules.findIndex(r => r.id === rule.id);
+                    if (index !== -1) {
+                        this.rules.splice(index, 1);
+                        this.saveRulesToStorage();
+                    }
+                },
+                cancelEdit() {
+                    this.resetForm();  
+                },
+                resetForm() {
+                    this.editedRule = { id: null, name: '', regex: '', foreColor: '#000000', backColor: '#ffffff' };
+                    this.isEditing = false;
+                },
+                saveRulesToStorage() {
+                    localStorage.setItem('colorRules', JSON.stringify(this.rules));
+                },
+                searchLogs() {
+                    const regex = new RegExp(this.searchTerm, 'gi');
+                    const matches = this.fileContent.split('\n').filter(line => line.match(regex));
+                    let result = matches.join('\n');
+                    this.rules.forEach(rule => {
+                        result = result.replace(
+                            new RegExp(rule.regex, 'gi'),
+                            match => `<span style="color: ${rule.foreColor}; background-color: ${rule.backColor};">${match}</span>`
+                        );
+                    });
+                    this.searchResult = result.split('\n').join('<br>');
+                }
+            },
+            mounted() {
+                const storedRules = localStorage.getItem('colorRules');
+                if (storedRules) {
+                    this.rules = JSON.parse(storedRules);
+                }
+            }
+        });
+
+        app.mount('#app');
+    </script>
+</body>
 </html>
