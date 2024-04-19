@@ -1,30 +1,29 @@
-<script setup>
-import HelloWorld from './components/HelloWorld.vue'
+<script setup lang="ts">
+
+import { useVirtualList, useToggle } from '@vueuse/core'
+import { computed } from 'vue'
+const [isEven, toggle] = useToggle()
+const allItems = Array.from(Array(99999).keys())
+const filteredList = computed(() => allItems.filter(i => isEven.value ? i % 2 === 0 : i % 2 === 1))
+
+const { list, containerProps, wrapperProps } = useVirtualList(
+  filteredList,
+  {
+    itemHeight: 22,
+  },
+)
 </script>
 
 <template>
-  <div>
-    <a href="https://vitejs.dev" target="_blank">
-      <img src="/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
+   <p>Showing {{ isEven ? 'even' : 'odd' }} items</p>
+  <button @click="toggle">
+    Toggle Even/Odd
+  </button>
+  <div v-bind="containerProps" style="height: 300px">
+    <div v-bind="wrapperProps">
+      <div v-for="item in list" :key="item.index" style="height: 22px">
+        Row: {{ item.data }}
+      </div>
+    </div>
   </div>
-  <HelloWorld msg="Vite + Vue" />
 </template>
-
-<style scoped>
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-}
-</style>

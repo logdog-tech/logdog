@@ -8,7 +8,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "vue": "^3.2.45"
+    "@vueuse/core": "^10.9.0",
+    "vue": "^3.2.45",
+    "vue3-virtual-scroll-list": "^0.2.1"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^4.0.0",
