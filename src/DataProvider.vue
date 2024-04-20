@@ -26,28 +26,20 @@ const files = ref([])
 
 const readFolder = (event) => {
   files.value = Array.from(event.target.files)
+
+  if (files.value.length > 0) {
+    readFile(files.value[0])
+  }
 }
 const readFiles = (event) => {
   const selectedFiles = Array.from(event.target.files)
+  files.value = []
   selectedFiles.forEach(file => {
     files.value.push(file)
   })
-}
-
-const traverseDirectory = (entry) => {
-  const reader = entry.createReader()
-  reader.readEntries((entries) => {
-    entries.forEach((entry) => {
-      if (entry.isFile) {
-        entry.file((file) => {
-          file.path = entry.fullPath
-          files.value.push(file)
-        })
-      } else if (entry.isDirectory) {
-        traverseDirectory(entry)
-      }
-    })
-  })
+  if (files.value.length > 0) {
+    readFile(files.value[0])
+  }
 }
 
 const readFile = (file) => {
