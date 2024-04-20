@@ -12,31 +12,40 @@
     </div>
     <ul v-if="files.length > 0" class="file-list">
       <li v-for="file in files" :key="file.path" @click="readFile(file)" class="file-item" :title="file.path">
-        {{ file.webkitRelativePath + "/" + file.name }}
+        <!-- {{ file.webkitRelativePath + "/" + file.name }} -->
+        Name: {{ file.name }}, Size: {{ file.size }} bytes
       </li>
     </ul>
   </div>
 </template>
-
 <script setup>
 import { ref } from 'vue'
-const emit = defineEmits(['fileLoaded'])
+import JSZip from 'jszip'
 
+const emit = defineEmits(['fileLoaded'])
 const files = ref([])
 
 const readFolder = (event) => {
   files.value = Array.from(event.target.files)
-
   if (files.value.length > 0) {
     readFile(files.value[0])
   }
 }
+
 const readFiles = (event) => {
   const selectedFiles = Array.from(event.target.files)
   files.value = []
+  
   selectedFiles.forEach(file => {
-    files.value.push(file)
+    if (file.name.endsWith('.zip')) {
+      // 处理 zip 文件
+      readZip(file)
+    } else {
+      // 其他文件类型，直接添加
+      files.value.push(file)
+    }
   })
+
   if (files.value.length > 0) {
     readFile(files.value[0])
   }
@@ -49,8 +58,30 @@ const readFile = (file) => {
   }
   reader.readAsText(file)
 }
-</script>
 
+const readZip = (zipFile) => {
+  const reader = new FileReader()
+  reader.onload = async (e) => {
+    const zip = new JSZip()
+    try {
+      const contents = await zip.loadAsync(e.target.result)
+      files.value = [] // 清空现有列表或初始化
+      for (const fileName in contents.files) {
+        const file = contents.files[fileName];
+        if (!file.dir) { // 确保不是目录
+          files.value.push({
+            name: zipFile.name + '@' + fileName, // 文件名
+            size: file._data.uncompressedSize // 文件未压缩大小
+          })
+        }
+      }
+    } catch (err) {
+      console.error('Error reading zip:', err)
+    }
+  }
+  reader.readAsArrayBuffer(zipFile)
+}
+</script>
 <style scoped>
 .file-input-container {
   width: 280px;
