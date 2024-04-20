@@ -63,5 +63,7 @@ const highlight = (text) => {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+
+  overflow-y: auto;
 }
 </style>

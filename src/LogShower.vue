@@ -1,6 +1,5 @@
 <template>
-    <div class="main">
-      <div v-bind="containerProps" class="log-panel">
+      <div class="log-panel" v-bind="containerProps">
         <div v-bind="wrapperProps">
           <div v-for="item in list" :key="item.index" class="log-item"  v-html="highlight(item.data)">
           </div>
@@ -11,13 +10,12 @@
         <input type="text" v-model="searchTerm" @keyup.enter="searchLogs" class="form-control" placeholder="输入搜索关键词">
         <button @click="searchLogs" class="btn btn-primary">搜索</button>
       </div>
-      <div v-bind="searchContainerProps" class="log-panel">
-        <div v-bind="wrapperProps">
+      <div  class="log-panel" v-bind="searchContainerProps">
+        <div v-bind="searchWrapperProps">
           <div v-for="item in searchList" :key="item.index" class="log-item" v-html="highlight(item.data)">
           </div>
         </div>
       </div>
-    </div>
   </template>
   
   <script setup>
@@ -43,8 +41,13 @@
     const searchResult = ref('')
   
     const searchLogs = () => {
+        console.log("searchLogs")
       const regex = new RegExp(searchTerm.value, 'gi')
+
+      console.log("searchLogs regex" , regex)
       const matches = props.fileContent.split('\n').filter(line => line.match(regex))
+
+      console.log("searchLogs matches" , matches.length)
       searchResult.value = matches.join('\n')
     }
   
@@ -54,8 +57,13 @@
     })
     const { list, containerProps, wrapperProps } = useVirtualList(mylines, { itemHeight: 24 })
   
-    const { list: searchList, containerProps: searchContainerProps, wrapperProps: searchWrapperProps } = useVirtualList(
-      computed(() => searchResult.value.split('\n')),
+
+    const mysearchlines = computed(() => {
+      const items = searchResult.value .split('\n')
+      return items
+    })
+    const { list:searchList, containerProps:searchContainerProps, wrapperProps:searchWrapperProps } = useVirtualList(
+      mysearchlines,
       {
         itemHeight: 24,
       },
@@ -63,12 +71,6 @@
   </script>
   
   <style scoped>
-    .main {
-      flex: 1;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-    }
   
     .log-panel {
 
