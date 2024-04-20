@@ -35,9 +35,10 @@
     import { ref, computed } from 'vue'
   
     const initialRules = [
-        { id: 1, name: '错误', regex: /error/gi, foreColor: '#ffffff', backColor: '#f8d7da' },
-        { id: 2, name: '警告', regex: /warning/gi, foreColor: '#ffffff', backColor: '#fff3cd' },
-        { id: 3, name: '信息', regex: /info/gi, foreColor: '#ffffff', backColor: '#cff4fc' }
+        { id: 1, name: '错误', regex: '^.*? E .*$', foreColor: '#ff0000', backColor: '#ffe0e0' },
+        { id: 2, name: '警告', regex: '^.*? W .*$', foreColor: '#ffa500', backColor: '#ffffd0' },
+        { id: 3, name: '信息', regex: '^.*? I .*$', foreColor: '#008000', backColor: '#e0ffe0' },
+        { id: 4, name: '调试', regex: '^.*? D .*$', foreColor: '#0000ff', backColor: '#e0e0ff' }
     ]
     const rules = ref([...initialRules])
     const editedRule = ref({ id: null, name: '', regex: '', foreColor: '#000000', backColor: '#ffffff' })
@@ -84,6 +85,7 @@
     }
   
     const emits = defineEmits(['rulesUpdated'])
+    emits('rulesUpdated', rules.value)
   </script>
   
   <style scoped>
