@@ -1,73 +1,67 @@
+<!-- App.vue -->
 <template>
-  <div>
-    <p>Showing {{ isEven ? 'even' : 'odd' }} items</p>
-    <button @click="toggle">
-      Toggle Even/Odd
-    </button>
-    <input type="file" @change="handleFileChange">
-    <div v-bind="containerProps" style="height: 300px; width: 500%">
-      <div v-bind="wrapperProps">
-        <div v-for="item in list" :key="item.index" style="height: 24px; line-height: 24px; font-size: small; display: flex">
-          <div v-html="highlight(item.data)"></div>
-        </div>
+  <div id="root" style="display: flex; flex-direction: row; ">
+    <div class="sidebar">
+      <DataProvider @fileLoaded="handleFileLoaded" />
+      <div>
+        <RulesManager @rulesUpdated="handleRulesUpdated" />
       </div>
+    </div>
+    <div class="main">
+      <LogShower :fileContent="fileContent" :rules="rules" :highlight="highlight" />
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { useVirtualList, useToggle } from '@vueuse/core'
-import { computed, ref } from 'vue'
+<script setup>
+import { ref } from 'vue'
+import RulesManager from './RulesManager.vue'
+import DataProvider from './DataProvider.vue'
+import LogShower from './LogShower.vue'
 
-const fileContent = ref<string>('')
+const fileContent = ref('')
+const rules = ref([])
+
+const handleFileLoaded = (content) => {
+  fileContent.value = content
+}
+
+const handleRulesUpdated = (updatedRules) => {
+  rules.value = updatedRules
+}
 
 const highlight = (text) => {
-  let rules = [
-      { id: 1, name: '错误', regex: /^.*? E /gi, foreColor: '#ffffff', backColor: 'red' },
-      { id: 2, name: '警告', regex: /^.*? W /gi, foreColor: '#ffffff', backColor: 'yellow' },
-      { id: 3, name: '信息', regex: /^.*? I /gi, foreColor: '#ffffff', backColor: 'blue' },
-      { id: 4, name: '信息', regex: /^.*? D /gi, foreColor: '#ffffff', backColor: 'gray' },
-  ];
-  let formatted = text;
-  rules.forEach(rule => {
-      formatted = formatted.replace(
-          new RegExp(rule.regex, 'gi'), 
-          match => `<span style="color: ${rule.foreColor}; background-color: ${rule.backColor};">${match}</span>`
-      );
-  });
-  return formatted;
+  let formatted = text
+  rules.value.forEach(rule => {
+    formatted = formatted.replace(
+      new RegExp(rule.regex, 'gi'),
+      match => `<span style="color: ${rule.foreColor}; background-color: ${rule.backColor};">${match}</span>`
+    )
+  })
+  return formatted
 }
-
-// 处理文件改变事件
-const handleFileChange = (event: Event) => {
-  const input = event.target as HTMLInputElement
-  const file = input.files?.[0]
-
-  if (file) {
-    const reader = new FileReader()
-
-    reader.onload = (event: ProgressEvent<FileReader>) => {
-      if (event.target) {
-        fileContent.value = event.target.result as string
-      }
-    }
-
-    reader.readAsText(file)
-  }
-}
-
-const [isEven, toggle] = useToggle()
-
-// 使用文件内容作为数据源
-const filteredList = computed(() => {
-  const items = fileContent.value.split('\n')
-  return items.filter((_, index) => isEven.value ? index % 2 === 0 : index % 2 === 1)
-})
-
-const { list, containerProps, wrapperProps } = useVirtualList(
-  filteredList,
-  {
-    itemHeight: 22,
-  },
-)
 </script>
+<style scoped>
+#root {
+  display: flex;
+  height: 100vh;
+}
+
+
+.sidebar {
+  width: 300px;
+  padding: 14px;
+  background-color: #f8f9fa;
+  border-right: 1px solid #dee2e6;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex: 1;
+  padding: 14px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+</style>
