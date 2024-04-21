@@ -24,23 +24,28 @@ import JSZip from 'jszip'
 
 const emit = defineEmits(['fileLoaded'])
 const files = ref([])
+const zipFiles = ref([])
 
 const readFolder = (event) => {
-  files.value = Array.from(event.target.files)
-  if (files.value.length > 0) {
-    readFile(files.value[0])
-  }
+  const selectedFiles = Array.from(event.target.files)
+  handleUploadFiles(selectedFiles)
 }
 
 const readFiles = (event) => {
   const selectedFiles = Array.from(event.target.files)
+  handleUploadFiles(selectedFiles)
+}
+
+const handleUploadFiles = (selectedFiles)=>{
   files.value = []
+  zipFiles.value = []
   
+  console.log("selectedFiles.size=", selectedFiles.length)
   selectedFiles.forEach(file => {
     if (file.name.endsWith('.zip')) {
       // 处理 zip 文件
       readZip(file)
-      files.value.push(file)
+      zipFiles.value.push(file)
     } else {
       // 其他文件类型，直接添加
       files.value.push(file)
@@ -56,11 +61,8 @@ const readFile = (file) => {
   if (file.zip) {
     // 提取ZIP文件内的文件内容
     const [zipFileName, innerFileName] = file.path.split('@')
-    const zipFile = files.value.find(f => f.name === zipFileName && !f.zip)
-    console.log('files:', files)
-    console.log('click target file4:', zipFile, zipFileName, innerFileName)
+    const zipFile = zipFiles.value.find(f => f.name === zipFileName && !f.zip)
     if (zipFile) {
-      console.log('found zipFile:', zipFile)
       const reader = new FileReader()
       reader.onload = async (e) => {
         const zip = new JSZip()
@@ -95,7 +97,7 @@ const readZip = (zipFile) => {
         if (!file.dir) { // 确保不是目录
           files.value.push({
             path: `${zipFile.name}@${fileName}`, // 包含zip文件名和内部路径
-            name: fileName, // 文件名
+            name: `${zipFile.name}@${fileName}`, // 文件名
             size: file._data.uncompressedSize, // 文件未压缩大小
             zip: true // 标记为zip内的文件
           })
