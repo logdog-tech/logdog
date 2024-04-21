@@ -13,7 +13,7 @@
     <ul v-if="files.length > 0" class="file-list">
       <li v-for="file in files" :key="file.path" @click="readFile(file)" class="file-item" :title="file.path">
         <!-- {{ file.webkitRelativePath + "/" + file.name }} -->
-        Name: {{ file.name }}, Size: {{ file.size }} bytes
+        {{ file.name }}
       </li>
     </ul>
   </div>
@@ -40,6 +40,7 @@ const readFiles = (event) => {
     if (file.name.endsWith('.zip')) {
       // 处理 zip 文件
       readZip(file)
+      files.value.push(file)
     } else {
       // 其他文件类型，直接添加
       files.value.push(file)
@@ -52,11 +53,35 @@ const readFiles = (event) => {
 }
 
 const readFile = (file) => {
-  const reader = new FileReader()
-  reader.onload = (e) => {
-    emit('fileLoaded', e.target.result)
+  if (file.zip) {
+    // 提取ZIP文件内的文件内容
+    const [zipFileName, innerFileName] = file.path.split('@')
+    const zipFile = files.value.find(f => f.name === zipFileName && !f.zip)
+    console.log('files:', files)
+    console.log('click target file4:', zipFile, zipFileName, innerFileName)
+    if (zipFile) {
+      console.log('found zipFile:', zipFile)
+      const reader = new FileReader()
+      reader.onload = async (e) => {
+        const zip = new JSZip()
+        try {
+          const contents = await zip.loadAsync(e.target.result)
+          const fileData = await contents.file(innerFileName).async("string")
+          emit('fileLoaded', fileData)
+        } catch (err) {
+          console.error('Error extracting file:', err)
+        }
+      }
+      reader.readAsArrayBuffer(zipFile)
+    }
+  } else {
+    // 处理普通文件
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      emit('fileLoaded', e.target.result)
+    }
+    reader.readAsText(file)
   }
-  reader.readAsText(file)
 }
 
 const readZip = (zipFile) => {
@@ -65,13 +90,14 @@ const readZip = (zipFile) => {
     const zip = new JSZip()
     try {
       const contents = await zip.loadAsync(e.target.result)
-      files.value = [] // 清空现有列表或初始化
       for (const fileName in contents.files) {
         const file = contents.files[fileName];
         if (!file.dir) { // 确保不是目录
           files.value.push({
-            name: zipFile.name + '@' + fileName, // 文件名
-            size: file._data.uncompressedSize // 文件未压缩大小
+            path: `${zipFile.name}@${fileName}`, // 包含zip文件名和内部路径
+            name: fileName, // 文件名
+            size: file._data.uncompressedSize, // 文件未压缩大小
+            zip: true // 标记为zip内的文件
           })
         }
       }
@@ -79,6 +105,7 @@ const readZip = (zipFile) => {
       console.error('Error reading zip:', err)
     }
   }
+  console.error("readZip readAsArrayBuffer=",zipFile)
   reader.readAsArrayBuffer(zipFile)
 }
 </script>
