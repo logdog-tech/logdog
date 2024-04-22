@@ -13,7 +13,7 @@
   </div>
   <div  class="log-panel" v-bind="searchContainerProps">
     <div v-bind="searchWrapperProps">
-      <div v-for="item in searchList" :key="item.index" class="log-item">
+      <div v-for="item in searchList" :key="item.index" class="log-item"  @dblclick="jumpToLine(item.data.line)">
         <span class="line-number" v-html="item.data.line"></span><span v-html="showIt(item.data)"></span>
       </div>
     </div>
@@ -48,7 +48,7 @@ const showIt = (item) => {
 }
 
 const mylines = computed(() =>props.fileContent)
-const { list, containerProps, wrapperProps } = useVirtualList(mylines, { itemHeight: 24 });
+const { list, containerProps, wrapperProps, scrollTo} = useVirtualList(mylines, { itemHeight: 24 });
 
 
 
@@ -60,6 +60,9 @@ const { list:searchList, containerProps:searchContainerProps, wrapperProps:searc
     },
   )
 
+const jumpToLine = (lineNum) => {
+  scrollTo(lineNum - 5)
+};
 </script>
 
 <style scoped>
@@ -91,7 +94,7 @@ const { list:searchList, containerProps:searchContainerProps, wrapperProps:searc
 .line-number {
   user-select: none;
   /* Prevent selection */
-  width: 50px;
+  min-width: 24px;
   display: inline-block;
   color: gray;
   text-align: right;
