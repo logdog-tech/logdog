@@ -1,8 +1,7 @@
 <template>
   <div class="log-panel" v-bind="containerProps">
     <div v-bind="wrapperProps">
-      <div v-for="item in list" :key="item.index" class="log-item" :class="{ 'highlighted': item.data.line === selectedLine }">
-        <span class="line-number" v-html="item.data.line"></span><span v-html="showIt(item.data)"></span>
+      <div v-for="item in list" :key="item.index" class="log-item" v-html="showIt(item.data)" :class="{ 'highlighted': item.data.line === selectedLine }">
       </div>
     </div>
   </div>
@@ -12,8 +11,7 @@
     <button @click="searchLogs" class="btn btn-primary">搜索</button>
   </div>
   <div class="log-panel" v-bind="searchContainerProps">
-    <div v-for="item in searchList" :key="item.index" class="log-item" @dblclick="jumpToLine(item.data.line)">
-      <span class="line-number" v-html="item.data.line"></span><span v-html="showIt(item.data)"></span>
+    <div v-for="item in searchList" :key="item.index" class="log-item" v-html="showIt(item.data)"  @dblclick="jumpToLine(item.data.line)">
     </div>
   </div>
 </template>
@@ -44,7 +42,8 @@ const searchLogs = () => {
 }
 
 const showIt = (item) => {
-  return props.highlight(item.content)
+  const lineData = `<span class="line-number" >${item.line}</span>`
+  return lineData + props.highlight(item.content)
 }
 
 const mylines = computed(() => props.fileContent)
@@ -99,7 +98,7 @@ const jumpToLine = (lineNum) => {
   background-color: cornsilk;
 }
 
-.line-number {
+::v-deep .line-number {
   user-select: none;
   /* Prevent selection */
   min-width: 24px;
