@@ -19,11 +19,13 @@ import RulesManager from './RulesManager.vue'
 import DataProvider from './DataProvider.vue'
 import LogShower from './LogShower.vue'
 
-const fileContent = ref('')
+const fileContent = ref([])
 const rules = ref([])
 
 const handleFileLoaded = (content) => {
-  fileContent.value = content
+  fileContent.value = content.split('\n').map((content, index) => {
+    return { line: index + 1, content: content };
+  });
 }
 
 const handleRulesUpdated = (updatedRules) => {
