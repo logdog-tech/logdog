@@ -12,14 +12,14 @@
     <button @click="searchLogs" class="btn btn-primary">搜索</button>
   </div>
   <div class="log-panel" v-bind="searchContainerProps">
-    <div v-for="item in searchList" :key="item.index" class="log-item" @dblclick="jumpToLine(item.data.line)"
-      :class="{ 'highlighted': item.data.line === selectedLine }">
+    <div v-for="item in searchList" :key="item.index" class="log-item" @dblclick="jumpToLine(item.data.line)">
       <span class="line-number" v-html="item.data.line"></span><span v-html="showIt(item.data)"></span>
     </div>
   </div>
 </template>
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
+
 import { useVirtualList } from '@vueuse/core';
 
 const props = defineProps({
@@ -53,12 +53,18 @@ const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(mylines,
 
 
 const mysearchlines = computed(() => { return searchResult.value })
-const { list: searchList, containerProps: searchContainerProps, wrapperProps: searchWrapperProps } = useVirtualList(
+const { list: searchList, containerProps: searchContainerProps, wrapperProps: searchWrapperProps, scrollTo: scrollToSearch } = useVirtualList(
   mysearchlines,
-  {
-    itemHeight: 24,
-  },
-)
+  { itemHeight: 24 },
+);
+
+// 更新 watch 监听器
+watch(() => props.fileContent, (newFileContent) => {
+  scrollTo(0);         // 滚动主日志列表到顶部
+  scrollToSearch(0);   // 滚动搜索结果列表到顶部
+  searchResult.value = [];
+  searchTerm.value = '';
+}, { deep: true });
 
 const jumpToLine = (lineNum) => {
   scrollTo(lineNum - 5);
