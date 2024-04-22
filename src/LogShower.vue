@@ -1,7 +1,7 @@
 <template>
   <div class="log-panel" v-bind="containerProps">
     <div v-bind="wrapperProps">
-      <div v-for="item in list" :key="item.index" class="log-item">
+      <div v-for="item in list" :key="item.index" class="log-item" :class="{ 'highlighted': item.data.line === selectedLine }">
         <span class="line-number" v-html="item.data.line"></span><span v-html="showIt(item.data)"></span>
       </div>
     </div>
@@ -11,11 +11,10 @@
     <input type="text" v-model="searchTerm" @keyup.enter="searchLogs" class="form-control" placeholder="输入搜索关键词">
     <button @click="searchLogs" class="btn btn-primary">搜索</button>
   </div>
-  <div  class="log-panel" v-bind="searchContainerProps">
-    <div v-bind="searchWrapperProps">
-      <div v-for="item in searchList" :key="item.index" class="log-item"  @dblclick="jumpToLine(item.data.line)">
-        <span class="line-number" v-html="item.data.line"></span><span v-html="showIt(item.data)"></span>
-      </div>
+  <div class="log-panel" v-bind="searchContainerProps">
+    <div v-for="item in searchList" :key="item.index" class="log-item" @dblclick="jumpToLine(item.data.line)"
+      :class="{ 'highlighted': item.data.line === selectedLine }">
+      <span class="line-number" v-html="item.data.line"></span><span v-html="showIt(item.data)"></span>
     </div>
   </div>
 </template>
@@ -29,6 +28,7 @@ const props = defineProps({
   highlight: { type: Function, required: true }
 })
 
+const selectedLine = ref(null);
 const searchTerm = ref('')
 const searchResult = ref([])
 
@@ -47,21 +47,22 @@ const showIt = (item) => {
   return props.highlight(item.content)
 }
 
-const mylines = computed(() =>props.fileContent)
-const { list, containerProps, wrapperProps, scrollTo} = useVirtualList(mylines, { itemHeight: 24 });
+const mylines = computed(() => props.fileContent)
+const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(mylines, { itemHeight: 24 });
 
 
 
-const mysearchlines = computed(() =>{return searchResult.value})
-const { list:searchList, containerProps:searchContainerProps, wrapperProps:searchWrapperProps } = useVirtualList(
+const mysearchlines = computed(() => { return searchResult.value })
+const { list: searchList, containerProps: searchContainerProps, wrapperProps: searchWrapperProps } = useVirtualList(
   mysearchlines,
-    {
-      itemHeight: 24,
-    },
-  )
+  {
+    itemHeight: 24,
+  },
+)
 
 const jumpToLine = (lineNum) => {
-  scrollTo(lineNum - 5)
+  scrollTo(lineNum - 5);
+  selectedLine.value = lineNum;  // 设置当前选中的行号
 };
 </script>
 
@@ -77,6 +78,7 @@ const jumpToLine = (lineNum) => {
 
 .input-group {
   margin: .6rem 0px .6rem 0px !important;
+  font-size: small;
 }
 
 .log-item {
@@ -99,5 +101,21 @@ const jumpToLine = (lineNum) => {
   color: gray;
   text-align: right;
   margin-right: 10px;
+}
+
+@keyframes flash {
+  0%, 50%, 100% {
+    background-color: yellow;
+    font-size: large;
+  }
+  25%, 75% {
+    background-color: red;
+  }
+}
+.highlighted {
+  background-color: yellow;
+  color: red;
+
+  animation: flash 0.5s ease;
 }
 </style>
