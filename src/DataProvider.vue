@@ -119,6 +119,7 @@ function processZipFile(zipFile) {
   scoped>
   .file-input-container {
     margin: auto;
+    width: 100%;
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
   }
 
