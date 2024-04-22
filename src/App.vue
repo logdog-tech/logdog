@@ -3,7 +3,7 @@
   <div id="root" style="display: flex; flex-direction: row; ">
     <div class="sidebar">
       <DataProvider @fileLoaded="handleFileLoaded" />
-      <div>
+      <div class="sidebar-rules">
         <RulesManager @rulesUpdated="handleRulesUpdated" />
       </div>
     </div>
@@ -54,12 +54,15 @@ const highlight = (text) => {
 .sidebar {
   width: 300px;
   height: 100vh;
-  overflow-y: scroll;
-  padding: 14px;
   background-color: #f8f9fa;
   border-right: 1px solid #dee2e6;
   display: flex;
   flex-direction: column;
+}
+.sidebar-rules {
+  flex-grow: 1;
+  overflow-y: scroll;
+  padding: 14px;
 }
 
 .main {

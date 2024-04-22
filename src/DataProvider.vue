@@ -1,19 +1,19 @@
 <!-- DataProvider.vue -->
 <template>
   <div class="file-input-container">
-    <h5>文本文件输入</h5>
-    <div class="button-group">
-      <label for="folderInput" class="custom-button">按文件夹分析
-        <input type="file" id="folderInput" @change="handleFolderSelection" webkitdirectory directory class="hidden-input">
-      </label>
-      <label for="fileInput" class="custom-button">按文件分析
-        <input type="file" id="fileInput" @change="handleFileSelection" multiple class="hidden-input">
-      </label>
+    <div class="logo">
+      <h1>LogDog</h1>
+      <p>一款强大的日志分析工具</p>
     </div>
+    <div class="button-group"> <label for="folderInput" class="custom-button left-button"> <i class="fas fa-folder"></i>
+        文件夹 <input type="file" id="folderInput" @change="handleFolderSelection" webkitdirectory directory
+          class="hidden-input"> </label> <label for="fileInput" class="custom-button right-button"> <i
+          class="fas fa-file"></i> 文件 <input type="file" id="fileInput" @change="handleFileSelection" multiple
+          class="hidden-input"> </label> </div>
+    <p class="file-label">打开日志文件或文件夹进行分析</p>
     <ul v-if="files.length > 0" class="file-list">
-      <li v-for="file in files" :key="file.path" @click="handleFileRead(file)" class="file-item" :title="file.path">
-        {{ file.name }}
-      </li>
+      <li v-for="file in files" :key="file.path" @click="handleFileRead(file)" class="file-item" :title="file.path"> {{
+        file.name }} </li>
     </ul>
   </div>
 </template>
@@ -115,59 +115,106 @@ function processZipFile(zipFile) {
   reader.readAsArrayBuffer(zipFile)
 }
 </script>
-<style scoped>
-.file-input-container {
-  width: 280px;
-  margin: auto;
-}
+<style
+  scoped>
+  .file-input-container {
+    margin: auto;
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
 
-.button-group {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 1rem;
-}
+  .logo {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
 
-.custom-button {
-  background-color: #007bff;
-  color: #fff;
-  border: none;
-  padding: 10px 20px;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  margin: 4px 2px;
-  cursor: pointer;
-  border-radius: 4px;
-  transition: background-color 0.3s;
-}
+  .logo h1 {
+    font-size: 24px;
+    font-weight: bold;
+    color: #1a1a1a;
+    margin: 0;
+  }
 
-.custom-button:hover {
-  background-color: #0056b3;
-}
+  .logo p {
+    font-size: 14px;
+    color: #666;
+    margin: 3px 0 0;
+  }
 
-.hidden-input {
-  display: none;
-}
+  .button-group {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+  }
 
-.file-list {
-  max-height: 30vh;
-  overflow-y: auto;
-  background-color: #f8f9fa;
-  border: 1px solid #ccc;
-  padding: 0;
-  list-style: none;
-}
+  .custom-button {
+    background-color: #007aff;
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
 
-.file-item {
-  padding: 8px 12px;
-  font-size: 0.8rem;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-  cursor: pointer;
-}
+  .left-button {
+    border-top-left-radius: 32px;
+    border-bottom-left-radius: 32px;
+    margin:0.02rem;
+    width: 80px;
+  }
 
-.file-item:hover {
-  background-color: #e9ecef;
-}
+  .right-button {
+    border-top-right-radius: 32px;
+    border-bottom-right-radius: 32px;
+    margin:0.02rem;
+    width: 80px;
+  }
+
+  .custom-button:hover {
+    background-color: #005ad5;
+  }
+
+  .custom-button i {
+    margin-right: 6px;
+    font-size: 16px;
+  }
+
+  .hidden-input {
+    display: none;
+  }
+
+  .file-label {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .file-list {
+    max-height: 30vh;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+    border: 1px solid #e5e5e5;
+    padding: 0;
+    list-style: none;
+    border-radius: 6px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+
+  .file-item {
+    padding: 8px 12px;
+    font-size: 12px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+
+  .file-item:hover {
+    background-color: #e5e5e5;
+  }
 </style>
