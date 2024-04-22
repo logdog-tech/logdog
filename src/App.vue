@@ -45,11 +45,14 @@ const highlight = (text) => {
 #root {
   display: flex;
   height: 100vh;
+  font-family: 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
 }
 
 
 .sidebar {
   width: 300px;
+  height: 100vh;
+  overflow-y: scroll;
   padding: 14px;
   background-color: #f8f9fa;
   border-right: 1px solid #dee2e6;

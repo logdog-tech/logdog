@@ -78,14 +78,17 @@
         overflow-y: auto;
         border: 1px solid #ccc;
         padding: 10px;
-        margin-bottom: 20px;
         white-space: pre-wrap;
+    }
+  
+    .input-group {
+      margin: .6rem 0px .6rem 0px !important;
     }
   
     .log-item {
       font-size: small;
       word-break: break-all; 
-      white-space: nowrap;
+      white-space: pre;
       /* white-space: pre-wrap; */
       border-bottom: 1px dashed #ccc;
     }
