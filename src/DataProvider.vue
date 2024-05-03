@@ -338,7 +338,7 @@ onUnmounted(() => {
   }
 
   .drag-message, .empty-message {
-    padding: 240px 180px;
+    justify-content: center;
     width: 80%;
     height: 70%;
     border-radius: 10px;
