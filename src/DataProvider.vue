@@ -1,30 +1,123 @@
-<!-- DataProvider.vue -->
+!-- DataProvider.vue -->
 <template>
-  <div class="file-input-container">
+  <div class="file-input-container" @dragenter="handleDragEnter" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
     <div class="logo">
       <h1>LogDog</h1>
       <p>一款强大的日志分析工具</p>
     </div>
-    <div class="button-group"> <label for="folderInput" class="custom-button left-button"> <i class="fas fa-folder"></i>
-        文件夹 <input type="file" id="folderInput" @change="handleFolderSelection" webkitdirectory directory
-          class="hidden-input"> </label> <label for="fileInput" class="custom-button right-button"> <i
-          class="fas fa-file"></i> 文件 <input type="file" id="fileInput" @change="handleFileSelection" multiple
-          class="hidden-input"> </label> </div>
+    <div class="button-group">
+      <label for="folderInput" class="custom-button left-button">
+        <i class="fas fa-folder"></i>
+        文件夹
+        <input type="file" id="folderInput" @change="handleFolderSelection" webkitdirectory directory class="hidden-input">
+      </label>
+      <label for="fileInput" class="custom-button right-button">
+        <i class="fas fa-file"></i>
+        文件
+        <input type="file" id="fileInput" @change="handleFileSelection" multiple class="hidden-input">
+      </label>
+    </div>
     <p class="file-label">打开日志文件或文件夹进行分析</p>
     <ul v-if="files.length > 0" class="file-list">
-      <li v-for="file in files" :key="file.path" @click="handleFileRead(file)" class="file-item" :title="file.path"> {{
-        file.name }} </li>
+      <li v-for="file in files" :key="file.path" @click="handleFileRead(file)" class="file-item" :title="file.path">
+        {{ file.name }}
+      </li>
     </ul>
+    <div v-if="isDragging" class="drag-overlay">
+      <div class="drag-message">
+        <i class="fas fa-file-import"></i>
+        将文件或文件夹拖拽到此处进行分析
+      </div>
+    </div>
+    <div v-if="!isDragging && files.length === 0" class="empty-overlay">
+      <div class="empty-message">
+        <i class="fas fa-file-import"></i>
+        将文件或文件夹拖拽到此处进行分析
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import JSZip from 'jszip'
 
 const emit = defineEmits(['fileLoaded'])
 const files = ref([])
 const zipFiles = ref([])
+const isDragging = ref(false)
+let dragCounter = 0
+
+function handleDragEnter(event) {
+  event.preventDefault()
+  event.stopPropagation()
+  dragCounter++
+  isDragging.value = true
+}
+
+function handleDragOver(event) {
+  event.preventDefault()
+  event.stopPropagation()
+}
+
+function handleDragLeave(event) {
+  event.preventDefault()
+  event.stopPropagation()
+  dragCounter--
+  if (dragCounter === 0) {
+    isDragging.value = false
+  }
+}
+
+async function handleDrop(event) {
+  event.preventDefault()
+  event.stopPropagation()
+  isDragging.value = false
+  dragCounter = 0
+  const items = Array.from(event.dataTransfer.items)
+  const processedFiles = []
+  const promises = items.map(item => {
+    if (item.kind === 'file') {
+      const entry = item.webkitGetAsEntry()
+      return processEntry(entry, processedFiles)
+    }
+  })
+  await Promise.all(promises)
+  // 将新拖拽的文件追加到 files.value 中
+  files.value = [...files.value, ...processedFiles]
+  // 将最后一个文件设置为当前选中的文件
+  if (processedFiles.length > 0) {
+    handleFileRead(processedFiles[processedFiles.length - 1])
+  }
+}
+
+function processEntry(entry, processedFiles) {
+  return new Promise((resolve) => {
+    if (entry.isFile) {
+      entry.file((file) => {
+        // 检查文件是否已经存在于 files.value 中
+        const existingFile = files.value.find(f => f.name === file.name && f.size === file.size)
+        if (!existingFile) {
+          if (file.name.endsWith('.zip')) {
+            processZipFile(file)
+            zipFiles.value.push(file)
+          } else {
+            processedFiles.push(file)
+          }
+        }
+        resolve()
+      })
+    } else if (entry.isDirectory) {
+      const dirReader = entry.createReader()
+      dirReader.readEntries(async (entries) => {
+        for (const innerEntry of entries) {
+          await processEntry(innerEntry, processedFiles)
+        }
+        resolve()
+      })
+    }
+  })
+}
 
 function handleFolderSelection(event) {
   const selectedFiles = Array.from(event.target.files)
@@ -40,7 +133,6 @@ function processFiles(selectedFiles) {
   files.value = []
   zipFiles.value = []
 
-  console.log("选中文件数量:", selectedFiles.length)
   selectedFiles.forEach(file => {
     if (file.name.endsWith('.zip')) {
       processZipFile(file)
@@ -111,10 +203,24 @@ function processZipFile(zipFile) {
       console.error('读取ZIP文件时出错:', err)
     }
   }
-  console.log("读取ZIP文件为ArrayBuffer:", zipFile)
   reader.readAsArrayBuffer(zipFile)
 }
+
+onMounted(() => {
+  window.addEventListener('dragenter', handleDragEnter)
+  window.addEventListener('dragover', handleDragOver)
+  window.addEventListener('dragleave', handleDragLeave)
+  window.addEventListener('drop', handleDrop)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('dragenter', handleDragEnter)
+  window.removeEventListener('dragover', handleDragOver)
+  window.removeEventListener('dragleave', handleDragLeave)
+  window.removeEventListener('drop', handleDrop)
+})
 </script>
+
 <style
   scoped>
   .file-input-container {
@@ -217,5 +323,34 @@ function processZipFile(zipFile) {
 
   .file-item:hover {
     background-color: #e5e5e5;
+  }
+  
+  .drag-overlay, .empty-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+  }
+
+  .drag-message, .empty-message {
+    padding: 20px 40px;
+    border-radius: 8px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #333;
+    display: flex;
+    align-items: center;
+  }
+
+  .drag-message i, .empty-message i {
+    margin-right: 10px;
+    font-size: 24px;
+    color: #007aff;
   }
 </style>
