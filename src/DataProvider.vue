@@ -1,4 +1,4 @@
-!-- DataProvider.vue -->
+<!-- DataProvider.vue -->
 <template>
   <div class="file-input-container" @dragenter="handleDragEnter" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
     <div class="logo">
@@ -221,8 +221,7 @@ onUnmounted(() => {
 })
 </script>
 
-<style
-  scoped>
+<style scoped>
   .file-input-container {
     margin: auto;
     width: 100%;
@@ -339,18 +338,29 @@ onUnmounted(() => {
   }
 
   .drag-message, .empty-message {
-    padding: 20px 40px;
-    border-radius: 8px;
-    font-size: 18px;
+    padding: 240px 180px;
+    width: 80%;
+    height: 70%;
+    border-radius: 10px;
+    font-size: 24px;
     font-weight: bold;
     color: #333;
     display: flex;
     align-items: center;
+    background-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: 2px dashed #007aff;
+    transition: border-color 0.3s, box-shadow 0.3s;
+  }
+
+  .drag-message:hover, .empty-message:hover {
+    border-color: #005ad5;
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
   }
 
   .drag-message i, .empty-message i {
-    margin-right: 10px;
-    font-size: 24px;
+    margin-right: 15px;
+    font-size: 32px;
     color: #007aff;
   }
 </style>
