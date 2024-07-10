@@ -1,6 +1,7 @@
 <!-- DataProvider.vue -->
 <template>
-  <div class="file-input-container" @dragenter="handleDragEnter" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
+  <div class="file-input-container" @dragenter="handleDragEnter" @dragover="handleDragOver" @dragleave="handleDragLeave"
+    @drop="handleDrop">
     <div class="logo">
       <h1>LogDog</h1>
       <p>一款强大的日志分析工具</p>
@@ -9,7 +10,8 @@
       <label for="folderInput" class="custom-button left-button">
         <i class="fas fa-folder"></i>
         文件夹
-        <input type="file" id="folderInput" @change="handleFolderSelection" webkitdirectory directory class="hidden-input">
+        <input type="file" id="folderInput" @change="handleFolderSelection" webkitdirectory directory
+          class="hidden-input">
       </label>
       <label for="fileInput" class="custom-button right-button">
         <i class="fas fa-file"></i>
@@ -29,7 +31,7 @@
         将文件或文件夹拖拽到此处进行分析
       </div>
     </div>
-    <div v-if="!isDragging && files.length === 0" class="empty-overlay">
+    <div v-if="!isDragging && files.length === 0" class="empty-overlay" @click="triggerFileInputClick">
       <div class="empty-message">
         <i class="fas fa-file-import"></i>
         将文件或文件夹拖拽到此处进行分析
@@ -219,148 +221,162 @@ onUnmounted(() => {
   window.removeEventListener('dragleave', handleDragLeave)
   window.removeEventListener('drop', handleDrop)
 })
+
+function triggerFileInputClick() {
+  // 这里假设你想要触发文件选择，如果是文件夹选择，可以改为 folderInput
+  document.getElementById('fileInput').click();
+}
+
 </script>
 
 <style scoped>
-  .file-input-container {
-    margin: auto;
-    width: 100%;
-    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
-  }
+.file-input-container {
+  margin: auto;
+  width: 100%;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
 
-  .logo {
-    text-align: center;
-    margin-bottom: 1rem;
-  }
+.logo {
+  text-align: center;
+  margin-bottom: 1rem;
+}
 
-  .logo h1 {
-    font-size: 24px;
-    font-weight: bold;
-    color: #1a1a1a;
-    margin: 0;
-  }
+.logo h1 {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1a1a1a;
+  margin: 0;
+}
 
-  .logo p {
-    font-size: 14px;
-    color: #666;
-    margin: 3px 0 0;
-  }
+.logo p {
+  font-size: 14px;
+  color: #666;
+  margin: 3px 0 0;
+}
 
-  .button-group {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 0.5rem;
-  }
+.button-group {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 0.5rem;
+}
 
-  .custom-button {
-    background-color: #007aff;
-    color: #fff;
-    border: none;
-    padding: 8px 16px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-flex;
-    align-items: center;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
+.custom-button {
+  background-color: #007aff;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
 
-  .left-button {
-    border-top-left-radius: 32px;
-    border-bottom-left-radius: 32px;
-    margin:0.02rem;
-    width: 80px;
-  }
+.left-button {
+  border-top-left-radius: 32px;
+  border-bottom-left-radius: 32px;
+  margin: 0.02rem;
+  width: 80px;
+}
 
-  .right-button {
-    border-top-right-radius: 32px;
-    border-bottom-right-radius: 32px;
-    margin:0.02rem;
-    width: 80px;
-  }
+.right-button {
+  border-top-right-radius: 32px;
+  border-bottom-right-radius: 32px;
+  margin: 0.02rem;
+  width: 80px;
+}
 
-  .custom-button:hover {
-    background-color: #005ad5;
-  }
+.custom-button:hover {
+  background-color: #005ad5;
+}
 
-  .custom-button i {
-    margin-right: 6px;
-    font-size: 16px;
-  }
+.custom-button i {
+  margin-right: 6px;
+  font-size: 16px;
+}
 
-  .hidden-input {
-    display: none;
-  }
+.hidden-input {
+  display: none;
+}
 
-  .file-label {
-    font-size: 12px;
-    color: #888;
-    text-align: center;
-    margin-bottom: 0.5rem;
-  }
+.file-label {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
 
-  .file-list {
-    max-height: 30vh;
-    overflow-y: auto;
-    background-color: #f8f9fa;
-    border: 1px solid #e5e5e5;
-    padding: 0;
-    list-style: none;
-    border-radius: 6px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  }
+.file-list {
+  max-height: 30vh;
+  overflow-y: auto;
+  background-color: #f8f9fa;
+  border: 1px solid #e5e5e5;
+  padding: 0;
+  list-style: none;
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
 
-  .file-item {
-    padding: 8px 12px;
-    font-size: 12px;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    cursor: pointer;
-    transition: background-color 0.3s;
-  }
+.file-item {
+  padding: 8px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
 
-  .file-item:hover {
-    background-color: #e5e5e5;
-  }
-  
-  .drag-overlay, .empty-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.7);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-  }
+.file-item:hover {
+  background-color: #e5e5e5;
+}
 
-  .drag-message, .empty-message {
-    justify-content: center;
-    width: 80%;
-    height: 70%;
-    border-radius: 10px;
-    font-size: 24px;
-    font-weight: bold;
-    color: #333;
-    display: flex;
-    align-items: center;
-    background-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    border: 2px dashed #007aff;
-    transition: border-color 0.3s, box-shadow 0.3s;
-  }
+.drag-overlay,
+.empty-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
 
-  .drag-message:hover, .empty-message:hover {
-    border-color: #005ad5;
-    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
-  }
+.drag-message,
+.empty-message {
+  justify-content: center;
+  width: 80%;
+  height: 70%;
+  border-radius: 10px;
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  display: flex;
+  align-items: center;
+  background-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  border: 2px dashed #007aff;
+  transition: border-color 0.3s, box-shadow 0.3s;
+}
 
-  .drag-message i, .empty-message i {
-    margin-right: 15px;
-    font-size: 32px;
-    color: #007aff;
-  }
+.drag-message:hover,
+.empty-message:hover {
+  border-color: #005ad5;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+}
+
+.drag-message i,
+.empty-message i {
+  margin-right: 15px;
+  font-size: 32px;
+  color: #007aff;
+}
+
+.empty-message {
+  background-color: #fcfcfc;
+}
 </style>
