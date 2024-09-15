@@ -1,35 +1,44 @@
-<!-- App.vue -->
 <template>
-  <div id="root" style="display: flex; flex-direction: row; ">
+  <div id="root" style="display: flex; flex-direction: row;">
     <div class="sidebar">
       <DataProvider @fileLoaded="handleFileLoaded" />
       <div class="sidebar-rules">
         <RulesManager @rulesUpdated="handleRulesUpdated" />
+        <PrefilterManager 
+          @prefilterUpdated="handlePrefilterUpdated" 
+          @prefilterApplied="applyPrefilterToLogShower" 
+        />
       </div>
     </div>
     <div class="main">
-      <LogShower :fileContent="fileContent" :rules="rules" :highlight="highlight" />
+      <LogShower ref="logShowerRef" :fileContent="fileContent" :rules="rules" :prefilters="prefilters" :highlight="highlight" />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, nextTick } from 'vue'
 import RulesManager from './RulesManager.vue'
+import PrefilterManager from './PrefilterManager.vue'
 import DataProvider from './DataProvider.vue'
 import LogShower from './LogShower.vue'
 
 const fileContent = ref([])
 const rules = ref([])
+const prefilters = ref([])
 
 const handleFileLoaded = (content) => {
   fileContent.value = content.split('\n').map((content, index) => {
-    return { line: index + 1, content: content };
-  });
+    return { line: index + 1, content: content }
+  })
 }
 
 const handleRulesUpdated = (updatedRules) => {
   rules.value = updatedRules
+}
+
+const handlePrefilterUpdated = (updatedPrefilters) => {
+  prefilters.value = updatedPrefilters
 }
 
 const highlight = (text) => {
@@ -42,14 +51,26 @@ const highlight = (text) => {
   })
   return formatted
 }
+
+const logShowerRef = ref(null)
+
+const applyPrefilterToLogShower = (prefilterData) => {
+  nextTick(() => {
+    if (logShowerRef.value && logShowerRef.value.applyPrefilter) {
+      logShowerRef.value.applyPrefilter(prefilterData)
+    } else {
+      console.error('LogShower component or applyPrefilter method not available')
+    }
+  })
+}
 </script>
+
 <style scoped>
 #root {
   display: flex;
   height: 100vh;
   font-family: 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', monospace;
 }
-
 
 .sidebar {
   width: 300px;
@@ -59,6 +80,7 @@ const highlight = (text) => {
   display: flex;
   flex-direction: column;
 }
+
 .sidebar-rules {
   flex-grow: 1;
   overflow-y: scroll;
