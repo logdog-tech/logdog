@@ -7,7 +7,14 @@
   </div>
 
   <div class="input-group mb-3">
-    <input type="text" v-model="searchTerm" @input="handleSearchInput" class="form-control" placeholder="输入搜索关键词" />
+    <input 
+      type="text" 
+      v-model="searchTerm" 
+      @input="handleSearchInput" 
+      @keyup.enter="searchLogs"
+      class="form-control" 
+      placeholder="输入搜索关键词" 
+    />
     <button @click="searchLogs" class="btn btn-primary">搜索</button>
   </div>
   <div class="log-panel" v-bind="searchContainerProps">
