@@ -17,9 +17,12 @@
     />
     <button @click="searchLogs" class="btn btn-primary">搜索</button>
   </div>
+  <div>搜索结果: {{ searchResult.length }} 条</div>
   <div class="log-panel" v-bind="searchContainerProps">
-    <div v-for="item in searchList" :key="item.index" class="log-item" v-html="showIt(item.data)"
-      @dblclick="jumpToLine(item.data.line)"></div>
+    <div v-bind="searchWrapperProps">
+      <div v-for="item in searchList" :key="item.index" class="log-item" v-html="showIt(item.data)"
+        @dblclick="jumpToLine(item.data.line)"></div>
+    </div>
   </div>
 </template>
 
@@ -38,6 +41,24 @@ const selectedLine = ref(null)
 const searchTerm = ref('')
 const searchResult = ref([])
 
+// 新增：用于存储原始文件内容的引用
+const originalFileContent = ref([])
+
+// 修改：计算属性，用于获取当前显示的内容（经过预过滤器处理后的内容）
+const filteredContent = computed(() => {
+  const activePrefilters = props.prefilters.filter(p => p.active)
+  console.log('Active prefilters:', activePrefilters)
+  if (activePrefilters.length === 0) {
+    console.log('No active prefilters, returning original content')
+    return originalFileContent.value
+  }
+  const combinedRegex = new RegExp(activePrefilters.map(p => `(${p.regex})`).join('|'), 'gi')
+  console.log('Combined regex:', combinedRegex)
+  const filtered = originalFileContent.value.filter(item => item.content.match(combinedRegex))
+  console.log('Filtered content length:', filtered.length)
+  return filtered
+})
+
 const handleSearchInput = () => {
   // 当用户手动编辑搜索框时，更新 prefilters 的 active 状态
   props.prefilters.forEach(prefilter => {
@@ -46,13 +67,28 @@ const handleSearchInput = () => {
 }
 
 const searchLogs = () => {
-  if (!searchTerm.value) {
+  console.log('Searching logs with term:', searchTerm.value)
+  if (!searchTerm.value.trim()) {
     searchResult.value = []
+    console.log('Empty search term, clearing results')
     return
   }
-  const regex = new RegExp(searchTerm.value, 'gi')
-  const matches = props.fileContent.filter(item => item.content.match(regex))
-  searchResult.value = matches
+
+  try {
+    const escapedSearchTerm = searchTerm.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(escapedSearchTerm, 'gi')
+    console.log('Search regex:', regex)
+    
+    const matches = originalFileContent.value.filter(item => {
+      return item.content.match(regex)
+    })
+    
+    console.log('Search matches:', matches.length)
+    searchResult.value = matches
+  } catch (error) {
+    console.error('搜索出错:', error)
+    searchResult.value = []
+  }
 }
 
 const showIt = (item) => {
@@ -60,38 +96,36 @@ const showIt = (item) => {
   return lineData + props.highlight(item.content)
 }
 
-const mylines = computed(() => props.fileContent)
+// 修改：使用 filteredContent 计算属性
+const mylines = computed(() => filteredContent.value)
 const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(mylines, { itemHeight: 24 })
 
-const mysearchlines = computed(() => searchResult.value)
+// 修改：使用 searchResult 而不是 mysearchlines
 const { list: searchList, containerProps: searchContainerProps, wrapperProps: searchWrapperProps, scrollTo: scrollToSearch } = useVirtualList(
-  mysearchlines,
+  searchResult,
   { itemHeight: 24 }
 )
 
-watch(
-  () => props.prefilters,
-  (newPrefilters) => {
-    const activePrefilters = newPrefilters.filter(p => p.active)
-    if (activePrefilters.length > 0) {
-      const combinedRegex = activePrefilters.map(p => p.regex).join('|')
-      const prefilterRegex = new RegExp(combinedRegex, 'gi')
-      const filteredContent = props.fileContent.filter(item => item.content.match(prefilterRegex))
-      mylines.value = filteredContent
-    } else {
-      mylines.value = props.fileContent
-    }
-  },
-  { deep: true }
-)
-
+// 修改：监听 props.fileContent 的变化
 watch(
   () => props.fileContent,
   (newFileContent) => {
+    console.log('File content updated, length:', newFileContent.length)
+    originalFileContent.value = newFileContent
     scrollTo(0)
     scrollToSearch(0)
     searchResult.value = []
     searchTerm.value = ''
+  },
+  { immediate: true, deep: true }
+)
+
+// 新增：监听 filteredContent 的变化
+watch(
+  filteredContent,
+  () => {
+    console.log('Filtered content changed, re-running search')
+    searchLogs()
   },
   { deep: true }
 )
@@ -103,20 +137,21 @@ const jumpToLine = (lineNum) => {
 
 // Add this method to handle the applied prefilter
 const applyPrefilter = ({ regex, action, prefilter }) => {
+  console.log('Applying prefilter:', { regex, action, prefilter })
   if (action === 'toggle' && prefilter) {
     if (prefilter.active) {
-      // 如果过滤器被激活，且搜索框中不存在该正则，则添加
       if (!searchTerm.value.includes(prefilter.regex)) {
         searchTerm.value = searchTerm.value ? `${searchTerm.value}|${prefilter.regex}` : prefilter.regex
+        console.log('Added prefilter to search term:', searchTerm.value)
       }
     } else {
-      // 如果过滤器被取消激活，从搜索框中移除该正则
       searchTerm.value = searchTerm.value.replace(new RegExp(`\\|?${prefilter.regex}\\|?`), '')
-      // 清理开头或结尾的 |
       searchTerm.value = searchTerm.value.replace(/^\||\|$/g, '')
+      console.log('Removed prefilter from search term:', searchTerm.value)
     }
   } else {
     searchTerm.value = regex
+    console.log('Set search term to regex:', regex)
   }
   searchLogs()
 }
