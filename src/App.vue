@@ -65,6 +65,7 @@ const applyPrefilterToLogShower = (prefilterData) => {
   nextTick(() => {
     if (logShowerRef.value && logShowerRef.value.applyPrefilter) {
       logShowerRef.value.applyPrefilter(prefilterData)
+      updatePrefilterState(prefilterData.prefilter)
     } else {
       console.error('LogShower component or applyPrefilter method not available')
     }
@@ -72,6 +73,13 @@ const applyPrefilterToLogShower = (prefilterData) => {
 }
 
 const activeTab = ref('rules')
+
+const updatePrefilterState = (updatedPrefilter) => {
+  const index = prefilters.value.findIndex(p => p.id === updatedPrefilter.id);
+  if (index !== -1) {
+    prefilters.value[index] = { ...updatedPrefilter };
+  }
+}
 </script>
 
 <style scoped>
