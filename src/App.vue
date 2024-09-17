@@ -2,12 +2,19 @@
   <div id="root" style="display: flex; flex-direction: row;">
     <div class="sidebar">
       <DataProvider @fileLoaded="handleFileLoaded" />
-      <div class="sidebar-rules">
-        <RulesManager @rulesUpdated="handleRulesUpdated" />
-        <PrefilterManager 
-          @prefilterUpdated="handlePrefilterUpdated" 
-          @prefilterApplied="applyPrefilterToLogShower" 
-        />
+      <div class="sidebar-tabs">
+        <div class="tab-buttons">
+          <button @click="activeTab = 'rules'" :class="{ active: activeTab === 'rules' }">高亮规则</button>
+          <button @click="activeTab = 'prefilters'" :class="{ active: activeTab === 'prefilters' }">预过滤器</button>
+        </div>
+        <div class="tab-content">
+          <RulesManager v-if="activeTab === 'rules'" @rulesUpdated="handleRulesUpdated" />
+          <PrefilterManager 
+            v-if="activeTab === 'prefilters'"
+            @prefilterUpdated="handlePrefilterUpdated" 
+            @prefilterApplied="applyPrefilterToLogShower" 
+          />
+        </div>
       </div>
     </div>
     <div class="main">
@@ -63,6 +70,8 @@ const applyPrefilterToLogShower = (prefilterData) => {
     }
   })
 }
+
+const activeTab = ref('rules')
 </script>
 
 <style scoped>
@@ -81,9 +90,34 @@ const applyPrefilterToLogShower = (prefilterData) => {
   flex-direction: column;
 }
 
-.sidebar-rules {
+.sidebar-tabs {
   flex-grow: 1;
-  overflow-y: scroll;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.tab-buttons {
+  display: flex;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.tab-buttons button {
+  padding: 10px 20px;
+  border: none;
+  background-color: transparent;
+  cursor: pointer;
+  flex: 1;
+}
+
+.tab-buttons button.active {
+  background-color: #e9ecef;
+  border-bottom: 2px solid #007bff;
+}
+
+.tab-content {
+  flex-grow: 1;
+  overflow-y: auto;
   padding: 14px;
 }
 

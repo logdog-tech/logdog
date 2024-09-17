@@ -1,6 +1,5 @@
 <template>
   <div>
-    <h5>预过滤器</h5>
     <div v-for="prefilter in prefilters" :key="prefilter.id" 
          class="prefilter-item" 
          :class="{ 'prefilter-active': prefilter.active }"

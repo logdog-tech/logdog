@@ -1,6 +1,5 @@
 <template>
     <div>
-      <h5>高亮规则</h5>
       <div v-for="rule in rules" :key="rule.id" class="rule-item" 
            @dblclick="editRule(rule)"
            :style="{ color: rule.foreColor, backgroundColor: rule.backColor }">
