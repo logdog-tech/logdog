@@ -1,25 +1,39 @@
 <template>
   <div>
-    <div v-for="prefilter in prefilters" :key="prefilter.id" 
+    <div v-for="prefilter in displayPrefilters" :key="prefilter.id" 
          class="prefilter-item" 
-         :class="{ 'prefilter-active': prefilter.active }"
-         @click="togglePrefilter(prefilter)">
-      <span>{{ prefilter.name }}</span>
-      <span @click.stop="deletePrefilter(prefilter)" class="delete-btn">&times;</span>
+         :class="{ 'prefilter-active': prefilter.active }">
+      <div v-if="editingId === prefilter.id || (isAdding && prefilter.id === null)" class="prefilter-edit">
+        <input v-model="editedPrefilter.name" placeholder="过滤器名称" class="edit-input"
+               :style="{ backgroundColor: editedPrefilter.active ? '#d4edda' : '#f8f9fa' }">
+        <input v-model="editedPrefilter.regex" placeholder="正则表达式" class="edit-input"
+               :style="{ backgroundColor: editedPrefilter.active ? '#d4edda' : '#f8f9fa' }">
+        <div class="action-buttons">
+          <button @click="savePrefilter" class="save-btn">保存</button>
+          <button @click="cancelEdit" class="cancel-btn">取消</button>
+        </div>
+      </div>
+      <div v-else class="prefilter-info">
+        <div class="prefilter-content" @click="togglePrefilter(prefilter)">
+          <p class="prefilter-name">{{ prefilter.name || '未命名过滤器' }}</p>
+          <p class="prefilter-regex">{{ prefilter.regex }}</p>
+        </div>
+        <div class="prefilter-actions">
+          <div class="action-icons">
+            <span @click.stop="startEdit(prefilter)" class="edit-btn" title="编辑">✎</span>
+            <span @click.stop="deletePrefilter(prefilter)" class="delete-btn" title="删除">&times;</span>
+          </div>
+          <div class="toggle-wrapper">
+            <input type="checkbox" :checked="prefilter.active" @click.stop="togglePrefilter(prefilter)">
+            <span class="toggle-slider"></span>
+          </div>
+        </div>
+      </div>
     </div>
-    <h5>{{ isEditing ? '编辑' : '新增' }}</h5>
-    <div class="mb-3">
-      <label class="form-label">过滤器名称</label>
-      <input v-model="editedPrefilter.name" placeholder="过滤器名称" class="form-control">
+    <div v-if="!isAdding" class="new-prefilter" @click="startAdding">
+      <span class="add-icon">+</span>
+      <span>添加新预过滤器</span>
     </div>
-    <div class="mb-3">
-      <label class="form-label">过滤条件（正则表达式）</label>
-      <input v-model="editedPrefilter.regex" placeholder="正则表达式" class="form-control">
-    </div>
-    <button @click="savePrefilter" :disabled="!isValidPrefilter" class="btn btn-primary me-2">
-      {{ isEditing ? '保存' : '添加' }}
-    </button>
-    <button v-if="isEditing" @click="cancelEdit" class="btn btn-secondary">取消</button>
   </div>
 </template>
 
@@ -30,7 +44,12 @@ const STORAGE_KEY = 'logdog_prefilters'
 
 const prefilters = ref([])
 const editedPrefilter = ref({ id: null, name: '', regex: '', active: false })
-const isEditing = ref(false)
+const editingId = ref(null)
+const isAdding = ref(false)
+
+const displayPrefilters = computed(() => {
+  return isAdding.value ? [...prefilters.value, editedPrefilter.value] : prefilters.value
+})
 
 const isValidPrefilter = computed(() => {
   return editedPrefilter.value.name && editedPrefilter.value.regex
@@ -40,7 +59,6 @@ const isValidPrefilter = computed(() => {
 const loadPrefilters = () => {
   const savedPrefilters = localStorage.getItem(STORAGE_KEY)
   if (savedPrefilters) {
-    // 加载预过滤器，但重置所有 active 状态为 false
     prefilters.value = JSON.parse(savedPrefilters).map(prefilter => ({
       ...prefilter,
       active: false
@@ -54,9 +72,9 @@ const savePrefilters = () => {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(prefiltersToSave))
 }
 
-const editPrefilter = (prefilter) => {
+const startEdit = (prefilter) => {
   editedPrefilter.value = { ...prefilter }
-  isEditing.value = true
+  editingId.value = prefilter.id
 }
 
 const deletePrefilter = (prefilter) => {
@@ -69,14 +87,13 @@ const deletePrefilter = (prefilter) => {
 }
 
 const savePrefilter = () => {
-  if (isEditing.value) {
-    const index = prefilters.value.findIndex(p => p.id === editedPrefilter.value.id)
+  if (editingId.value !== null) {
+    const index = prefilters.value.findIndex(p => p.id === editingId.value)
     if (index !== -1) {
       prefilters.value[index] = { ...editedPrefilter.value }
     }
-  } else {
+  } else if (isAdding.value) {
     editedPrefilter.value.id = Date.now()
-    editedPrefilter.value.active = false
     prefilters.value.push({ ...editedPrefilter.value })
   }
   emitPrefilterUpdate()
@@ -90,13 +107,13 @@ const cancelEdit = () => {
 
 const resetForm = () => {
   editedPrefilter.value = { id: null, name: '', regex: '', active: false }
-  isEditing.value = false
+  editingId.value = null
+  isAdding.value = false
 }
 
 const togglePrefilter = (prefilter) => {
   prefilter.active = !prefilter.active
   emitPrefilterUpdate()
-  // 移除这里的 savePrefilters() 调用，因为我们不想保存 active 状态
 }
 
 const emitPrefilterUpdate = () => {
@@ -118,98 +135,200 @@ const emitPrefilterUpdate = () => {
 
 const emits = defineEmits(['prefilterUpdated', 'prefilterApplied'])
 
-// 监听 prefilters 的变化，以便在初始化时触发更新
 watch(prefilters, () => {
   prefilters.value.forEach(p => p.prevActive = p.active)
   emitPrefilterUpdate()
 }, { deep: true, immediate: true })
 
-// 组件挂载时加载保存的预过滤器
 onMounted(() => {
   loadPrefilters()
 })
+
+const startAdding = () => {
+  editedPrefilter.value = { id: null, name: '', regex: '', active: false }
+  editingId.value = null
+  isAdding.value = true
+}
 </script>
 
 <style scoped>
 .prefilter-item {
   margin-bottom: 10px;
-  padding: 8px 12px 8px 36px;
   border-radius: 5px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-between;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  background-color: #f0f0f0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  background-color: #f8f9fa;
   transition: all 0.3s ease;
-  border-left: 4px solid transparent;
-  position: relative;
-}
-
-.prefilter-item:hover {
-  background-color: #e0e0e0;
-  transform: translateX(2px);
+  overflow: hidden;
 }
 
 .prefilter-active {
   background-color: #d4edda;
-  border-color: #28a745;
   border-left: 4px solid #28a745;
+}
+
+.prefilter-info {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+}
+
+.prefilter-content {
+  flex-grow: 1;
+  cursor: pointer;
+}
+
+.prefilter-name {
+  margin: 0;
   font-weight: bold;
+  font-size: 16px;
 }
 
-.prefilter-active:hover {
-  background-color: #c3e6cb;
+.prefilter-regex {
+  margin: 5px 0 0;
+  font-size: 14px;
+  color: #666;
 }
 
-.prefilter-item::before {
-  content: '';
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  border: 2px solid #adb5bd;
-  border-radius: 3px;
-  transition: all 0.3s ease;
+.prefilter-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
 }
 
-.prefilter-active::before {
-  background-color: #28a745;
-  border-color: #28a745;
+.action-icons {
+  display: flex;
+  margin-bottom: 5px;
 }
 
-.prefilter-active::after {
-  content: '';
-  position: absolute;
-  left: 15px; /* 调整这个值来居中勾选标记 */
-  top: 50%;
-  width: 6px;
-  height: 11px;
-  border: solid white;
-  border-width: 0 2px 2px 0;
-  transform: translateX(30%) translateY(-56%) rotate(45deg);
-}
-
-.delete-btn {
-  color: #dc3545;
+.edit-btn, .delete-btn {
   font-size: 18px;
   line-height: 1;
   cursor: pointer;
-  padding: 0 5px;
+  padding: 5px;
   opacity: 0.7;
   transition: opacity 0.3s ease;
 }
 
-.delete-btn:hover {
-  color: #b02a37;
+.edit-btn {
+  color: #007bff;
+}
+
+.delete-btn {
+  color: #dc3545;
+}
+
+.edit-btn:hover, .delete-btn:hover {
   opacity: 1;
 }
 
-.prefilter-item span:first-child {
-  flex-grow: 1;
-  padding-right: 10px;
+.toggle-wrapper {
+  position: relative;
+  width: 50px;
+  height: 24px;
+}
+
+.toggle-wrapper input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 34px;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+  background-color: #2196F3;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(26px);
+}
+
+.prefilter-edit {
+  padding: 15px;
+}
+
+.edit-input {
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 8px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.save-btn, .cancel-btn {
+  padding: 5px 15px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.3s ease;
+}
+
+.save-btn {
+  background-color: #28a745;
+  color: white;
+  margin-right: 10px;
+}
+
+.save-btn:hover {
+  background-color: #218838;
+}
+
+.cancel-btn {
+  background-color: #dc3545;
+  color: white;
+}
+
+.cancel-btn:hover {
+  background-color: #c82333;
+}
+
+.new-prefilter {
+  display: flex;
+  align-items: center;
+  padding: 10px 15px;
+  background-color: #e9ecef;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.new-prefilter:hover {
+  background-color: #dee2e6;
+}
+
+.add-icon {
+  font-size: 24px;
+  margin-right: 10px;
+  color: #28a745;
 }
 </style>
