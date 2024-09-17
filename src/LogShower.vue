@@ -18,6 +18,7 @@
     <button @click="searchLogs" class="btn btn-primary">搜索</button>
   </div>
   <div>搜索结果: {{ searchResult.length }} 条</div>
+  <div v-if="searchError" class="alert alert-danger">{{ searchError }}</div>
   <div class="log-panel" v-bind="searchContainerProps">
     <div v-bind="searchWrapperProps">
       <div v-for="item in searchList" :key="item.index" class="log-item" v-html="showIt(item.data)"
@@ -40,6 +41,7 @@ const props = defineProps({
 const selectedLine = ref(null)
 const searchTerm = ref('')
 const searchResult = ref([])
+const searchError = ref('')
 
 // 新增：用于存储原始文件内容的引用
 const originalFileContent = ref([])
@@ -68,6 +70,7 @@ const handleSearchInput = () => {
 
 const searchLogs = () => {
   console.log('Searching logs with term:', searchTerm.value)
+  searchError.value = ''  // 重置错误消息
   if (!searchTerm.value.trim()) {
     searchResult.value = []
     console.log('Empty search term, clearing results')
@@ -75,18 +78,18 @@ const searchLogs = () => {
   }
 
   try {
-    const escapedSearchTerm = searchTerm.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-    const regex = new RegExp(escapedSearchTerm, 'gi')
-    console.log('Search regex:', regex)
+    const searchRegex = new RegExp(searchTerm.value, 'gi');
+    console.log('Search regex:', searchRegex)
     
     const matches = originalFileContent.value.filter(item => {
-      return item.content.match(regex)
+      return item.content.match(searchRegex)
     })
     
     console.log('Search matches:', matches.length)
     searchResult.value = matches
   } catch (error) {
     console.error('搜索出错:', error)
+    searchError.value = '无效的搜索表达式。请检查您的输入并重试。'
     searchResult.value = []
   }
 }
