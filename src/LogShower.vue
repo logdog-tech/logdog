@@ -17,13 +17,14 @@
     />
     <button @click="searchLogs" class="btn btn-primary">搜索</button>
   </div>
-  <div>搜索结果: {{ searchResult.length }} 条</div>
   <div class="log-panel" v-bind="searchContainerProps">
     <div v-bind="searchWrapperProps">
       <div v-for="item in searchList" :key="item.index" class="log-item" v-html="showIt(item.data)"
         @click="jumpToLine(item.data.line)" :class="{ highlighted: item.data.line === selectedLine }"></div>
     </div>
   </div>
+  <div style="font-size: small; padding-left: 0px; color: gray;">检索到{{ searchResult.length }}行</div>
+
 </template>
 
 <script setup>
@@ -163,6 +164,8 @@ defineExpose({ applyPrefilter })
 
 .log-item:hover {
   background-color: cornsilk;
+  position: relative;
+  z-index: 0;
 }
 
 ::v-deep .line-number {
@@ -177,6 +180,9 @@ defineExpose({ applyPrefilter })
 }
 
 .highlighted {
-  box-shadow: 0 0 5px red
+  position: relative;
+  z-index: 1;
+  background-color: rgba(255, 0, 0, 0.1);
+  box-shadow: 0 0 5px red;
 }
 </style>

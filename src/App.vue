@@ -139,6 +139,7 @@ const updatePrefilterState = (updatedPrefilter) => {
 .main {
   flex: 1;
   padding: 14px;
+  padding-bottom: 0px;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
