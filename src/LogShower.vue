@@ -103,7 +103,7 @@ watch(
     searchResult.value = []
     searchTerm.value = ''
   },
-  { immediate: true, deep: true }
+  { immediate: true, deep: false }
 )
 
 const jumpToLine = (lineNum) => {
