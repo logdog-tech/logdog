@@ -8,7 +8,12 @@
           <button @click="activeTab = 'prefilters'" :class="{ active: activeTab === 'prefilters' }">预过滤器</button>
         </div>
         <div class="tab-content">
-          <RulesManager v-if="activeTab === 'rules'" @rulesUpdated="handleRulesUpdated" />
+          <RulesManager 
+            v-if="activeTab === 'rules'" 
+            @rulesUpdated="handleRulesUpdated"
+            :sessionRules="sessionRules"
+            @sessionRulesUpdated="handleSessionRulesUpdated"
+          />
           <PrefilterManager 
             v-if="activeTab === 'prefilters'"
             @prefilterUpdated="handlePrefilterUpdated" 
@@ -18,7 +23,15 @@
       </div>
     </div>
     <div class="main">
-      <LogShower ref="logShowerRef" :fileContent="fileContent" :rules="rules" :prefilters="prefilters" :highlight="highlight" />
+      <LogShower 
+        ref="logShowerRef" 
+        :fileContent="fileContent" 
+        :rules="rules" 
+        :sessionRules="sessionRules"
+        :prefilters="prefilters" 
+        :highlight="highlight" 
+        @updateSessionRules="handleUpdateSessionRules"
+      />
     </div>
   </div>
 </template>
@@ -32,6 +45,7 @@ import LogShower from './LogShower.vue'
 
 const fileContent = shallowRef([])
 const rules = ref([])
+const sessionRules = ref([]) // 新增：用于存储会话规则
 const prefilters = ref([])
 
 const handleFileLoaded = (content) => {
@@ -51,13 +65,25 @@ const handleRulesUpdated = (updatedRules) => {
   rules.value = updatedRules
 }
 
+const handleSessionRulesUpdated = (updatedSessionRules) => {
+  sessionRules.value = updatedSessionRules
+}
+
 const handlePrefilterUpdated = (updatedPrefilters) => {
   prefilters.value = updatedPrefilters
 }
 
 const highlight = (text) => {
   let formatted = text.replace(/<br>/g, ' ') // TODO 改为默认就不允许显示内容中的标签
+  // 先应用持久化规则
   rules.value.forEach(rule => {
+    formatted = formatted.replace(
+      new RegExp(rule.regex, 'gi'),
+      match => `<span style="display: inline-block; color: ${rule.foreColor}; background-color: ${rule.backColor};">${match}</span>`
+    )
+  })
+  // 然后应用会话规则
+  sessionRules.value.forEach(rule => {
     formatted = formatted.replace(
       new RegExp(rule.regex, 'gi'),
       match => `<span style="display: inline-block; color: ${rule.foreColor}; background-color: ${rule.backColor};">${match}</span>`
@@ -85,6 +111,13 @@ const updatePrefilterState = (updatedPrefilter) => {
   const index = prefilters.value.findIndex(p => p.id === updatedPrefilter.id);
   if (index !== -1) {
     prefilters.value[index] = { ...updatedPrefilter };
+  }
+}
+const handleUpdateSessionRules = (newRule) => {
+  if (newRule.isClear) {
+    sessionRules.value = sessionRules.value.filter(rule => rule.regex !== newRule.regex)
+  } else {
+    sessionRules.value = [...sessionRules.value, newRule]
   }
 }
 </script>

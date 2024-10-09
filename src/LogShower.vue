@@ -1,6 +1,6 @@
 <template>
     <div class="log-container">
-        <div class="log-panel original-log" v-bind="containerProps" :style="{ height: originalLogHeight }">
+        <div class="log-panel original-log" v-bind="containerProps" :style="{ height: originalLogHeight }" @mouseup="handleLogTextSelection">
             <div v-bind="wrapperProps">
                 <div v-for="item in list" :key="item.index" class="log-item" v-html="showIt(item.data)"
                     :class="{ highlighted: item.data.line === selectedLine }"></div>
@@ -18,14 +18,26 @@
                 <button @click="searchLogs" class="btn btn-primary custom-button">搜索</button>
             </div>
 
-            <div class="log-panel search-results" v-bind="searchContainerProps">
+            <div class="log-panel search-results" v-bind="searchContainerProps" @mouseup="handleLogTextSelection">
                 <div v-bind="searchWrapperProps">
                     <div v-for="item in searchList" :key="item.index" class="log-item" v-html="showIt(item.data)"
                         @click="jumpToLine(item.data.line)" :class="{ highlighted: item.data.line === selectedLine }">
                     </div>
                 </div>
             </div>
-            <div class="search-result-count">检索到{{ searchResult.length }}行</div>
+            <div class="flex flex-row items-center w-full">
+                
+
+                <div v-if="selectedText" class="text-[12px] text-gray-600 select-none">点击色块染色</div>
+                <button v-if="selectedText"  v-for="(scheme, index) in colorSchemes" :key="index" 
+                        class="w-6 h-4 mx-1 flex items-center justify-center text-xs cursor-pointer transition-transform duration-100 hover:scale-110"
+                        :style="{ backgroundColor: scheme.backColor, color: scheme.foreColor }"
+                        @click="applyColorScheme(scheme)">
+                    {{ scheme.isClear ? 'x' : 'Aa' }}
+                </button>
+                <div class="flex-grow"></div>
+                <div class="text-[12px] text-gray-600 select-none">检索到{{ searchResult.length }}行</div>
+            </div>
         </div>
     </div>
 </template>
@@ -38,7 +50,8 @@ const props = defineProps({
     fileContent: { type: Array, required: true },
     rules: { type: Array, required: true },
     prefilters: { type: Array, required: true },
-    highlight: { type: Function, required: true }
+    highlight: { type: Function, required: true },
+    sessionRules: { type: Array, required: true }
 })
 
 const selectedLine = ref(null)
@@ -51,9 +64,46 @@ const originalFileContent = shallowRef([])
 const originalLogHeight = ref('50%')
 const containerHeight = ref(0)
 
+const emit = defineEmits(['updateSessionRules'])
+
+const selectedText = ref('')
+
+const colorSchemes = [
+  { foreColor: '#FFFFFF', backColor: '#FF0000' }, // 白字红底
+  { foreColor: '#000000', backColor: '#FFA500' }, // 黑字橙底
+  { foreColor: '#000000', backColor: '#FFFF00' }, // 黑字黄底
+  { foreColor: '#FFFFFF', backColor: '#008000' }, // 白字绿底
+  { foreColor: '#FFFFFF', backColor: '#0000FF' }, // 白字蓝底
+  { foreColor: '#FFFF00', backColor: '#800080' }, // 黄字紫底
+  { foreColor: '#FFFFFF', backColor: '#A52A2A' }, // 白字棕底
+  { foreColor: '#FF00FF', backColor: '#00FFFF' }, // 粉字青底
+  { foreColor: 'auto', backColor: 'lightgray', isClear: true }, // 清除染色
+]
+
+const applyColorScheme = (scheme) => {
+  if (selectedText.value) {
+    const newRule = {
+      id: Date.now(),
+      name: `高亮: ${selectedText.value}`,
+      regex: escapeRegExp(selectedText.value),
+      foreColor: scheme.foreColor,
+      backColor: scheme.backColor,
+      isClear: scheme.isClear
+    }
+    emit('updateSessionRules', newRule)
+    selectedText.value = ''
+  }
+}
+
+const escapeRegExp = (string) => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 onMounted(() => {
     updateContainerHeight()
     window.addEventListener('resize', updateContainerHeight)
+    // 移除全局的 mouseup 事件监听器
+    // document.addEventListener('mouseup', handleTextSelection)
 })
 
 const updateContainerHeight = () => {
@@ -202,6 +252,27 @@ const stopResize = () => {
     document.body.style.cursor = 'default'
     document.body.style.userSelect = 'auto'
 }
+
+// 新的处理日志文本选择的函数
+const handleLogTextSelection = (event) => {
+  const selection = window.getSelection()
+  const selectedStr = selection.toString().trim()
+  
+  if (selectedStr) {
+    // 检查选中文本是否在日志面板内
+    let node = selection.anchorNode
+    while (node != null) {
+      if (node.classList && (node.classList.contains('original-log') || node.classList.contains('search-results'))) {
+        selectedText.value = selectedStr
+        return
+      }
+      node = node.parentNode
+    }
+  }
+  
+  // 如果不在日志面板内，或没有选中文本，则清空 selectedText
+  selectedText.value = ''
+}
 </script>
 
 <style scoped>
@@ -302,13 +373,6 @@ const stopResize = () => {
     border-top: 0px solid #ccc;
 }
 
-.search-result-count {
-    font-size: small;
-    padding-left: 0px;
-    color: gray;
-    flex-shrink: 0;
-}
-
 .custom-input {
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
@@ -318,4 +382,22 @@ const stopResize = () => {
     border-bottom-left-radius: 0 !important;
     border-bottom-right-radius: 0 !important;
 }
+.color-scheme {
+    /* display: inline-block; */
+    /* width: 16px; */
+    /* height: 16px; */
+    /* border: 1px solid #ccc; */
+    /* border-radius: 3px; */
+    cursor: pointer;
+    margin: 0px 5px;
+    padding: 0px 5px;
+}
+
+/* 确保没有其他样式覆盖了 flex 布局 */
+.search-and-results {
+    display: flex;
+    flex-direction: column;
+}
+
+/* 如果有任何可能覆盖 Tailwind 类的自定义样式，请检查并移除或调整它们 */
 </style>

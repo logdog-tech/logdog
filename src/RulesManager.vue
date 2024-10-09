@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- 持久化规则 -->
     <div v-for="rule in displayRules" :key="rule.id" 
          class="rule-item" 
          :class="{ 'new-rule': rule.id === 'new' }"
@@ -42,6 +43,13 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
+
+const props = defineProps({
+  sessionRules: {
+    type: Array,
+    default: () => []
+  }
+})
 
 const STORAGE_KEY = 'highlightRules'
 
@@ -153,7 +161,7 @@ const applyPreset = (preset) => {
   editingRule.value.backColor = preset.backColor
 }
 
-const emits = defineEmits(['rulesUpdated'])
+const emits = defineEmits(['rulesUpdated', 'sessionRulesUpdated'])
 
 watch(rules, (newRules) => {
     console.log('规则发生变化，更新本地存储')
@@ -217,6 +225,24 @@ function generateContrastingColors() {
 const cancelEdit = () => {
   console.log('取消编辑')
   editingRule.value = null
+}
+
+const addNewSessionRule = () => {
+  const newRule = {
+    id: Date.now(),
+    name: '新会话规则',
+    regex: '',
+    foreColor: '#000000',
+    backColor: '#ffffff'
+  }
+  const updatedSessionRules = [...props.sessionRules, newRule]
+  emits('sessionRulesUpdated', updatedSessionRules)
+  startEdit(newRule)
+}
+
+const deleteSessionRule = (rule) => {
+  const updatedSessionRules = props.sessionRules.filter(r => r.id !== rule.id)
+  emits('sessionRulesUpdated', updatedSessionRules)
 }
 </script>
 
