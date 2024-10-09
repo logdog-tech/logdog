@@ -49,10 +49,11 @@ function loadInitialRules() {
     console.log('加载初始规则')
     const storedRules = localStorage.getItem(STORAGE_KEY)
     const rules = storedRules ? JSON.parse(storedRules) : [
-        { id: 1, name: '错误', regex: '^.*? E .*$', foreColor: '#ffffff', backColor: '#ff0000' },
-        { id: 2, name: '警告', regex: '^.*? W .*$', foreColor: '#000000', backColor: '#ffff00' },
-        { id: 3, name: '信息', regex: '^.*? I .*$', foreColor: '#ffffff', backColor: '#008000' },
-        { id: 4, name: '调试', regex: '^.*? D .*$', foreColor: '#ffffff', backColor: '#0000ff' }
+        { id: 1, name: '错误', regex: '^.*? E .*$', foreColor: '#FF0000', backColor: '#FFEBEE' }, // 红色文字，浅红色背景
+        { id: 2, name: '警告', regex: '^.*? W .*$', foreColor: '#FFA000', backColor: '#FFF3E0' }, // 橙色文字，浅橙色背景
+        { id: 3, name: '信息', regex: '^.*? I .*$', foreColor: '#2196F3', backColor: '#E3F2FD' }, // 蓝色文字，浅蓝色背景
+        { id: 4, name: '调试', regex: '^.*? D .*$', foreColor: '#4CAF50', backColor: '#E8F5E9' }, // 绿色文字，浅绿色背景
+        { id: 5, name: '详细', regex: '^.*? V .*$', foreColor: '#757575', backColor: '#FAFAFA' }  // 灰色文字，浅灰色背景
     ]
     console.log('初始规则:', rules)
     return rules
@@ -113,7 +114,7 @@ const saveRule = () => {
       foreColor: editingRule.value.foreColor,
       backColor: editingRule.value.backColor
     }
-    console.log('添加��规则:', newRule)
+    console.log('添加规则:', newRule)
     rules.value.push(newRule)
   } else {
     // 更新现有规则
