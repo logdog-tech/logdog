@@ -18,7 +18,6 @@
     <button @click="searchLogs" class="btn btn-primary">搜索</button>
   </div>
   <div>搜索结果: {{ searchResult.length }} 条</div>
-  <div v-if="searchError" class="alert alert-danger">{{ searchError }}</div>
   <div class="log-panel" v-bind="searchContainerProps">
     <div v-bind="searchWrapperProps">
       <div v-for="item in searchList" :key="item.index" class="log-item" v-html="showIt(item.data)"
@@ -28,7 +27,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, shallowRef, computed, watch } from 'vue'
 import { useVirtualList } from '@vueuse/core'
 
 const props = defineProps({
@@ -41,10 +40,9 @@ const props = defineProps({
 const selectedLine = ref(null)
 const searchTerm = ref('')
 const searchResult = ref([])
-const searchError = ref('')
 
 // 用于存储原始文件内容的引用
-const originalFileContent = ref([])
+const originalFileContent = shallowRef([])
 
 const handleSearchInput = () => {
   // 当用户手动编辑搜索框时，更新 prefilters 的 active 状态
@@ -54,29 +52,22 @@ const handleSearchInput = () => {
 }
 
 const searchLogs = () => {
-  console.log('Searching logs with term:', searchTerm.value)
-  searchError.value = ''  // 重置错误消息
-  if (!searchTerm.value.trim()) {
-    searchResult.value = []
-    console.log('Empty search term, clearing results')
-    return
-  }
+    
+  console.log('开始日志检索: ', "搜索条件" + searchTerm.value + "搜索任务总行数=" + originalFileContent.value.length)
+  console.time('🕘日志检索')
 
-  try {
-    const searchRegex = new RegExp(searchTerm.value, 'gi');
-    console.log('Search regex:', searchRegex)
-    
-    const matches = originalFileContent.value.filter(item => {
-      return item.content.match(searchRegex)
-    })
-    
-    console.log('Search matches:', matches.length)
-    searchResult.value = matches
-  } catch (error) {
-    console.error('搜索出错:', error)
-    searchError.value = '无效的搜索表达式。请检查您的输入并重试。'
-    searchResult.value = []
-  }
+    const searchRegex = new RegExp(searchTerm.value, '');
+    console.timeLog('🕘日志检索', 's2, 完成正则创建')
+    if (!searchTerm.value.trim()) {
+        searchResult.value = []
+    } else {
+        searchResult.value = originalFileContent.value.filter(item => {
+            return searchRegex.test(item.content)
+        })
+    }
+
+    console.timeLog('🕘日志检索', 's3, 完成过滤')
+    console.timeEnd('🕘日志检索')
 }
 
 const showIt = (item) => {

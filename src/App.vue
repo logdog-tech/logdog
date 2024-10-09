@@ -24,20 +24,27 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, shallowRef, nextTick } from 'vue'
 import RulesManager from './RulesManager.vue'
 import PrefilterManager from './PrefilterManager.vue'
 import DataProvider from './DataProvider.vue'
 import LogShower from './LogShower.vue'
 
-const fileContent = ref([])
+const fileContent = shallowRef([])
 const rules = ref([])
 const prefilters = ref([])
 
 const handleFileLoaded = (content) => {
-  fileContent.value = content.split('\n').map((content, index) => {
-    return { line: index + 1, content: content }
-  })
+  console.timeLog('🕘加载文件', 's2.1, handleFileLoaded函数接收到任务，数据总长度' + content.length);
+
+  const lines = content.split('\n');
+  console.timeLog('🕘加载文件', 's2.2, 完成split风格，总行数' + lines.length);
+
+  fileContent.value = lines.map((content, index) => {
+    return { line: index + 1, content: content };
+  });
+  console.timeLog('🕘加载文件', 's2.3, 完成映射为line+content的json结构');
+  console.timeEnd('🕘加载文件');
 }
 
 const handleRulesUpdated = (updatedRules) => {

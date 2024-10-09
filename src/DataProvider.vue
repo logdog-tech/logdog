@@ -177,11 +177,21 @@ function extractFileFromZip(file) {
 }
 
 function readFile(file) {
-  const reader = new FileReader()
+  console.time('🕘加载文件');
+  console.timeLog('🕘加载文件', 's1.1, 开始读取文件');
+  
+  const reader = new FileReader();
   reader.onload = (e) => {
-    emit('fileLoaded', e.target.result)
-  }
-  reader.readAsText(file)
+    console.timeLog('🕘加载文件', 's1.2, 文件二进制数据加载完成');
+    
+    const decoder = new TextDecoder('utf-8');
+    const text = decoder.decode(e.target.result);
+    
+    console.timeLog('🕘加载文件', 's1.3, 文件解码完成');
+
+    emit('fileLoaded', text);
+  };
+  reader.readAsArrayBuffer(file);
 }
 
 function processZipFile(zipFile) {
