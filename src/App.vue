@@ -56,11 +56,11 @@ const handlePrefilterUpdated = (updatedPrefilters) => {
 }
 
 const highlight = (text) => {
-  let formatted = text
+  let formatted = text.replace(/<br>/g, ' ') // TODO 改为默认就不允许显示内容中的标签
   rules.value.forEach(rule => {
     formatted = formatted.replace(
       new RegExp(rule.regex, 'gi'),
-      match => `<span style="color: ${rule.foreColor}; background-color: ${rule.backColor};">${match}</span>`
+      match => `<span style="display: inline-block; color: ${rule.foreColor}; background-color: ${rule.backColor};">${match}</span>`
     )
   })
   return formatted

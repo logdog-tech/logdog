@@ -21,7 +21,7 @@
   <div class="log-panel" v-bind="searchContainerProps">
     <div v-bind="searchWrapperProps">
       <div v-for="item in searchList" :key="item.index" class="log-item" v-html="showIt(item.data)"
-        @dblclick="jumpToLine(item.data.line)"></div>
+        @click="jumpToLine(item.data.line)" :class="{ highlighted: item.data.line === selectedLine }"></div>
     </div>
   </div>
 </template>
@@ -76,11 +76,11 @@ const showIt = (item) => {
 }
 
 // 使用 originalFileContent 而不是 filteredContent
-const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(originalFileContent, { itemHeight: 24 })
+const { list, containerProps, wrapperProps, scrollTo } = useVirtualList(originalFileContent, { itemHeight: 18 })
 
 const { list: searchList, containerProps: searchContainerProps, wrapperProps: searchWrapperProps, scrollTo: scrollToSearch } = useVirtualList(
   searchResult,
-  { itemHeight: 24 }
+  { itemHeight: 18 }
 )
 
 // 监听 props.fileContent 的变化
@@ -152,11 +152,13 @@ defineExpose({ applyPrefilter })
 }
 
 .log-item {
-  font-size: small;
+  font-size: 12px;
   word-break: break-all;
   white-space: pre;
+  min-width: 1200px;
+  /* line-height: 18px; */
   /* white-space: pre-wrap; */
-  border-bottom: 1px dashed #ccc;
+  /* border-bottom: 1px dashed #ccc; */
 }
 
 .log-item:hover {
@@ -168,30 +170,13 @@ defineExpose({ applyPrefilter })
   /* Prevent selection */
   min-width: 24px;
   display: inline-block;
+  font-size: 12px;
   color: gray;
   text-align: right;
   margin-right: 10px;
 }
 
-@keyframes flash {
-
-  0%,
-  50%,
-  100% {
-    background-color: yellow;
-    font-size: large;
-  }
-
-  25%,
-  75% {
-    background-color: red;
-  }
-}
-
 .highlighted {
-  background-color: yellow;
-  color: red;
-
-  animation: flash 0.5s ease;
+  box-shadow: 0 0 5px red
 }
 </style>
