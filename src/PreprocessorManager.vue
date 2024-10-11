@@ -74,13 +74,15 @@
     return isAdding.value ? [...preprocessors.value, editedPreprocessor.value] : preprocessors.value
   })
   
-  // 从 localStorage 加载预处理器，如果没有则使用默认预处理器
+  // 修改加载预处理器的函数
   const loadPreprocessors = () => {
     const savedPreprocessors = localStorage.getItem(STORAGE_KEY)
     if (savedPreprocessors) {
       preprocessors.value = JSON.parse(savedPreprocessors)
     } else {
+      // 如果没有保存的预处理器，使用默认预处理器并保存它们
       preprocessors.value = defaultPreprocessors
+      savePreprocessors()
     }
   }
   
@@ -216,7 +218,7 @@
   // 新增：截断描述的函数
   const truncateDescription = (description) => {
     if (!description) return '无描述'
-    return description.length > 15 ? description.slice(0, 15) + '...' : description
+    return description.length > 12 ? description.slice(0, 12) + '...' : description
   }
   </script>
   
@@ -255,7 +257,7 @@
   
   .preprocessor-description {
     margin: 5px 0 0;
-    font-size: 14px;
+    font-size: 12px;
     color: #666;
     white-space: nowrap;
     overflow: hidden;
