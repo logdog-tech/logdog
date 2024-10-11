@@ -47,6 +47,24 @@
   
   const STORAGE_KEY = 'logdog_preprocessors'
   
+  // 预设的预处理器
+  const defaultPreprocessors = [
+    {
+        id: 1,
+        name: 'dmesg时间转换',
+        description: '将dmesg日志中的相对时间戳转换为绝对时间，请确保日志名格式如dmesg_2024-0929-193244_9.log.bin',
+        function: "function(fileName, lineNumber, content) {\n  // 从文件名中提取日期时间\n  const dateTimeMatch = fileName.match(/(\\d{4})-(\\d{2})(\\d{2})-(\\d{2})(\\d{2})(\\d{2})/);\n  if (!dateTimeMatch) return content;  // 如果文件名不匹配预期格式,返回原内容\n\n  const [_, year, month, day, hour, minute, second] = dateTimeMatch;\n  const baseDate = new Date(year, month - 1, day, hour, minute, second);\n  const baseTime = baseDate.getTime() / 1000;  // 转换为秒\n\n  // 匹配dmesg日志中的时间戳和优先级\n  return content.replace(/<(\\d+)>\\[(\\s*\\d+\\.\\d+)\\]\\s*(\\(\\d+\\)\\[[\\d:]+\\])?(.*)/, (match, priority, timestamp, processInfo, remainder) => {\n    const absoluteTime = baseTime + parseFloat(timestamp);\n    const date = new Date(absoluteTime * 1000);\n    \n    const formattedDate = `${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;\n    const formattedTime = `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}.${String(date.getMilliseconds()).padStart(3, '0')}`;\n    \n    let priorityChar;\n    switch(parseInt(priority)) {\n      case 0: case 1: case 2: priorityChar = 'F'; break; // KERN_EMERG, KERN_ALERT, KERN_CRIT\n      case 3: priorityChar = 'E'; break; // KERN_ERR\n      case 4: priorityChar = 'W'; break; // KERN_WARNING\n      case 5: priorityChar = 'N'; break; // KERN_NOTICE\n      case 6: priorityChar = 'I'; break; // KERN_INFO\n      case 7: priorityChar = 'D'; break; // KERN_DEBUG\n      default: priorityChar = '?';\n    }\n\n    const pidTid = processInfo ? processInfo.match(/\\((\\d+)\\)\\[(\\d+):/) : null;\n    const pid = pidTid ? pidTid[1].padStart(5) : '    0';\n    const tid = pidTid ? pidTid[2].padStart(5) : '    0';\n\n    return `${formattedDate} ${formattedTime} ${pid} ${tid} ${priorityChar} ${remainder.trim()}`;\n  });\n}"
+    },
+    {
+      id: 2,
+      name: '示例：行号添加',
+      description: '在每行开头添加文件名和行号',
+      function: `function(fileName, lineNumber, content) {
+    return \`[\${fileName}:\${lineNumber}] \${content}\`;
+  }`
+    },
+  ]
+  
   const preprocessors = ref([])
   const editedPreprocessor = ref({ id: null, name: '', description: '', function: '', active: false })
   const editingId = ref(null)
@@ -56,21 +74,19 @@
     return isAdding.value ? [...preprocessors.value, editedPreprocessor.value] : preprocessors.value
   })
   
-  // 从 localStorage 加载预处理器
+  // 从 localStorage 加载预处理器，如果没有则使用默认预处理器
   const loadPreprocessors = () => {
     const savedPreprocessors = localStorage.getItem(STORAGE_KEY)
     if (savedPreprocessors) {
-      preprocessors.value = JSON.parse(savedPreprocessors).map(preprocessor => ({
-        ...preprocessor,
-        active: false
-      }))
+      preprocessors.value = JSON.parse(savedPreprocessors)
+    } else {
+      preprocessors.value = defaultPreprocessors
     }
   }
   
-  // 保存预处理器到 localStorage，但不保存 active 状态
+  // 保存预处理器到 localStorage
   const savePreprocessors = () => {
-    const preprocessorsToSave = preprocessors.value.map(({ id, name, description, function: func }) => ({ id, name, description, function: func }))
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(preprocessorsToSave))
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(preprocessors.value))
   }
   
   const startEdit = (preprocessor) => {
