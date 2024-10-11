@@ -178,30 +178,63 @@ const handleUpdateSessionRules = (newRule) => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background-color: #ffffff;
 }
 
 .tab-buttons {
   display: flex;
-  border-bottom: 1px solid #dee2e6;
+  background-color: #f8f9fa;
+  padding: 10px 10px 0;
+  border-bottom: none;
 }
 
 .tab-buttons button {
-  padding: 10px 20px;
-  border: none;
-  background-color: transparent;
+  padding: 10px 15px;
+  border: 1px solid #dee2e6;
+  border-bottom: none;
+  background-color: #f8f9fa;
   cursor: pointer;
   flex: 1;
+  font-size: 14px;
+  font-weight: bold;
+  color: #495057;
+  transition: all 0.3s ease;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
+  margin-right: 2px;
+}
+
+.tab-buttons button:last-child {
+  margin-right: 0;
 }
 
 .tab-buttons button.active {
+  background-color: #ffffff;
+  color: #007bff;
+  border-bottom: none;
+  position: relative;
+}
+
+.tab-buttons button.active::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: #ffffff;
+}
+
+.tab-buttons button:hover:not(.active) {
   background-color: #e9ecef;
-  border-bottom: 2px solid #007bff;
 }
 
 .tab-content {
   flex-grow: 1;
   overflow-y: auto;
-  padding: 14px;
+  padding: 20px;
+  background-color: #ffffff;
+  border-top: 1px solid #dee2e6;
 }
 
 .main {
