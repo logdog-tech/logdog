@@ -6,6 +6,7 @@
         <div class="tab-buttons">
           <button @click="activeTab = 'rules'" :class="{ active: activeTab === 'rules' }">高亮规则</button>
           <button @click="activeTab = 'prefilters'" :class="{ active: activeTab === 'prefilters' }">预过滤器</button>
+          <button @click="activeTab = 'preprocessors'" :class="{ active: activeTab === 'preprocessors' }">预处理器</button>
         </div>
         <div class="tab-content">
           <RulesManager 
@@ -19,6 +20,11 @@
             @prefilterUpdated="handlePrefilterUpdated" 
             @prefilterApplied="applyPrefilterToLogShower" 
           />
+          <PreprocessorManager 
+            v-if="activeTab === 'preprocessors'"
+            @preprocessorUpdated="handlePreprocessorUpdated"
+            @preprocessorApplied="applyPreprocessorToLogShower"
+          />
         </div>
       </div>
     </div>
@@ -29,7 +35,9 @@
         :rules="rules" 
         :sessionRules="sessionRules"
         :prefilters="prefilters" 
+        :preprocessors="preprocessors"
         :highlight="highlight" 
+        :fileName="fileName"
         @updateSessionRules="handleUpdateSessionRules"
       />
     </div>
@@ -40,15 +48,18 @@
 import { ref, shallowRef, nextTick } from 'vue'
 import RulesManager from './RulesManager.vue'
 import PrefilterManager from './PrefilterManager.vue'
+import PreprocessorManager from './PreprocessorManager.vue'
 import DataProvider from './DataProvider.vue'
 import LogShower from './LogShower.vue'
 
 const fileContent = shallowRef([])
 const rules = ref([])
-const sessionRules = ref([]) // 新增：用于存储会话规则
+const sessionRules = ref([])
 const prefilters = ref([])
+const preprocessors = ref([])
+const fileName = ref('') // 添加这一行来存储文件名
 
-const handleFileLoaded = (content) => {
+const handleFileLoaded = (content, name) => { // 修改这里，添加 name 参数
   console.timeLog('🕘加载文件', 's2.1, handleFileLoaded函数接收到任务，数据总长度' + content.length);
 
   const lines = content.split('\n');
@@ -57,6 +68,7 @@ const handleFileLoaded = (content) => {
   fileContent.value = lines.map((content, index) => {
     return { line: index + 1, content: content };
   });
+  fileName.value = name; // 设置文件名
   console.timeLog('🕘加载文件', 's2.3, 完成映射为line+content的json结构');
   console.timeEnd('🕘加载文件');
 }
@@ -71,6 +83,10 @@ const handleSessionRulesUpdated = (updatedSessionRules) => {
 
 const handlePrefilterUpdated = (updatedPrefilters) => {
   prefilters.value = updatedPrefilters
+}
+
+const handlePreprocessorUpdated = (updatedPreprocessors) => {
+  preprocessors.value = updatedPreprocessors
 }
 
 const highlight = (text) => {
@@ -105,6 +121,17 @@ const applyPrefilterToLogShower = (prefilterData) => {
   })
 }
 
+const applyPreprocessorToLogShower = (preprocessorData) => {
+  nextTick(() => {
+    if (logShowerRef.value && logShowerRef.value.applyPreprocessor) {
+      logShowerRef.value.applyPreprocessor(preprocessorData)
+      updatePreprocessorState(preprocessorData.preprocessor)
+    } else {
+      console.error('LogShower component or applyPreprocessor method not available')
+    }
+  })
+}
+
 const activeTab = ref('rules')
 
 const updatePrefilterState = (updatedPrefilter) => {
@@ -113,6 +140,14 @@ const updatePrefilterState = (updatedPrefilter) => {
     prefilters.value[index] = { ...updatedPrefilter };
   }
 }
+
+const updatePreprocessorState = (updatedPreprocessor) => {
+  const index = preprocessors.value.findIndex(p => p.id === updatedPreprocessor.id);
+  if (index !== -1) {
+    preprocessors.value[index] = { ...updatedPreprocessor };
+  }
+}
+
 const handleUpdateSessionRules = (newRule) => {
   if (newRule.isClear) {
     sessionRules.value = sessionRules.value.filter(rule => rule.regex !== newRule.regex)

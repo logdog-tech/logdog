@@ -189,7 +189,7 @@ function readFile(file) {
     
     console.timeLog('🕘加载文件', 's1.3, 文件解码完成');
 
-    emit('fileLoaded', text);
+    emit('fileLoaded', text, file.name);
   };
   reader.readAsArrayBuffer(file);
 }

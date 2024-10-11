@@ -51,7 +51,15 @@ const props = defineProps({
     rules: { type: Array, required: true },
     prefilters: { type: Array, required: true },
     highlight: { type: Function, required: true },
-    sessionRules: { type: Array, required: true }
+    sessionRules: { type: Array, required: true },
+    preprocessors: {
+      type: Array,
+      default: () => []
+    },
+    fileName: { // 新增：文件名属性
+      type: String,
+      default: 'unknown.log'
+    }
 })
 
 const selectedLine = ref(null)
@@ -148,7 +156,34 @@ const searchLogs = () => {
 
 const showIt = (item) => {
     const lineData = `<span class="line-number">${item.line}</span>`
-    return lineData + props.highlight(item.content)
+    // 应用所有激活的预处理器
+    const processedContent = applyPreprocessors(props.fileName, item.line, item.content)
+    return lineData + props.highlight(processedContent)
+}
+
+// 修改：应用预处理器的函数
+const applyPreprocessors = (fileName, lineNumber, content) => {
+    return props.preprocessors
+        .filter(p => p.active)
+        .reduce((processedContent, preprocessor) => {
+            try {
+                const func = new Function('return ' + preprocessor.function)()
+                return func(fileName, lineNumber, processedContent)
+            } catch (error) {
+                console.error(`Error in preprocessor "${preprocessor.name}":`, error)
+                return processedContent
+            }
+        }, content)
+}
+
+// 修改 applyPreprocessor 函数
+const applyPreprocessor = (preprocessorData) => {
+    if (preprocessorData.action === 'toggle') {
+        // 不需要在这里应用预处理器，因为我们会在 showIt 函数中应用
+        // 只需要触发重新渲染
+        list.value = [...list.value]
+        searchList.value = [...searchList.value]
+    }
 }
 
 // 使用 originalFileContent 而不是 filteredContent
@@ -207,9 +242,6 @@ const applyPrefilter = ({ regex, action, prefilter }) => {
     }
     searchLogs()
 }
-
-// 暴露 applyPrefilter 方法
-defineExpose({ applyPrefilter })
 
 const startResize = (event) => {
     event.preventDefault()
@@ -273,6 +305,12 @@ const handleLogTextSelection = (event) => {
   // 如果不在日志面板内，或没有选中文本，则清空 selectedText
   selectedText.value = ''
 }
+
+// 将这个 defineExpose 移到脚本的末尾，包含所有需要暴露的方法
+defineExpose({
+  applyPrefilter,
+  applyPreprocessor
+})
 </script>
 
 <style scoped>
