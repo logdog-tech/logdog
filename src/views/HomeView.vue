@@ -112,7 +112,7 @@ export default {
         },
         handleUserToggleItems(type: number, item: Rule) {
             console.log('handleUserToggleItems', type, item);
-            (this.$refs.logdogEditorRef as any)?.handleUserToggleItems(1, item);
+            (this.$refs.logdogEditorRef as any)?.handleUserToggleItems(item.rule_type, item);
         },
         handleDogfileSelected(dogfile: string) {
             console.log("🕘handleDogfileSelected", dogfile);

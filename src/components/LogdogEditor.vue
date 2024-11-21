@@ -328,9 +328,9 @@ export default {
             logFullView.scrollToIndex(item.line - 8);
             this.selectedline = item.line;
         },
-        handleUserToggleItems(type: number, item: Rule) {
+        handleUserToggleItems(type: string, item: Rule) {
             console.log('====handleUserToggleItems', type, item.pattern, item._checked, item);
-            if (type === 1) { // 过滤器
+            if (type === 'filter') { // 过滤器
                 let searchBoxPatterns = this.searchTerm.split("|");
                 if (!item._checked) {
                     if (searchBoxPatterns.includes(item.pattern!)) {

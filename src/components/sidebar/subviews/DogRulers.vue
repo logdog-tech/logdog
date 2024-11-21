@@ -146,13 +146,20 @@ export default {
     emits: ['configChanged', 'userToggleItems'],
     methods: {
         async getWorkspaceRulesFromDatabase() {
-            return await ruleTableHelper.getAll().then(rules => rules.filter((rule: Rule) => {
+            const rules = await ruleTableHelper.getAll().then(rules => rules.filter((rule: Rule) => {
                 return rule.workspace_id === this.workspace.id || rule.workspace_id === 1;
             }).reverse());
+            for (const rule of rules) {
+                if (rule.rule_type === 'color') {
+                    rule._checked = true;
+                }
+            }
+            return rules;
         },
         handleUserToggleItems(type: 'filter' | 'color' | 'function', item: Rule) {
             console.log('handleUserToggleItems', type, item);
             this.$emit('userToggleItems', type, item);
+            this.$emit('configChanged', this.rules);
         },
         handleUpdateItems(type: 'filter' | 'color' | 'function', items: Rule[]) {
             // TODO

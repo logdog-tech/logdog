@@ -114,7 +114,7 @@ export default {
                     id: 0,
                     workspace_name: '本地工作区',
                     is_public: false,
-                    created_by: this.currentUser.id,
+                    created_by: this.currentUser.id || 0,
                     _is_local: true,
                 } as Workspace;
                 await workspaceTableHelper.add(localWorkspace);
