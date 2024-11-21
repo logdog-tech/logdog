@@ -43,11 +43,14 @@ export default {
     data() {
         return {
             colorStyles: [
-                { color: "#ffffff", "background-color": "#333333" },
-                { color: "#333333", "background-color": "#ffffff" },
-                { color: "#ffffff", "background-color": "#ff4444" },
-                { color: "#ffffff", "background-color": "#2196F3" },
-                { color: "#333333", "background-color": "#FFEB3B" },
+                { color: "white", "background-color": "red" },
+                { color: "black", "background-color": "rgb(255, 165, 0)" },
+                { color: "black", "background-color": "rgb(255, 255, 0)" },
+                { color: "rgb(255, 255, 255)", "background-color": "rgb(0, 128, 0)" },
+                { color: "rgb(255, 255, 255)", "background-color": "rgb(0, 0, 255)" },
+                { color: "rgb(255, 255, 0)", "background-color": "rgb(128, 0, 128)" },
+                { color: "rgb(255, 255, 255)", "background-color": "rgb(165, 42, 42)" },
+                { color: "rgb(255, 0, 255)", "background-color": "rgb(0, 255, 255)" },
             ] as ColorStyle[]
         }
     },
