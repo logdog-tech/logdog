@@ -18,6 +18,7 @@
     </div>
 </template>
 <script lang="ts">
+import { userApi } from '@/api'
     export default {
         name: 'UserDropdown',
         data() {
@@ -26,19 +27,9 @@
             }
         },
         methods: {
-            logout() {
-                // this.$emit('logout');
-
-                // 清除所有数据包括 cookie的access_token
-                localStorage.removeItem('access_token');
-                localStorage.clear();
-                sessionStorage.clear();
-
-                // 清除.logdog.tech这个域下的所有域的cookie
-                document.cookie = document.cookie.replace(/(?:(?:^|.*;\s*)access_token\s*\=\s*[^;]*).*/g, '');
-
-                // 退出登录
-                window.location.href = "https://api.logdog.tech/logout";
+            async logout() {
+                await userApi.logout();
+                window.location.reload();
             }
         }
     }

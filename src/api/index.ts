@@ -46,6 +46,15 @@ export const userApi = {
     } as RequestInit)
     if (!response.ok) throw new Error('Failed to check login state')
     return response.json()
+  },
+
+  async logout() {
+    const response = await fetch(`${config.API_BASE_URL}/api/logout`, {
+      ...defaultConfig,
+      method: 'GET'
+    } as RequestInit)
+    if (!response.ok) throw new Error('Failed to logout')
+    return response.json()
   }
 }
 
