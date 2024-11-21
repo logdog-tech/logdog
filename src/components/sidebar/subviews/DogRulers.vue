@@ -98,13 +98,10 @@ export default {
         async workspace(newWorkspaceValue) {
             console.log('new workspace', newWorkspaceValue);
 
-            this.rules = await ruleTableHelper.getAll().then(rules => rules.filter((rule: Rule) => rule.workspace_id === newWorkspaceValue.id).reverse());
+            this.rules = await this.getWorkspaceRulesFromDatabase();
 
-            if (newWorkspaceValue.id === 0) {
-                return; // 0 是本地工作区，不需要从远程获取
-            }
 
-            const localRules = await ruleTableHelper.getAll().then(rules => rules.filter((rule: Rule) => rule.workspace_id === newWorkspaceValue.id));
+            const localRules = await this.getWorkspaceRulesFromDatabase();
             const remoteRules = await ruleApi.getRules({ workspace_id: newWorkspaceValue.id });
 
             // remoteRules 中不存在的，直接删除
@@ -115,14 +112,10 @@ export default {
             }
             // remoteRules 中存在的，直接添加或修改
             for (const rule of remoteRules) {
-                if (localRules.some(r => r.uuid === rule.uuid)) {
-                    await ruleTableHelper.put(rule);
-                } else {
-                    await ruleTableHelper.add(rule);
-                }
+                await ruleTableHelper.insertOrUpdate(rule);
             }
             
-            this.rules = await ruleTableHelper.getAll().then(rules => rules.filter((rule: Rule) => rule.workspace_id === newWorkspaceValue.id).reverse());
+            this.rules = await this.getWorkspaceRulesFromDatabase();
 
         }
     },
@@ -152,6 +145,11 @@ export default {
     },
     emits: ['configChanged', 'userToggleItems'],
     methods: {
+        async getWorkspaceRulesFromDatabase() {
+            return await ruleTableHelper.getAll().then(rules => rules.filter((rule: Rule) => {
+                return rule.workspace_id === this.workspace.id || rule.workspace_id === 1;
+            }).reverse());
+        },
         handleUserToggleItems(type: 'filter' | 'color' | 'function', item: Rule) {
             console.log('handleUserToggleItems', type, item);
             this.$emit('userToggleItems', type, item);

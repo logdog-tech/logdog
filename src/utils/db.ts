@@ -123,7 +123,7 @@ class DB {
       const store = transaction.objectStore(storeName);
       const request = store.getAll();
       
-      request.onsuccess = () => resolve(request.result);
+      request.onsuccess = () => resolve(JSON.parse(JSON.stringify(request.result)));
       request.onerror = () => reject(request.error);
     });
   }
@@ -202,6 +202,13 @@ export const workspaceTableHelper = {
 }
 
 export const ruleTableHelper = {
+    insertOrUpdate: async (data: Rule) => {
+        if (await ruleTableHelper.isExistByUuid(data.uuid)) {
+            return ruleTableHelper.put(data);
+        } else {
+            return ruleTableHelper.add(data);
+        }
+    },
     add: (data: Rule) => db.add('rule', data),
     get: (key: string|number) => db.get('rule', key) as Promise<Rule>,
     put: (data: Rule) => db.put('rule', data),

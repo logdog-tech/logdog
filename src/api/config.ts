@@ -12,7 +12,7 @@ const ENV: Record<string, EnvConfig> = {
     API_BASE_URL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000',
     DOMAIN: import.meta.env.VITE_DOMAIN || 'localhost',
     DEBUG: true,
-    DEBUG_TOKEN: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIyIiwiZXhwIjoyMDQ1MzU5NDc1fQ.3a6r_Vmj3Yt9bD1LhV86o5H7xN567hJZGBXj177g8TY'
+    DEBUG_TOKEN: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1IiwiZXhwIjoyMDQ3NTY4ODAyfQ.ijUh5wLUOj1_vQP-eqQhg8eGQd9oFa_vIUW3YpV3R1Y'
   },
   staging: {
     API_BASE_URL: 'https://api-staging.logdog.tech',

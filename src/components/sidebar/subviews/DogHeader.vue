@@ -22,7 +22,7 @@
                 <div @click="selectWorkspace(workspace)" class="flex-grow p-2 hover:bg-gray-100 rounded-md cursor-pointer">
                     {{ workspace.workspace_name }}
                 </div>
-                <i v-if="!workspace._is_local" @click="deleteWorkspace(workspace)" class="pi pi-trash p-2 hover:bg-gray-100 rounded-md cursor-pointer"></i>
+                <i v-if="canDeleteWorkspace(workspace)" @click="deleteWorkspace(workspace)" class="pi pi-trash p-2 hover:bg-gray-100 rounded-md cursor-pointer"></i>
             </div>
         </div>
     </div>
@@ -60,13 +60,13 @@ export default {
         
         const lastSelectedWorkspaceId = await settingsTableHelper.get('last_selected_workspace', 0);
         console.log('tryInitLocalWorkspace', lastSelectedWorkspaceId);
-        this.myWorkspaces = await workspaceTableHelper.getAll() as Workspace[];
-        this.currentWorkspace = this.myWorkspaces.find(w => w.id === lastSelectedWorkspaceId) || this.myWorkspaces[0];
-        this.selectWorkspace(this.currentWorkspace);
+        this.myWorkspaces = await workspaceTableHelper.getAll();
+        const tmpCurrentWorkspace = this.myWorkspaces.find(w => w.id === lastSelectedWorkspaceId) || this.myWorkspaces[0];
+        this.selectWorkspace(tmpCurrentWorkspace);
         console.log('currentWorkspace', this.currentWorkspace);
        
         await this.syncWorkspace();
-        const workspaces = await workspaceTableHelper.getAll() as Workspace[];
+        const workspaces = await workspaceTableHelper.getAll();
         
         this.myWorkspaces = [];
         this.myWorkspaces.push(...workspaces);
@@ -82,6 +82,9 @@ export default {
         document.removeEventListener('click', this.handleClickOutside);
     },
     methods: {
+        canDeleteWorkspace(workspace: Workspace): boolean {
+            return !workspace._is_local && workspace.created_by === this.currentUser.id;
+        },
         async syncWorkspace() {
             const workspaces = await workspaceApi.getWorkspaces();
             for (const workspace of workspaces) {
@@ -145,7 +148,7 @@ export default {
         selectWorkspace(workspace: Workspace) {
             this.currentWorkspace = workspace;
             this.isOpen = false;
-            this.$emit('workspace-selected', workspace);
+            this.$emit('workspace-selected', JSON.parse(JSON.stringify(workspace)));
             settingsTableHelper.set('last_selected_workspace', workspace.id);
         },
         

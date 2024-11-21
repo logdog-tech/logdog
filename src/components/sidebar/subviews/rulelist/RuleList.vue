@@ -90,7 +90,7 @@
                             </svg>
                         </button>
                         <!-- 其他按钮 -->
-                        <div v-if="!item._is_editing">
+                        <div v-if="!item._is_editing && canEdit(item)">
                             <button 
                                 class="p-1.5 rounded-md text-gray-400 hover:text-blue-500 
                                        hover:bg-gray-100 dark:hover:bg-gray-700
@@ -139,7 +139,7 @@
                     </div>
                     <div v-else class="space-y-2">
 
-                        <!-- 匹配���框 -->
+                        <!-- 匹配框 -->
                         <input 
                             v-if="type !== 'function'"
                             v-model="editingItem!.pattern"
@@ -736,6 +736,9 @@ export default {
         },
         handleBackspace() {
             // 处理回退键的逻辑
+        },
+        canEdit(item: Rule): boolean {
+            return item.workspace_id === this.workspace.id;
         },
     }
 }
