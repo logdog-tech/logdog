@@ -40,6 +40,7 @@ export default {
         Notifications,
         UserDropdown
     },
+    emits: ['login-status-changed'],
     data() {
         return {
             isLoggedIn: false,
@@ -58,13 +59,15 @@ export default {
         },
         async checkLoginStatus() {
             try {
-                const data = await userApi.getUserInfo();
+                const data = await userApi.getUserInfo() as User;
                 this.isLoggedIn = true;
                 this.userInfo = data;
+                this.$emit('login-status-changed', true, data);
             } catch (error) {
                 handleApiError(error as Error);
                 this.isLoggedIn = false;
                 this.userInfo = null;
+                this.$emit('login-status-changed', false, null);
             }
         },
         toggleNotifications(event: Event) {

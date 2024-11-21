@@ -17,7 +17,7 @@
                 <div class="overflow-y-auto">
                     <DogRulers :currentUser="currentUser" :workspace="workspace" @configChanged="handleConfigChanged" @userToggleItems="handleUserToggleItems" />
                 </div>
-                <LoginInfo />
+                <LoginInfo @login-status-changed="handleLoginStatusChanged" />
             </div>
         </SplitterPanel>
         
@@ -64,13 +64,21 @@ export default {
             workspace: {} as Workspace,
             showSidebar: true,
             isSelectedFileMode: true,
-            currentUser: {} as User
+            currentUser: this.createLocalTmpUser()
         }
     },
     async mounted() {
-        this.currentUser = await userApi.getUserInfo();
     },
     methods: {
+        createLocalTmpUser() {
+            return {
+                id: -1,
+                nickname: '未登录用户',
+            } as User;
+        },
+        handleLoginStatusChanged(isLoggedIn: boolean, user: User) {
+            this.currentUser = user;
+        },
         handleWorkspaceSelected(workspace: Workspace) {
             console.log('handleWorkspaceSelected', workspace);
             this.workspace = workspace;
