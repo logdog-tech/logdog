@@ -1,1 +1,54 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" aria-hidden="true" role="img" class="iconify iconify--logos" width="37.07" height="36" preserveAspectRatio="xMidYMid meet" viewBox="0 0 256 198"><path fill="#41B883" d="M204.8 0H256L128 220.8L0 0h97.92L128 51.2L157.44 0h47.36Z"></path><path fill="#41B883" d="m0 0l128 220.8L256 0h-51.2L128 132.48L50.56 0H0Z"></path><path fill="#35495E" d="M50.56 0L128 133.12L204.8 0h-47.36L128 51.2L97.92 0H50.56Z"></path></svg>
+<svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#00C6FF"/>
+                    <stop offset="100%" stop-color="#0072FF"/>
+                </linearGradient>
+                <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#FF4B1F"/>
+                    <stop offset="100%" stop-color="#FF9068"/>
+                </linearGradient>
+                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+            </defs>
+
+            <!-- 六边形基础 -->
+            <polygon points="200,50 350,150 350,250 200,350 50,250 50,150" 
+                     fill="url(#gradient1)" 
+                     stroke="#0072FF" 
+                     stroke-width="4" 
+                     filter="url(#glow)" />
+
+            <!-- 数据流动线条 -->
+            <path d="M80,200 Q200,100 320,200" 
+                  stroke="url(#gradient2)" 
+                  stroke-width="4" 
+                  fill="none" 
+                  stroke-dasharray="5,5" 
+                  filter="url(#glow)" />
+
+            <path d="M80,220 Q200,120 320,220" 
+                  stroke="url(#gradient2)" 
+                  stroke-width="4" 
+                  fill="none" 
+                  stroke-dasharray="5,5" 
+                  filter="url(#glow)" />
+
+            <!-- 中心图标: 放大镜与数据点 -->
+            <g transform="translate(200,200)" filter="url(#glow)">
+                <!-- 放大镜圆环 -->
+                <circle cx="0" cy="0" r="40" fill="none" stroke="#FFFFFF" stroke-width="4"/>
+                <!-- 放大镜柄 -->
+                <line x1="28" y1="28" x2="60" y2="60" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+                <!-- 数据点 -->
+                <circle cx="-15" cy="-15" r="5" fill="#FF9068"/>
+                <circle cx="15" cy="-15" r="5" fill="#FF4B1F"/>
+                <circle cx="-15" cy="15" r="5" fill="#FF9068"/>
+                <circle cx="15" cy="15" r="5" fill="#FF4B1F"/>
+            </g>
+        </svg>

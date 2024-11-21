@@ -1,0 +1,54 @@
+ <svg viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <!-- 渐变定义 -->
+                <linearGradient id="gradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#4A90E2"/>
+                    <stop offset="100%" stop-color="#9013FE"/>
+                </linearGradient>
+                <linearGradient id="gradient2" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#50C9C3"/>
+                    <stop offset="100%" stop-color="#960DF4"/>
+                </linearGradient>
+                <!-- 发光滤镜 -->
+                <filter id="glow">
+                    <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+                    <feMerge>
+                        <feMergeNode in="coloredBlur"/>
+                        <feMergeNode in="SourceGraphic"/>
+                    </feMerge>
+                </filter>
+            </defs>
+
+            <!-- 背景六边形 -->
+            <polygon points="200,50 350,150 350,250 200,350 50,250 50,150" 
+                     fill="url(#gradient1)" 
+                     stroke="url(#gradient2)" 
+                     stroke-width="4" 
+                     filter="url(#glow)"
+                     class="glow-effect"/>
+
+            <!-- 数据流动线条 -->
+            <path d="M80,200 C150,100 250,300 320,200" 
+                  stroke="url(#gradient2)" 
+                  stroke-width="4" 
+                  fill="none" 
+                  stroke-dasharray="10,5" 
+                  class="glow-effect"/>
+
+            <!-- 数据节点 -->
+            <circle cx="80" cy="200" r="8" fill="#FFFFFF" stroke="url(#gradient2)" stroke-width="2"/>
+            <circle cx="320" cy="200" r="8" fill="#FFFFFF" stroke="url(#gradient2)" stroke-width="2"/>
+
+            <!-- 中心图标：放大镜与数据点 -->
+            <g transform="translate(200,200)" filter="url(#glow)">
+                <!-- 放大镜圆环 -->
+                <circle cx="0" cy="0" r="40" fill="none" stroke="#FFFFFF" stroke-width="4"/>
+                <!-- 放大镜柄 -->
+                <line x1="28" y1="28" x2="60" y2="60" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round"/>
+                <!-- 数据点 -->
+                <circle cx="-15" cy="-15" r="5" fill="#50C9C3"/>
+                <circle cx="15" cy="-15" r="5" fill="#50C9C3"/>
+                <circle cx="-15" cy="15" r="5" fill="#50C9C3"/>
+                <circle cx="15" cy="15" r="5" fill="#50C9C3"/>
+            </g>
+        </svg>
