@@ -130,6 +130,35 @@ export const workspaceApi = {
     )
     if (!response.ok) throw new Error('添加成员失败')
     return response.json()
+  },
+
+  async removeWorkspaceMember(
+    workspaceId: number,
+    userId: number
+  ): Promise<{ message: string }> {
+    const response = await fetch(
+      `${config.API_BASE_URL}/api/workspaces/${workspaceId}/members/${userId}`, {
+        ...defaultConfig,
+        method: 'DELETE'
+      } as RequestInit
+    )
+    if (!response.ok) throw new Error('移除成员失败')
+    return response.json()
+  },
+
+  async searchUsers(
+    workspaceId: number,
+    query: string
+  ): Promise<UserInfo[]> {
+    const response = await fetch(
+      `${config.API_BASE_URL}/api/workspaces/${workspaceId}/search_users?query=${encodeURIComponent(query)}`,
+      {
+        ...defaultConfig,
+        method: 'GET'
+      }
+    )
+    if (!response.ok) throw new Error('搜索用户失败')
+    return response.json()
   }
 }
 
