@@ -319,9 +319,10 @@ export default {
             const regex = new RegExp(this.searchTerm, 'gi');
             const logSearchView = this.$refs.logSearchView as { scrollToIndex: (index: number) => void };
             logSearchView.scrollToIndex(0);
-            this.searchItems = this.logData.filter((item) =>
-                regex.test(item.content)
-            );
+            this.searchItems = this.logData.filter((item) => {
+                regex.lastIndex = 0; // 每次测试前重置lastIndex，否则匹配会有漏掉的行
+                return regex.test(item.content);
+            });
         },
         handleSearchItemClick(item: { line: number; content: string }) {
             const logFullView = this.$refs.logFullView as { scrollToIndex: (index: number) => void };
