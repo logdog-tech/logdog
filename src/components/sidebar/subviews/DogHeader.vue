@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div style="display: grid; grid-template-columns: 40px 1fr 40px 40px; align-items: center;">
+        <div style="display: grid; grid-template-columns: 40px 1fr 30px 40px; align-items: center;">
             <div @click="toggleFileMode"><i :class="{'pi-folder-open': isSelectedFileMode, 'pi-folder': !isSelectedFileMode, 'bg-gray-200': isSelectedFileMode}" class="pi m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md" style="font-size: 16px;"></i></div>
             <div class="text-lg font-bold text-gray-800">
                 <span @click="isOpen = !isOpen" :class="{'bg-gray-200': isOpen}" class="hover:cursor-pointer hover:bg-gray-200 rounded-md p-2">
