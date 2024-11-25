@@ -58,6 +58,15 @@ export const userApi = {
   }
 }
 
+// 通用的响应处理函数
+async function handleResponse<T>(response: Response): Promise<T> {
+    const data = await response.json();
+    if (!response.ok) {
+        throw data;
+    }
+    return data;
+}
+
 // 修改 workspaceApi 的类型定义
 export const workspaceApi = {
   async createWorkspace(workspace: {
@@ -128,8 +137,7 @@ export const workspaceApi = {
         body: JSON.stringify({ role })
       } as RequestInit
     )
-    if (!response.ok) throw new Error('添加成员失败')
-    return response.json()
+    return handleResponse(response)
   },
 
   async removeWorkspaceMember(
@@ -149,16 +157,48 @@ export const workspaceApi = {
   async searchUsers(
     workspaceId: number,
     query: string
-  ): Promise<UserInfo[]> {
+  ): Promise<Array<{
+    id: number;
+    nickname: string;
+    email: string;
+    avatar?: string;
+  }>> {
     const response = await fetch(
       `${config.API_BASE_URL}/api/workspaces/${workspaceId}/search_users?query=${encodeURIComponent(query)}`,
       {
         ...defaultConfig,
         method: 'GET'
-      }
+      } as RequestInit
     )
     if (!response.ok) throw new Error('搜索用户失败')
     return response.json()
+  },
+
+  async createInvitation(workspaceId: number): Promise<{
+    code: string;
+    expired_at: string;
+    url: string;
+  }> {
+    const response = await fetch(
+      `${config.API_BASE_URL}/api/workspaces/${workspaceId}/invitation`,
+      {
+        ...defaultConfig,
+        method: 'POST'
+      } as RequestInit
+    )
+    if (!response.ok) throw new Error('创建邀请链接失败')
+    return response.json()
+  },
+
+  async joinWorkspaceByInvitation(code: string): Promise<{ message: string }> {
+    const response = await fetch(
+      `${config.API_BASE_URL}/api/workspaces/join/${code}`,
+      {
+        ...defaultConfig,
+        method: 'POST'
+      } as RequestInit
+    );
+    return handleResponse(response);
   }
 }
 

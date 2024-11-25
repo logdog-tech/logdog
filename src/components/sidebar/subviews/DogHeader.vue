@@ -89,6 +89,31 @@
                     </div>
                 </div>
 
+                <!-- 添加邀请链接按钮 -->
+                <div class="mt-4">
+                    <button @click="generateInvitation" 
+                            class="flex items-center px-4 py-2 text-sm text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100">
+                        <i class="pi pi-link mr-2"></i>
+                        生成邀请链接
+                    </button>
+                </div>
+                
+                <!-- 显示邀请链接 -->
+                <div v-if="invitationLink" class="mt-2 p-4 bg-gray-50 rounded-md">
+                    <div class="flex items-center justify-between">
+                        <div class="text-sm text-gray-600">
+                            邀请链接 (7天内有效):
+                        </div>
+                        <button @click="copyInvitationLink" 
+                                class="text-blue-600 hover:text-blue-800">
+                            <i class="pi pi-copy"></i>
+                        </button>
+                    </div>
+                    <div class="mt-2 text-sm break-all">
+                        {{ invitationLink }}
+                    </div>
+                </div>
+
                 <!-- 成员列表 -->
                 <div class="max-h-[400px] overflow-y-auto">
                     <div v-for="member in currentWorkspace.members" 
@@ -107,15 +132,17 @@
                                 <span class="text-lg font-medium">{{ getAvatarText(member) }}</span>
                             </div>
                             <div>
-                                <div class="font-medium">{{ member.nickname }}</div>
+                                <div class="font-medium">
+                                    {{ member.nickname || `用户${member.user_id}` }}
+                                </div>
                                 <div class="text-sm">
                                     <span class="px-2 py-1 rounded-full text-xs" 
                                           :class="{
                                               'bg-blue-100 text-blue-800': member.role === 'owner',
-                                              'bg-blue-100 text-blue-800': member.role === 'admin',
+                                              'bg-green-100 text-green-800': member.role === 'admin',
                                               'bg-gray-100 text-gray-800': member.role === 'member'
                                           }">
-                                        {{ member.role }}
+                                        {{ getRoleText(member.role) }}
                                     </span>
                                 </div>
                             </div>
@@ -174,12 +201,22 @@ export default {
         return {
             isOpen: false,
             myWorkspaces: [] as Workspace[],
-            currentWorkspace: {} as WorkspaceWithMembers,
+            currentWorkspace: {
+                id: 0,
+                workspace_name: '',
+                workspace_desc: '',
+                is_public: false,
+                created_by: 0,
+                created_at: new Date(),
+                updated_at: new Date(),
+                members: []
+            } as WorkspaceWithMembers,
             showMemberDialog: false,
             newMemberEmail: '',
             searchQuery: '',
             searchResults: [] as UserInfo[],
             searchTimeout: null as number | null,
+            invitationLink: '',
         }
     },
     async mounted() {
@@ -280,7 +317,12 @@ export default {
             this.$emit('reselect-files');
         },
         selectWorkspace(workspace: Workspace) {
-            this.currentWorkspace = workspace;
+            const workspaceWithMembers = {
+                ...workspace,
+                members: [] as WorkspaceMember[]
+            } as WorkspaceWithMembers;
+            
+            this.currentWorkspace = workspaceWithMembers;
             this.isOpen = false;
             this.$emit('workspace-selected', JSON.parse(JSON.stringify(workspace)));
             settingsTableHelper.set('last_selected_workspace', workspace.id);
@@ -337,12 +379,12 @@ export default {
                     member.user_id
                 );
                 await this.syncWorkspace();
-            } catch (error: Error) {
-                alert('移除成员失败：' + error.message);
+            } catch (error: unknown) {
+                const err = error as Error;
+                alert('移除成员失败：' + err.message);
             }
         },
         async handleSearch() {
-            // 防抖处理
             if (this.searchTimeout) {
                 clearTimeout(this.searchTimeout);
             }
@@ -358,9 +400,10 @@ export default {
                         this.currentWorkspace.id,
                         this.searchQuery.trim()
                     );
-                } catch (error: Error) {
-                    console.error('搜索用户失败:', error);
-                    alert('搜索用户失败：' + error.message);
+                } catch (error: unknown) {
+                    const err = error as Error;
+                    console.error('搜索用户失败:', err);
+                    alert('搜索用户失败：' + err.message);
                 }
             }, 300);
         },
@@ -374,8 +417,9 @@ export default {
                 this.searchQuery = '';
                 this.searchResults = [];
                 await this.syncWorkspace();
-            } catch (error: Error) {
-                alert('添加成员失败：' + error.message);
+            } catch (error: unknown) {
+                const err = error as Error;
+                alert('添加成员失败：' + err.message);
             }
         },
         handleAvatarError(e: Event) {
@@ -391,12 +435,14 @@ export default {
             }
         },
         getAvatarText(user: UserInfo | WorkspaceMember): string {
+            // 添加日志
+            console.log('getAvatarText user:', user);
+            
+            // 只有当昵称存在且不为空字符串时才使用昵称首字母
             if (user.nickname?.trim()) {
                 return user.nickname.charAt(0).toUpperCase();
             }
-            if ('email' in user && user.email?.trim()) {
-                return user.email.charAt(0).toUpperCase();
-            }
+            // 其他情况都显示 #
             return '#';
         },
         getAvatarColor(id: number): string {
@@ -412,6 +458,33 @@ export default {
             ];
             // 根据用户 ID 选择固定的颜色
             return colors[id % colors.length];
+        },
+        async generateInvitation() {
+            try {
+                const response = await workspaceApi.createInvitation(this.currentWorkspace.id);
+                const baseUrl = window.location.origin;
+                this.invitationLink = `${baseUrl}/join/${response.code}`;
+            } catch (error: unknown) {
+                const err = error as Error;
+                alert('生成邀请链接失败：' + err.message);
+            }
+        },
+        
+        async copyInvitationLink() {
+            try {
+                await navigator.clipboard.writeText(this.invitationLink);
+                alert('邀请链接已复制到剪贴板');
+            } catch (_error) {
+                alert('复制失败，请手动复制');
+            }
+        },
+        getRoleText(role: string): string {
+            const roleMap = {
+                'owner': '所有者',
+                'admin': '管理员',
+                'member': '成员'
+            };
+            return roleMap[role as keyof typeof roleMap] || role;
         },
     }
 }
