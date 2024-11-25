@@ -2,7 +2,9 @@
     <div class="grid grid-cols-2 h-[48px] hover:cursor-pointer px-2" @click="toggleUserDropdown"
          style="grid-template-columns: 40px 1fr 48px; grid-template-rows: 1px 1fr; align-items: center; ">
         <div class="h-[1px] bg-gray-200" style="grid-column: 1 / 4"/>
-        <div class="rounded-full bg-blue-500 p-2 w-10 h-10"/>
+        <div class="rounded-full bg-blue-500 p-2 w-10 h-10 flex items-center justify-center text-white font-medium">
+            {{ avatarText }}
+        </div>
         <div class="">
             <template v-if="isLoggedIn">
                 <div class="text">{{ userInfo?.nickname }}</div>
@@ -52,6 +54,14 @@ export default {
     },
     async mounted() {
         await this.checkLoginStatus();
+    },
+    computed: {
+        avatarText(): string {
+            if (this.isLoggedIn && this.userInfo?.nickname) {
+                return this.userInfo.nickname.charAt(0).toUpperCase();
+            }
+            return '#';
+        }
     },
     methods: {
         async handleLoginClick() {
