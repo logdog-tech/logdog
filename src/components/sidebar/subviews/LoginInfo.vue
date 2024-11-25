@@ -57,8 +57,11 @@ export default {
     },
     computed: {
         avatarText(): string {
-            if (this.isLoggedIn && this.userInfo?.nickname) {
-                return this.userInfo.nickname.charAt(0).toUpperCase();
+            if (this.isLoggedIn) {
+                if (this.userInfo?.nickname?.trim()) {
+                    return this.userInfo.nickname.charAt(0).toUpperCase();
+                }
+                return this.userInfo?.id?.toString().charAt(0) || '#';
             }
             return '#';
         }
