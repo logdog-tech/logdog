@@ -166,21 +166,21 @@ import { workspaceApi } from '../../../api';
 import { settingsTableHelper, workspaceTableHelper } from '../../../utils/db';
 import type { PropType } from 'vue';
 
-interface UserInfo {
+export interface UserInfo {
   id: number;
   nickname: string;
   email: string;
   avatar?: string;
 }
 
-interface WorkspaceMember {
+export interface WorkspaceMember {
     user_id: number;
     role: 'owner' | 'admin' | 'member';
     nickname: string;
     avatar?: string;
 }
 
-interface WorkspaceWithMembers extends Workspace {
+export interface WorkspaceWithMembers extends Workspace {
     members: WorkspaceMember[];
 }
 
@@ -207,8 +207,8 @@ export default {
                 workspace_desc: '',
                 is_public: false,
                 created_by: 0,
-                created_at: new Date(),
-                updated_at: new Date(),
+                created_at: '',
+                updated_at: '',
                 members: []
             } as WorkspaceWithMembers,
             showMemberDialog: false,
@@ -335,7 +335,16 @@ export default {
             if (index > -1) {
                 this.myWorkspaces.splice(index, 1);
                 if (this.currentWorkspace.id === workspace.id) {
-                    this.currentWorkspace = {} as Workspace;
+                    this.currentWorkspace = {
+                        id: 0,
+                        workspace_name: '',
+                        workspace_desc: '',
+                        is_public: false,
+                        created_by: 0,
+                        created_at: '',
+                        updated_at: '',
+                        members: []
+                    } as WorkspaceWithMembers;
                 }
 
                 await workspaceApi.deleteWorkspace(workspace.id);
