@@ -1,12 +1,12 @@
 <template>
-    <div class="grid grid-cols-2 h-[48px] hover:cursor-pointer" @click="toggleUserDropdown"
-         style="grid-template-columns: 48px 1fr 48px; grid-template-rows: 1px 1fr; align-items: center;">
+    <div class="grid grid-cols-2 h-[48px] hover:cursor-pointer px-2" @click="toggleUserDropdown"
+         style="grid-template-columns: 40px 1fr 48px; grid-template-rows: 1px 1fr; align-items: center; ">
         <div class="h-[1px] bg-gray-200" style="grid-column: 1 / 4"/>
-        <div class="mx-4 rounded-full bg-blue-500 p-2 w-10 h-10"/>
-        <div class="mx-2">
+        <div class="rounded-full bg-blue-500 p-2 w-10 h-10"/>
+        <div class="">
             <template v-if="isLoggedIn">
                 <div class="text">{{ userInfo?.nickname }}</div>
-                <div class="text text-gray-500 max-w-[140px] truncate">{{ userInfo?.email }}</div>
+                <div class="text-xs text-gray-500 max-w-[140px] truncate">{{ userInfo?.email }}</div>
             </template>
             <template v-else>
                 <div class="text-sm">未登录</div>

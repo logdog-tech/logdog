@@ -3,9 +3,9 @@
         <!-- 添加规则按钮 -->
         <button v-if="!showEditor"
             class="w-full flex items-center justify-center px-4 py-2.5 rounded-lg
-                   bg-blue-50 dark:bg-blue-900/30 
+                   bg-blue-100 dark:bg-blue-900/30 
                    text-blue-600 dark:text-blue-400
-                   hover:bg-blue-100 dark:hover:bg-blue-900/50
+                   hover:bg-blue-200 dark:hover:bg-blue-900/50
                    transition duration-200 group"
             @click="handleAddRule"
         >
@@ -28,7 +28,7 @@
                        group"
                 :class="{
                     'bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50': !item._checked,
-                    'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-200 dark:border-emerald-800': item._checked
+                    'bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800': item._checked
                 }"
                 @click="toggleCheck(item)"
             >
@@ -37,7 +37,7 @@
                     class="absolute left-0 top-0 bottom-0 w-1.5
                            transition-all duration-200"
                     :class="{
-                        'bg-emerald-500 dark:bg-emerald-400': item._checked,
+                        'bg-blue-500 dark:bg-blue-400': item._checked,
                         'opacity-0 group-hover:opacity-100 bg-gray-300 dark:bg-gray-600': !item._checked
                     }"
                 ></div>
@@ -68,8 +68,8 @@
                         <span 
                             v-if="item.is_public && !item._is_editing"
                             class="px-2 py-0.5 text-xs rounded-full 
-                                   bg-green-50 dark:bg-green-900/30 
-                                   text-green-600 dark:text-green-400"
+                                   bg-blue-50 dark:bg-blue-900/30 
+                                   text-blue-600 dark:text-blue-400"
                         >
                             公开
                         </span>
@@ -283,6 +283,33 @@
                     <!-- 数预览 -->
                     <div v-if="type === 'function' && !item._is_editing" class="mt-2">
                         <pre class="text-xs bg-gray-50 dark:bg-gray-900 p-2 rounded overflow-x-auto">{{ item.custom_function }}</pre>
+                    </div>
+
+                    <!-- 在内容区域底部添加一个新的底栏 -->
+                    <div class="flex items-center justify-between mt-2" v-if="!item._is_editing">
+                        <!-- 左侧可以放描述等信息 -->
+                        <div class="text-sm text-gray-500 dark:text-gray-400">
+                            {{ getItemDescription(item) }}
+                        </div>
+                        
+                        <!-- 右侧放置开关控件 -->
+                        <button
+                            class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full 
+                                   transition-colors duration-200 ease-in-out"
+                            :class="[item._checked ? 'bg-blue-500 dark:bg-blue-400' : 'bg-gray-200 dark:bg-gray-600']"
+                            @click.stop="toggleCheck(item)"
+                            role="switch"
+                            :aria-checked="item._checked"
+                        >
+                            <span
+                                class="pointer-events-none relative inline-block h-4 w-4 transform rounded-full 
+                                       bg-white shadow ring-0 transition duration-200 ease-in-out"
+                                :class="[
+                                    item._checked ? 'translate-x-4' : 'translate-x-0.5',
+                                    'translate-y-0.5'
+                                ]"
+                            ></span>
+                        </button>
                     </div>
                 </div>
             </div>

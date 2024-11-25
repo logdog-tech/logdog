@@ -356,6 +356,9 @@ export default {
     width: 100%;
     display: flex;
 }
+:deep(span) {
+    display: inline-block !important;
+}
 
 .search-input {
     padding: 0 4px;
@@ -366,6 +369,7 @@ export default {
 .bottom-status-bar {
     height: 20px;
     background-color: #f0f0f0;
+    padding-left: 4px;
 }
 
 .virtual-scroller {

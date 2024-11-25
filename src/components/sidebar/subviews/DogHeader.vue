@@ -14,6 +14,7 @@
                 <i class="pi pi-users m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md" 
                    style="font-size: 16px;"></i>
             </div>
+            <div v-else></div>
             <div @click="clickMenuButton">
                 <i class="pi pi-bars m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md" 
                    style="font-size: 16px;"></i>
@@ -111,7 +112,7 @@
                                     <span class="px-2 py-1 rounded-full text-xs" 
                                           :class="{
                                               'bg-blue-100 text-blue-800': member.role === 'owner',
-                                              'bg-green-100 text-green-800': member.role === 'admin',
+                                              'bg-blue-100 text-blue-800': member.role === 'admin',
                                               'bg-gray-100 text-gray-800': member.role === 'member'
                                           }">
                                         {{ member.role }}
@@ -402,7 +403,7 @@ export default {
             // 预定义一组好看的颜色
             const colors = [
                 'bg-blue-100 text-blue-600',
-                'bg-green-100 text-green-600',
+                'bg-blue-100 text-blue-600',
                 'bg-yellow-100 text-yellow-600',
                 'bg-red-100 text-red-600',
                 'bg-purple-100 text-purple-600',

@@ -1,7 +1,7 @@
 <template>
     <div class="search-container">
         <InputGroup class="search-input">
-            <InputGroupAddon @click="toggleHistory">
+            <InputGroupAddon @click="toggleHistory" class="cursor-pointer hover:bg-gray-100" >
                 <i class="pi pi-clock"></i>
             </InputGroupAddon>
             <InputText 
@@ -429,7 +429,7 @@ export default {
     display: flex;
     justify-content: flex-start;
     align-items: center;
-    padding: 6px 12px;
+    padding: 0px 12px;
     border-bottom: 1px solid #eee;
 }
 
@@ -447,6 +447,8 @@ export default {
     overflow: hidden;
     text-overflow: ellipsis;
     min-width: 0;
+    cursor: pointer;
+    padding: 8px 0px;
 }
 
 .history-items:hover {
