@@ -117,6 +117,7 @@ export default {
             
             this.rules = await this.getWorkspaceRulesFromDatabase();
 
+            this.$emit('configChanged', this.rules);
         }
     },
     computed: {
