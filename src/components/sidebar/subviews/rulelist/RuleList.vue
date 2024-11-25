@@ -71,7 +71,7 @@
                                    bg-blue-50 dark:bg-blue-900/30 
                                    text-blue-600 dark:text-blue-400"
                         >
-                            公开
+                            只读
                         </span>
                     </div>
                     
@@ -131,14 +131,8 @@
                         </div>
                     </div>
 
-                    <!-- 描述或模式编辑 -->
-                    <div v-if="!item._is_editing">
-                        <p class="text-sm text-gray-500 dark:text-gray-400">
-                            {{ getItemDescription(item) }}2
-                        </p>
-                    </div>
-                    <div v-else class="space-y-2">
-
+                    <!-- 编辑表单 -->
+                    <div v-if="item._is_editing" class="space-y-2">
                         <!-- 匹配框 -->
                         <input 
                             v-if="type !== 'function'"
@@ -261,7 +255,7 @@
                             <!-- 操作按钮 -->
                             <div class="flex space-x-2">
                                 <button 
-                                    @click="cancelEdit"
+                                    @click.stop="cancelEdit"
                                     class="px-3 py-1 text-sm rounded-md
                                            text-gray-600 dark:text-gray-400
                                            hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -269,7 +263,7 @@
                                     取消
                                 </button>
                                 <button 
-                                    @click="handleSave"
+                                    @click.stop="handleSave"
                                     class="px-3 py-1 text-sm rounded-md
                                            bg-blue-500 hover:bg-blue-600
                                            text-white"
@@ -280,18 +274,12 @@
                         </div>
                     </div>
 
-                    <!-- 数预览 -->
-                    <div v-if="type === 'function' && !item._is_editing" class="mt-2">
-                        <pre class="text-xs bg-gray-50 dark:bg-gray-900 p-2 rounded overflow-x-auto">{{ item.custom_function }}</pre>
-                    </div>
 
                     <!-- 在内容区域底部添加一个新的底栏 -->
                     <div class="flex items-center justify-between mt-2" v-if="!item._is_editing">
-                        <!-- 左侧可以放描述等信息 -->
                         <div class="text-sm text-gray-500 dark:text-gray-400">
                             {{ getItemDescription(item) }}
                         </div>
-                        
                         <!-- 右侧放置开关控件 -->
                         <button
                             class="relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full 
@@ -413,35 +401,54 @@
                                 ></textarea>
                             </div>
 
-                            <!-- 颜色选择器 -->
+                            <!-- 颜色预览和选择器 -->
                             <div v-if="type === 'color'" class="space-y-2">
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                    颜色方案
-                                </label>
+                                <!-- 预览 -->
                                 <div class="flex items-center space-x-2">
-                                    <button
-                                        v-for="(scheme, index) in colorSchemes"
-                                        :key="index"
-                                        class="px-3 py-1.5 rounded-lg hover:ring-2 hover:ring-blue-500 dark:hover:ring-blue-400 transition-all"
-                                        :class="{'ring-2 ring-blue-500 dark:ring-blue-400': isSelectedScheme(scheme)}"
+                                    <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        预览
+                                    </label>
+                                    <div 
+                                        class="px-3 py-1.5 rounded text-sm"
                                         :style="{
-                                            color: scheme.fg,
-                                            backgroundColor: scheme.bg
+                                            color: expandedContent.fg_color,
+                                            backgroundColor: expandedContent.bg_color
                                         }"
-                                        @click="applyColorScheme(scheme)"
                                     >
                                         示例文本
-                                    </button>
-                                    <button
-                                        @click="regenerateColorSchemes"
-                                        class="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300
-                                               hover:bg-gray-100 dark:hover:bg-gray-700
-                                               transition-all duration-200"
-                                    >
-                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                        </svg>
-                                    </button>
+                                    </div>
+                                </div>
+
+                                <!-- 颜色选择器 -->
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
+                                        颜色方案
+                                    </label>
+                                    <div class="flex items-center space-x-2">
+                                        <button
+                                            v-for="(scheme, index) in colorSchemes"
+                                            :key="index"
+                                            class="px-3 py-1.5 rounded-lg hover:ring-2 hover:ring-blue-500 dark:hover:ring-blue-400 transition-all"
+                                            :class="{'ring-2 ring-blue-500 dark:ring-blue-400': isExpandedSelectedScheme(scheme)}"
+                                            :style="{
+                                                color: scheme.fg,
+                                                backgroundColor: scheme.bg
+                                            }"
+                                            @click="applyExpandedColorScheme(scheme)"
+                                        >
+                                            示例文本
+                                        </button>
+                                        <button
+                                            @click="regenerateColorSchemes"
+                                            class="p-2 rounded-lg text-gray-400 hover:text-gray-600 dark:hover:text-gray-300
+                                                   hover:bg-gray-100 dark:hover:bg-gray-700
+                                                   transition-all duration-200"
+                                        >
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -559,7 +566,7 @@ export default {
             localItems: [] as Rule[],
             editingItem: undefined as Rule | undefined,
             newTag: '',
-            colorSchemes: [] as ColorScheme[],
+            colorSchemes: generateColorSchemes(),
             showExpandedEditor: false,
             expandedContent: {} as Rule,
             titleInputRef: null as HTMLInputElement | null,
@@ -617,6 +624,10 @@ export default {
         startEdit(item: Rule) {
             this.editingItem = item;
             item._is_editing = true;
+            
+            if (this.type === 'color') {
+                this.regenerateColorSchemes();
+            }
             
             setTimeout(() => {
                 const input = document.querySelector('input[ref="titleInput"]') as HTMLInputElement;
@@ -730,15 +741,13 @@ export default {
             this.colorSchemes = generateColorSchemes();
         },
         isSelectedScheme(scheme: ColorScheme): boolean {
-            if (!this.editingItem!.fg_color || !this.editingItem!.bg_color) return false;
-            return this.editingItem!.fg_color === scheme.fg && 
-                   this.editingItem!.bg_color === scheme.bg;
+            if (!this.editingItem) return false;
+            return this.editingItem.fg_color === scheme.fg && 
+                   this.editingItem.bg_color === scheme.bg;
         },
         applyColorScheme(scheme: ColorScheme) {
-            if (!this.editingItem!.fg_color || !this.editingItem!.bg_color) {
-                this.editingItem!.fg_color = scheme.fg;
-                this.editingItem!.bg_color = scheme.bg;
-            }
+            this.editingItem!.fg_color = scheme.fg;
+            this.editingItem!.bg_color = scheme.bg;
         },
         toggleCheck(item: Rule) {
             if (item._is_editing) {
@@ -749,6 +758,9 @@ export default {
         },
         openExpandedEdit() {
             this.expandedContent = JSON.parse(JSON.stringify(this.editingItem));
+            if (this.type === 'color') {
+                this.regenerateColorSchemes();
+            }
             this.showExpandedEditor = true;
         },
         closeExpandedEdit() {
@@ -766,6 +778,15 @@ export default {
         },
         canEdit(item: Rule): boolean {
             return item.workspace_id === this.workspace.id;
+        },
+        isExpandedSelectedScheme(scheme: ColorScheme): boolean {
+            if (!this.expandedContent) return false;
+            return this.expandedContent.fg_color === scheme.fg && 
+                   this.expandedContent.bg_color === scheme.bg;
+        },
+        applyExpandedColorScheme(scheme: ColorScheme) {
+            this.expandedContent.fg_color = scheme.fg;
+            this.expandedContent.bg_color = scheme.bg;
         },
     }
 }

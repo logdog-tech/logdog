@@ -8,7 +8,7 @@
         <div class="">
             <template v-if="isLoggedIn">
                 <div class="text">{{ userInfo?.nickname }}</div>
-                <div class="text-xs text-gray-500 max-w-[140px] truncate">{{ userInfo?.email }}</div>
+                <div class="text-xs text-gray-500 max-w-[120px] truncate">{{ userInfo?.email }}</div>
             </template>
             <template v-else>
                 <div class="text-sm">未登录</div>
