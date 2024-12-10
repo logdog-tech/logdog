@@ -41,6 +41,7 @@ import DogHeader from "../components/sidebar/subviews/DogHeader.vue";
 import DogRulers from "../components/sidebar/subviews/DogRulers.vue";
 import type { Workspace, Rule } from '../modules/base';
 import { userApi } from "@/api";
+import { markRaw } from "vue";
 
 export default {
     name: 'HomeView',
@@ -92,9 +93,10 @@ export default {
             const lines = content.split("\n");
             console.timeLog("🕘加载文件", "s2.2, 完成split风格，总行数" + lines.length);
 
-            this.fileContent = lines.map((content: string, index: number) => {
+            // important 如果不声明为markRaw，会导致vue在搜索时出现严重的性能问题
+            this.fileContent = markRaw(lines.map((content: string, index: number) => {
                 return { filename: name, line: index + 1, content: content } as BaseLine;
-            });
+            }));
             this.fileName = name;
             console.timeLog("🕘加载文件", "s2.3, 完成映射为line+content的json结构");
             console.timeEnd("🕘加载文件");
