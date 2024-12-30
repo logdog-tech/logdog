@@ -140,7 +140,10 @@ export default {
         
         doSearch() {
             const currentTerm = this.localSearchTerm.trim();
-            if (!currentTerm) return;
+            if (!currentTerm) {
+                this.$emit('search', "");
+                return;
+            };
             
             this.updateHistory(currentTerm);
             this.hideHistory();

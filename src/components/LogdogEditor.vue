@@ -1,59 +1,74 @@
 <template>
     <Splitter class="logdog-editor" layout="vertical">
         <SplitterPanel style="width: 100%; height: 100%; min-height: 100px">
-            <VirtualScroller ref="logFullView" :items="logData" :itemSize="18"
-                class="log-full-view virtual-scroller border border-surface-200 dark:border-surface-700 rounded"
-                style="overflow-x: scroll; width: 100%" scrollHeight="10%" contenteditable="true">
-                <template v-slot:item="{ item, options }">
-                    <div class="log-item" :class="[
-                        'flex items-center hover:bg-red-50',
-                        { 'bg-red-100': item.line === selectedline },
-                        { 'bg-surface-100 dark:bg-surface-700': options.odd },
-                    ]">
+            <div class="h-full flex flex-col">
+                <HugeList ref="logFullView" class="border border-surface-200 dark:border-surface-700 rounded m-[4px]"
+                    :dataSource="dataSource">
+                    <template #default="{ item, index }">
+                        <div class="log-item" :class="[
+                            'flex items-center hover:bg-red-50',
+                            { 'bg-red-100': item.line === selectedline },
+                            { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
+                        ]">
 
-                        <div class="line-number" contenteditable="false" v-html="item.line" />
-                        <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection"/>
-                    </div>
-                </template>
-            </VirtualScroller>
+                            <div class="line-number" contenteditable="false" v-html="item.line" />
+                            <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
+                        </div>
+                    </template>
+                </HugeList>
+            </div>
         </SplitterPanel>
-        <SplitterPanel style="width: 100%; height: 100%; min-height: 100px">
-            <SearchBar :searchTerm="searchTerm" @search="searchLogs" @update:searchTerm="handleSearchInput" />
+        <SplitterPanel style="width: 100%; height: 100%; min-height: 100px; ">
+            <div class="h-full flex flex-col">
+                <SearchBar :searchTerm="searchTerm" @search="searchLogs" @update:searchTerm="handleSearchInput" />
 
-            <VirtualScroller ref="logSearchView" :items="searchItems" :itemSize="18"
-                class="log-search-view virtual-scroller border border-surface-200 rounded"
-                style="overflow-x: scroll; width: 650px" contenteditable="true">
-                <template v-slot:item="{ item, options }">
-                    <div class="log-item" @click="handleSearchItemClick(item)" :class="[
-                        'flex items-center hover:bg-red-50',
-                        { 'bg-red-100': item.line === selectedline },
-                        { 'bg-surface-100 dark:bg-surface-700': options.odd },
-                    ]" tabindex="0">
-                        <div class="line-number" contenteditable="false" v-html="item.line" />
-                        <div class="content" v-html="renderLogItem(item)" @mousedown="handleTextSelection" @mouseup="handleTextSelection" />
-                    </div>
-                </template>
-            </VirtualScroller>
-            <div class="bottom-status-bar">
-                共计 {{ logData.length }} 行，找到 {{ searchItems.length }} 行
+                <HugeList class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px]"
+                    style="flex-grow: 1; overflow: hidden;" ref="logSearchView" :dataSource="searchDataSource">
+                    <template #default="{ item, index }">
+                        <div class="log-item" @click="onClickSearchItem(item, index)" :class="[
+                            'flex items-center hover:bg-red-50',
+                            { 'bg-red-100': item.line === selectedline },
+                            { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
+                        ]">
+
+                            <div class="line-number" contenteditable="false" v-html="item.line" />
+                            <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
+                        </div>
+                    </template>
+                </HugeList>
+                <div class="bottom-status-bar">
+                    共计 {{ dataSource.getCount() }} 行，找到 {{ searchDataSource.getCount() }} 行
+                </div>
             </div>
         </SplitterPanel>
     </Splitter>
-    <ColorSelecter @picked="handleColorPicked" :show="showColorSelecter" :x="selectionRect?.right" :y="selectionRect?.top" />
+    <ColorSelecter @picked="handleColorPicked" :show="showColorSelecter" :x="selectionRect?.right"
+        :y="selectionRect?.top" />
 </template>
 
 <script lang="ts">
 import VirtualScroller from "primevue/virtualscroller";
+import HugeList from "./HugeList.vue";
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
 import ColorSelecter from "./ColorSelecter.vue";
 import SearchBar from "./SearchBar.vue";
 import type { BaseLine, Rule } from "../modules/base";
 import type { PropType } from "vue";
+import { dataAdapter, filterDataAdapter } from "@/utils/dataAdapter";
+import { defineComponent } from 'vue';
+import type { ComponentRefs } from './HugeList.vue';
 
 type StyleObject = Record<string, string>;
 
-export default {
+export interface LogViewRef {
+    scrollToTop: () => void;
+    flush: () => void;
+    scrollToIndex: (index: number) => void;
+    scroolToBottomIfNecessary: () => void;
+}
+
+export default defineComponent({
     name: "LogdogEditor",
     components: {
         VirtualScroller,
@@ -61,12 +76,9 @@ export default {
         SplitterPanel,
         ColorSelecter,
         SearchBar,
+        HugeList,
     },
     props: {
-        logData: {
-            type: Array as PropType<BaseLine[]>,
-            required: true,
-        },
         filters: {
             type: Array as PropType<Rule[]>,
             required: true,
@@ -85,10 +97,25 @@ export default {
     },
     data() {
         return {
-            searchItems: [] as BaseLine[],
+            dataSource: {
+                getCount() {
+                    return dataAdapter.getCount();
+                },
+                getItem(index: number) {
+                    return dataAdapter.getItem(index);
+                }
+            },
+            searchDataSource: {
+                getCount() {
+                    return filterDataAdapter.getCount();
+                },
+                getItem(index: number) {
+                    return filterDataAdapter.getItem(index);
+                }
+            },
             searchTerm: "",
-            logFullView: null,
-            logSearchView: null,
+            logFullView: HugeList,
+            logSearchView: HugeList,
             selectedline: -1 as number,
             selectionRect: null as DOMRect | null,
             showColorSelecter: false,
@@ -96,7 +123,61 @@ export default {
             sessionColors: {} as Record<string, StyleObject>,
         };
     },
+    mounted() {
+        const logFullView = this.$refs.logFullView as LogViewRef;
+        const logSearchView = this.$refs.logSearchView as LogViewRef;
+
+        const self = this;
+        dataAdapter.subscribe({
+            reset(): void {
+                logFullView.scrollToTop();
+                logFullView.flush();
+
+                self.searchTerm = "";
+                logSearchView.flush();
+            },
+            append(oldCount: number, newCount: number): void {
+                console.log("🔧subscribe append", oldCount, newCount);
+                logFullView.flush();
+                logFullView.scroolToBottomIfNecessary();
+            },
+            clear(): void {
+                logFullView.scrollToTop();
+                logFullView.flush();
+            }
+        });
+
+        filterDataAdapter.setFilterFunction((item: BaseLine) => {
+            if (!this.searchTerm) {
+                return false;
+            }
+
+            const regex = new RegExp(this.searchTerm, 'gi');
+            regex.lastIndex = 0; // 每次测试前重置lastIndex，否则匹配会有漏掉的行
+            return regex.test(item.content);
+        });
+
+        filterDataAdapter.subscribe({
+            reset(): void {
+                logSearchView.scrollToTop();
+                logSearchView.flush();
+            },
+            append(oldCount: number, newCount: number): void {
+                logSearchView.flush();
+                logSearchView.scroolToBottomIfNecessary();
+            },
+            clear(): void {
+                logSearchView.scrollToTop();
+                logSearchView.flush();
+            }
+        });
+    },
     methods: {
+        onClickSearchItem(item: BaseLine, index: number) {
+            this.selectedline = item.line;
+            const logFullView = this.$refs.logFullView as LogViewRef;
+            logFullView.scrollToIndex(item.line - 8);
+        },
         renderLogItem(line: BaseLine) {
             const functions = this.functions.filter((f) => f._checked);
 
@@ -177,7 +258,7 @@ export default {
         highlights(content: string): string {
             const useColors = [] as { pattern: string | RegExp; style: StyleObject }[]
 
-            const colorItems = this.colors.filter((c)=>c._checked)
+            const colorItems = this.colors.filter((c) => c._checked)
             for (const c of colorItems) {
                 useColors.push({ pattern: c.pattern, style: { color: c.fg_color, "background-color": c.bg_color } } as { pattern: string | RegExp; style: StyleObject });
             }
@@ -209,7 +290,7 @@ export default {
             useColors.forEach((c) => {
                 // 确保 pattern 不为 undefined
                 if (!c.pattern) return;
-                
+
                 const regex = new RegExp(c.pattern, 'gi');
                 let match;
                 while ((match = regex.exec(formatted)) !== null) {
@@ -302,30 +383,22 @@ export default {
             return output;
         },
         handleSearchInput(currentTerm: string) {
+            console.log("handleSearchInput")
             const terms = currentTerm.split("|");
             for (const ff of this.filters) {
                 ff._checked = ff.pattern ? terms.includes(ff.pattern) : false;
             }
-            console.log('====handleSearchInput', this.filters);
         },
         searchLogs(currentTerm: string) {
             this.searchTerm = currentTerm;
             console.log("Searching for:", this.searchTerm);
-            if (!this.searchTerm) {
-                this.searchItems = [];
-                return;
-            }
-            
-            const regex = new RegExp(this.searchTerm, 'gi');
-            const logSearchView = this.$refs.logSearchView as { scrollToIndex: (index: number) => void };
-            logSearchView.scrollToIndex(0);
-            this.searchItems = this.logData.filter((item) => {
-                regex.lastIndex = 0; // 每次测试前重置lastIndex，否则匹配会有漏掉的行
-                return regex.test(item.content);
-            });
+            filterDataAdapter.flush();
+            const logSearchView = this.$refs.logSearchView as LogViewRef;
+            logSearchView.scrollToTop();
+            logSearchView.flush();
         },
         handleSearchItemClick(item: { line: number; content: string }) {
-            const logFullView = this.$refs.logFullView as { scrollToIndex: (index: number) => void };
+            const logFullView = this.$refs.logFullView as LogViewRef;
             logFullView.scrollToIndex(item.line - 8);
             this.selectedline = item.line;
         },
@@ -335,20 +408,20 @@ export default {
                 let searchBoxPatterns = this.searchTerm.split("|");
                 if (!item._checked) {
                     if (searchBoxPatterns.includes(item.pattern!)) {
-                        searchBoxPatterns = searchBoxPatterns.filter((f)=>f !== item.pattern);
+                        searchBoxPatterns = searchBoxPatterns.filter((f) => f !== item.pattern);
                     }
                 } else {
                     if (!searchBoxPatterns.includes(item.pattern!)) {
-                    searchBoxPatterns.push(item.pattern!);
+                        searchBoxPatterns.push(item.pattern!);
                     }
                 }
-                this.searchTerm = searchBoxPatterns.filter((f)=>f).join("|");
+                this.searchTerm = searchBoxPatterns.filter((f) => f).join("|");
 
                 this.searchLogs(this.searchTerm);
             }
         },
     },
-};
+});
 </script>
 <style scoped>
 .logdog-editor {
@@ -356,6 +429,7 @@ export default {
     width: 100%;
     display: flex;
 }
+
 :deep(span) {
     display: inline-block !important;
 }

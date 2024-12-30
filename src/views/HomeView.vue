@@ -2,32 +2,29 @@
     <Splitter style="width: 100vw; height: 100vh">
         <SplitterPanel v-show="showSidebar" :size="20" style="max-width: 400px; min-width: 227px;">
             <div class="sidebar min-w-[227px] h-full" style="display: grid; grid-template-rows: 50px 200px 1fr 48px;">
-                <DogHeader 
-                    :currentUser="currentUser"
-                    v-model:isSelectedFileMode="isSelectedFileMode"
-                    @workspace-selected="handleWorkspaceSelected" 
-                    @toggle-sidebar="onToggleSidebar" />
+                <DogHeader :currentUser="currentUser" v-model:isSelectedFileMode="isSelectedFileMode"
+                    @workspace-selected="handleWorkspaceSelected" @toggle-sidebar="onToggleSidebar" />
                 <div class="overflow-y-auto h-[200px]">
-                    <DataProvider 
-                        :isSelectedFileMode="isSelectedFileMode"
-                        @fileLoaded="handleFileLoaded"
-                        @switchToListMode="isSelectedFileMode = false"
-                    />
+                    <DataProvider :isSelectedFileMode="isSelectedFileMode" @fileLoaded="handleFileLoaded"
+                        @switchToListMode="isSelectedFileMode = false" />
                 </div>
                 <div class="overflow-y-auto">
-                    <DogRulers :currentUser="currentUser" :workspace="workspace" @configChanged="handleConfigChanged" @userToggleItems="handleUserToggleItems" />
+                    <DogRulers :currentUser="currentUser" :workspace="workspace" @configChanged="handleConfigChanged"
+                        @userToggleItems="handleUserToggleItems" />
                 </div>
                 <LoginInfo @login-status-changed="handleLoginStatusChanged" />
             </div>
         </SplitterPanel>
-        
-        <SplitterPanel class="flex items-center justify-center" :size="80">
-            <LogdogEditor ref="logdogEditorRef" :logData="fileContent" :filters="filters" :colors="colors"
-                :functions="functions" />
+
+        <!-- <DataProvider @fileLoaded="handleFileLoaded" /> -->
+        <SplitterPanel class="flex items-center justify-center">
+            <LogdogEditor ref="logdogEditorRef" :filters="filters" :colors="colors" :functions="functions" />
         </SplitterPanel>
     </Splitter>
-    <div v-if="!showSidebar" class="fixed top-0 left-0" @click="onToggleSidebar"><i class="pi pi-bars m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md" style="font-size: 16px;"></i></div>
-</template>
+    <div v-if="!showSidebar" class="fixed top-0 left-0" @click="onToggleSidebar"><i
+            class="pi pi-bars m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md"
+            style="font-size: 16px;"></i></div>
+</template>¡
 
 <script lang="ts">
 import DataProvider from "../components/DataProvider.vue";
@@ -35,15 +32,14 @@ import LogdogEditor from "../components/LogdogEditor.vue";
 import LoginInfo from "../components/sidebar/subviews/LoginInfo.vue";
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
-import type { BaseLine, User } from "../modules/base";
+import type { User } from "../modules/base";
 
 import DogHeader from "../components/sidebar/subviews/DogHeader.vue";
 import DogRulers from "../components/sidebar/subviews/DogRulers.vue";
 import type { Workspace, Rule } from '../modules/base';
-import { userApi } from "@/api";
-import { markRaw } from "vue";
+import { defineComponent } from 'vue';
 
-export default {
+export default defineComponent({
     name: 'HomeView',
     components: {
         DataProvider,
@@ -56,7 +52,6 @@ export default {
     },
     data() {
         return {
-            fileContent: [] as BaseLine[],
             fileName: "",
             filters: [] as Rule[],
             colors: [] as Rule[],
@@ -85,22 +80,6 @@ export default {
             this.workspace = workspace;
         },
         handleFileLoaded(content: string, name: string) {
-            console.timeLog(
-                "🕘加载文件",
-                "s2.1, handleFileLoaded函数接收到任务，数据总长度" + content.length
-            );
-
-            const lines = content.split("\n");
-            console.timeLog("🕘加载文件", "s2.2, 完成split风格，总行数" + lines.length);
-
-            // important 如果不声明为markRaw，会导致vue在搜索时出现严重的性能问题
-            this.fileContent = markRaw(lines.map((content: string, index: number) => {
-                return { filename: name, line: index + 1, content: content } as BaseLine;
-            }));
-            this.fileName = name;
-            console.timeLog("🕘加载文件", "s2.3, 完成映射为line+content的json结构");
-            console.timeEnd("🕘加载文件");
-
             this.isSelectedFileMode = false;
         },
 
@@ -125,8 +104,6 @@ export default {
             this.showSidebar = !this.showSidebar;
         }
     }
-}
+})
 </script>
-<style scoped>
-</style>
-
+<style scoped></style>

@@ -10,50 +10,61 @@
   </span>
 </template>
 
-<script setup lang="ts">
-import { computed } from 'vue'
+<script lang="ts">
 
-const props = defineProps<{
-  text: string
-  highlight: string
-}>()
+export default {
+    name: "HighlightText",
+    props: {
+        text: {
+            type: String,
+            required: true
+        },
+        highlight: {
+            type: String,
+            required: true
+        }
+    },
+    computed: {
+        parts() {
+            if (!this.highlight) {
+                return [{ text: this.text, highlight: false }]
+            }
 
-const parts = computed(() => {
-  if (!props.highlight) {
-    return [{ text: props.text, highlight: false }]
-  }
+            try {
+                const regex = new RegExp(this.highlight, 'gi')
+                const matches = Array.from(this.text.matchAll(regex)) as RegExpMatchArray[]
+                const result: { text: string; highlight: boolean }[] = []
+                let lastIndex = 0
 
-  try {
-    const regex = new RegExp(props.highlight, 'gi')
-    const matches = Array.from(props.text.matchAll(regex))
-    const result = []
-    let lastIndex = 0
+                for (const match of matches) {
+                    if (!match.index) continue
 
-    for (const match of matches) {
-      if (match.index! > lastIndex) {
-        result.push({
-          text: props.text.slice(lastIndex, match.index),
-          highlight: false
-        })
-      }
-      result.push({
-        text: match[0],
-        highlight: true
-      })
-      lastIndex = match.index! + match[0].length
+                    if (match.index > lastIndex) {
+                        result.push({
+                            text: this.text.slice(lastIndex, match.index),
+                            highlight: false
+                        })
+                    }
+                    result.push({
+                        text: match[0],
+                        highlight: true
+                    })
+                    lastIndex = match.index + match[0].length
+                }
+
+                if (lastIndex < this.text.length) {
+                    result.push({
+                        text: this.text.slice(lastIndex),
+                        highlight: false
+                    })
+                }
+
+                return result
+            } catch {
+                // 如果正则表达式无效，返回原始文本
+                return [{ text: this.text, highlight: false }]
+            }
+        }
     }
-
-    if (lastIndex < props.text.length) {
-      result.push({
-        text: props.text.slice(lastIndex),
-        highlight: false
-      })
-    }
-
-    return result
-  } catch (e) {
-    // 如果正则表达式无效，返回原始文本
-    return [{ text: props.text, highlight: false }]
-  }
-})
-</script> 
+}
+</script>
