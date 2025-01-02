@@ -1,12 +1,22 @@
 import type { BaseLine } from "@/modules/base";
-import { BaseAdapter } from "../dataAdapter";
+
+export interface Observer {
+    onChange(): void;
+}
 
 export interface Provider {
-  setup(input: File[] | File | string): Promise<void>;
+    setup(input: File[] | File | string): Promise<void>;
 
-  getResources(): string[];
+    getResources(): string[];
 
-  getLines(uri: string): Promise<BaseLine[]>;
+    useResource(resource: string): Promise<void>;
+    useFilter(search: string): Promise<void>;
 
-  getAdapter(resource: string): Promise<BaseAdapter<BaseLine>>;
+    getTotalLineCount(): Promise<number>;
+    getFilteredLineCount(): Promise<number>;
+    getLine(index: number): Promise<BaseLine>;
+    getFilteredLine(index: number): Promise<BaseLine>;
+
+    subscribe(observer: Observer): void;
+    unsubscribe(observer: Observer): void;
 }

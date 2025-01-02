@@ -19,7 +19,6 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 
-// 将接口声明为导出类型
 export interface ComponentRefs {
     wrapper: HTMLElement;
     viewport: HTMLElement;
@@ -28,62 +27,56 @@ export interface ComponentRefs {
     contentArea: HTMLElement;
 }
 
+export interface DataSource<T> {
+    getCount(): Promise<number>;
+    getItem(index: number): Promise<T>;
+}
+
 export default defineComponent({
     name: "HugeList",
     props: {
         dataSource: {
-            type: Object,
+            type: Object as () => DataSource<any>,
             required: true,
         }
     },
     data() {
         return {
-            // 每项高度(px)
             ITEM_HEIGHT: 18,
-            // 滚轮滚动灵敏度
             SCROLL_SENSITIVITY: 1.5,
-            // 缓冲渲染的条目数
             BUFFER_SIZE: 5,
-            // 当前已滚动的像素数
             scrollOffsetPx: 0,
-            // 最大滚动像素数
             maxScrollPx: 0,
             width: 0,
             height: 0,
             resizeObserver: null as ResizeObserver | null,
-            lastScrollLeft: 0, // 新增：记录横向滚动位置
+            lastScrollLeft: 0,
             dataVersion: 0 as number,
-            refs: {} as ComponentRefs
+            refs: {} as ComponentRefs,
+            isUpdating: false,
+            updateQueue: 0,
+            lastUpdateTime: 0,
+            userLockedToBottom: true,
+            totalCount: 0,
+            items: [] as Array<{ index: number; item: any; top: number }>,
         };
     },
     computed: {
-
         visibleItems() {
-            const dataVersion = this.dataVersion;
-            const totalCount = this.dataSource.getCount();
-
-            // 如果没有数据，直接返回空数组
-            if (totalCount === 0) {
-                return [];
+            return this.items;
+        }
+    },
+    watch: {
+        scrollOffsetPx: {
+            handler() {
+                this.updateVisibleItems();
             }
-
-            const startIndex = Math.floor(this.scrollOffsetPx / this.ITEM_HEIGHT);
-            const visibleCount = Math.ceil(this.height / this.ITEM_HEIGHT) + this.BUFFER_SIZE;
-
-            // 确保 startIndex 不会小于0
-            const safeStartIndex = Math.max(0, startIndex);
-            // 确保 endIndex 不会超过数据总量
-            const safeEndIndex = Math.min(totalCount, safeStartIndex + visibleCount);
-
-            // 使用安全的索引范围创建数组
-            return Array.from({ length: safeEndIndex - safeStartIndex }, (_, i) => {
-                const index = safeStartIndex + i;
-                return {
-                    index,
-                    item: this.dataSource.getItem(index),
-                    top: index * this.ITEM_HEIGHT - this.scrollOffsetPx
-                };
-            });
+        },
+        dataSource: {
+            handler() {
+                this.initializeData();
+            },
+            immediate: true
         }
     },
     mounted() {
@@ -101,17 +94,12 @@ export default defineComponent({
             contentArea
         };
 
-        // 使用类型断言
         this.resizeObserver = new ResizeObserver((entries) => {
             for (const entry of entries) {
                 const { width, height } = entry.contentRect;
                 this.width = width;
                 this.height = height;
-
-                // 验证并修正滚动位置
                 this.validateScrollPosition();
-
-                // 更新滚动条
                 this.updateScrollbar();
             }
         });
@@ -120,31 +108,65 @@ export default defineComponent({
             this.resizeObserver.observe(wrapper);
         }
 
-        // 验证并修正初始滚动位置
         this.validateScrollPosition();
-
-        // 初始化滚动位置为0
         this.setScrollOffset(0);
-
-        // 加入滚轮事件
         this.refs.wrapper.addEventListener('wheel', this.handleWheel, { passive: false });
-
-        // 添加拖拽事件
         this.addDragEvents();
-
-        // 使 wrapper 可聚焦以接收键盘事件
         this.refs.wrapper.focus();
-
-        // 添加轨道点击事件
         this.refs.fakeScrollbar.addEventListener('click', this.handleTrackClick);
     },
     beforeDestroy() {
-        // 清理 ResizeObserver
         if (this.resizeObserver) {
             this.resizeObserver.disconnect();
         }
     },
     methods: {
+        isCloseToThirdFromBottom() {
+            const startIndex = Math.floor(this.scrollOffsetPx / this.ITEM_HEIGHT);
+            const visibleCount = Math.ceil(this.height / this.ITEM_HEIGHT) + this.BUFFER_SIZE;
+            const lastVisibleIndex = startIndex + visibleCount - 1;
+            return lastVisibleIndex >= (this.totalCount - 2);
+        },
+        async initializeData() {
+            try {
+                this.totalCount = await this.dataSource.getCount();
+                this.maxScrollPx = Math.max(0, this.totalCount * this.ITEM_HEIGHT - this.height);
+                this.updateVisibleItems();
+            } catch (error) {
+                console.error('Failed to initialize data:', error);
+            }
+        },
+        async updateVisibleItems() {
+            if (this.totalCount === 0) {
+                this.items = [];
+                return;
+            }
+
+            const startIndex = Math.floor(this.scrollOffsetPx / this.ITEM_HEIGHT);
+            const visibleCount = Math.ceil(this.height / this.ITEM_HEIGHT) + this.BUFFER_SIZE;
+
+            const safeStartIndex = Math.max(0, startIndex);
+            const safeEndIndex = Math.min(this.totalCount, safeStartIndex + visibleCount);
+
+            try {
+                const itemPromises = Array.from(
+                    { length: safeEndIndex - safeStartIndex },
+                    async (_, i) => {
+                        const index = safeStartIndex + i;
+                        const item = await this.dataSource.getItem(index);
+                        return {
+                            index,
+                            item,
+                            top: index * this.ITEM_HEIGHT - this.scrollOffsetPx
+                        };
+                    }
+                );
+
+                this.items = await Promise.all(itemPromises);
+            } catch (error) {
+                console.error('Failed to update visible items:', error);
+            }
+        },
         scrollToBottom() {
             this.setScrollOffset(this.maxScrollPx, true);
         },
@@ -152,20 +174,20 @@ export default defineComponent({
             this.setScrollOffset(0);
         },
         scrollToIndex(index: number) {
-            this.setScrollOffset(index * this.ITEM_HEIGHT);
+            const offset = index * this.ITEM_HEIGHT;
+            this.userLockedToBottom = false; // 添加这一行，取消底部跟随
+            this.setScrollOffset(offset);
         },
-        // 更新滚动条
         updateScrollbar() {
             const scrollbarTrack = this.refs.fakeScrollbar;
             const thumb = this.refs.fakeThumb;
             if (!scrollbarTrack || !thumb) return;
 
-            const totalHeight = this.dataSource.getCount() * this.ITEM_HEIGHT;
+            const totalHeight = this.totalCount * this.ITEM_HEIGHT;
 
-            // 如果内容高度小于或等于容器高度，隐藏滚动条
             if (totalHeight <= this.height) {
                 thumb.style.display = 'none';
-                this.scrollOffsetPx = 0; // 确保滚动位置为0
+                this.scrollOffsetPx = 0;
                 this.maxScrollPx = 0;
                 return;
             }
@@ -173,24 +195,17 @@ export default defineComponent({
             thumb.style.display = 'block';
             this.maxScrollPx = totalHeight - this.height;
 
-            // 计算滑块高度
             const trackHeight = scrollbarTrack.clientHeight;
-            const thumbHeight = Math.max(
-                20,
-                trackHeight * (this.height / totalHeight)
-            );
+            const thumbHeight = Math.max(40, trackHeight * (this.height / totalHeight));
             thumb.style.height = `${thumbHeight}px`;
 
-            // 计算滑块位置
             const scrollRatio = this.scrollOffsetPx / this.maxScrollPx;
             const thumbY = (trackHeight - thumbHeight) * scrollRatio;
             thumb.style.transform = `translateY(${thumbY}px)`;
         },
-        // 设置滚动偏移
         setScrollOffset(newOffsetPx: number, forceBottom = false) {
-            const totalHeight = this.dataSource.getCount() * this.ITEM_HEIGHT;
+            const totalHeight = this.totalCount * this.ITEM_HEIGHT;
 
-            // 如果内容高度小于容器高度，强制设置偏移量为0
             if (totalHeight <= this.height) {
                 this.scrollOffsetPx = 0;
                 this.maxScrollPx = 0;
@@ -198,30 +213,38 @@ export default defineComponent({
                 return;
             }
 
-            if (forceBottom) {
-                this.scrollOffsetPx = this.maxScrollPx;
-            } else {
-                this.scrollOffsetPx = Math.max(0, Math.min(newOffsetPx, this.maxScrollPx));
-            }
-            this.updateScrollbar();
+            requestAnimationFrame(() => {
+                if (forceBottom) {
+                    this.scrollOffsetPx = this.maxScrollPx;
+                    this.userLockedToBottom = true;
+                } else {
+                    this.scrollOffsetPx = Math.max(0, Math.min(newOffsetPx, this.maxScrollPx));
+                    if (this.isCloseToThirdFromBottom()) {
+                        this.userLockedToBottom = true;
+                    }
+                }
+                this.updateScrollbar();
+            });
         },
-        // 处理滚轮滚动
         handleWheel(e: WheelEvent) {
             e.preventDefault();
             const viewport = this.refs.viewport;
 
-            // 如果按住 Shift 键或者是横向滚动
             if (e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) {
                 const newScrollLeft = viewport.scrollLeft + (e.deltaX || e.deltaY);
                 viewport.scrollLeft = newScrollLeft;
                 return;
             }
 
-            // 纵向滚动
             const delta = e.deltaY * this.SCROLL_SENSITIVITY;
-            this.setScrollOffset(this.scrollOffsetPx + delta);
+            const newOffset = this.scrollOffsetPx + delta;
+
+            if (delta < 0) {
+                this.userLockedToBottom = false;
+            }
+
+            this.setScrollOffset(newOffset);
         },
-        // 新增：处理横向滚动同步
         handleHorizontalScroll(e: Event) {
             const target = e.target as HTMLElement;
             const scrollLeft = target.scrollLeft;
@@ -229,7 +252,6 @@ export default defineComponent({
                 this.lastScrollLeft = scrollLeft;
             }
         },
-        // 添加拖拽事件
         addDragEvents() {
             const thumb = this.refs.fakeThumb;
             if (!thumb) return;
@@ -243,6 +265,7 @@ export default defineComponent({
                 dragStartY = e.clientY;
                 dragStartOffset = this.scrollOffsetPx;
                 document.body.style.userSelect = 'none';
+                this.userLockedToBottom = false;
             });
 
             document.addEventListener('mousemove', (e: MouseEvent) => {
@@ -281,68 +304,130 @@ export default defineComponent({
         handleTrackClick(e: MouseEvent) {
             if (e.target === this.refs.fakeThumb) return;
 
+            this.userLockedToBottom = false;
+
             const track = this.refs.fakeScrollbar;
             const thumb = this.refs.fakeThumb;
             const trackRect = track.getBoundingClientRect();
             const thumbHeight = thumb.offsetHeight;
 
-            // 计算点击位置相对于轨道顶部的距离
             const clickOffset = e.clientY - trackRect.top;
-
-            // 计算点击位置在内容中对应的滚动位置
             const scrollRatio = clickOffset / (trackRect.height - thumbHeight);
             const newScrollOffset = scrollRatio * this.maxScrollPx;
 
-            // 直接跳转到对应位置
             this.setScrollOffset(newScrollOffset);
         },
-        // 添加新方法检查是否在底部
-        isAtBottom() {
-            // 允许有1px的误差
-            return this.scrollOffsetPx >= this.maxScrollPx - 1;
-        },
         validateScrollPosition() {
-            const totalHeight = this.dataSource.getCount() * this.ITEM_HEIGHT;
+            const totalHeight = this.totalCount * this.ITEM_HEIGHT;
             if (totalHeight <= this.height) {
-                // 如果内容高度小于容器高度，强制滚动位置为0
                 this.scrollOffsetPx = 0;
                 this.maxScrollPx = 0;
             } else {
-                // 更新最大滚动范围并确保当前滚动位置有效
                 this.maxScrollPx = totalHeight - this.height;
                 this.scrollOffsetPx = Math.min(this.scrollOffsetPx, this.maxScrollPx);
             }
         },
-
-        flush() {
-            // 验证并修正滚动位置
+        async flush() {
+            await this.initializeData();
             this.validateScrollPosition();
 
-            // 增加版本号
-            this.dataVersion++;
+            if (this.userLockedToBottom) {
+                this.scrollOffsetPx = this.maxScrollPx;
+            }
 
-            // 强制更新组件
+            this.dataVersion++;
             this.$forceUpdate();
 
-            // 等待DOM更新后更新滚动条
             this.$nextTick(() => {
                 this.updateScrollbar();
             });
         },
         scroolToBottomIfNecessary() {
-            const wasAtBottom = this.isAtBottom();
-            this.maxScrollPx = this.dataSource.getCount() * this.ITEM_HEIGHT - this.height;
-            if (wasAtBottom) {
-                this.setScrollOffset(0, true);
-            } else {
-                this.updateScrollbar();
+            this.debounceUpdate(() => {
+                this.validateScrollPosition();
+                if (this.userLockedToBottom) {
+                    requestAnimationFrame(() => {
+                        this.setScrollOffset(this.maxScrollPx, true);
+                        this.flush();
+                    });
+                } else {
+                    this.flush();
+                }
+            });
+        },
+        debounceUpdate(fn: Function) {
+            const now = Date.now();
+            if (now - this.lastUpdateTime < 16) {
+                this.updateQueue++;
+                if (!this.isUpdating) {
+                    this.isUpdating = true;
+                    requestAnimationFrame(() => {
+                        fn();
+                        this.isUpdating = false;
+                        this.updateQueue = 0;
+                        this.lastUpdateTime = Date.now();
+                    });
+                }
+                return;
             }
-            this.flush();
+
+            this.lastUpdateTime = now;
+            fn();
         }
     }
 });
 </script>
 
+<style scoped>
+.wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    outline: none;
+}
+
+.content-viewport {
+    width: 100%;
+    height: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.content-area {
+    position: relative;
+    min-height: 100%;
+}
+
+.item {
+    position: absolute;
+    width: 100%;
+    height: 18px;
+    left: 0;
+}
+
+.fake-scrollbar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 14px;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 7px;
+}
+
+.fake-thumb {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 7px;
+    cursor: pointer;
+}
+
+.fake-thumb:hover {
+    background: rgba(0, 0, 0, 0.5);
+}
+</style>
 <style scoped>
 .wrapper {
     position: relative;
@@ -392,7 +477,8 @@ export default defineComponent({
         top: 0;
         left: 3px;
         width: 10px;
-        height: 40px;
+        height: 80px;
+            min-height: 40px;
         background-color: rgba(0, 0, 0, 0.15);
         border-radius: 20px;
         cursor: pointer;

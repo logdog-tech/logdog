@@ -1,10 +1,10 @@
 <template>
     <Splitter style="width: 100vw; height: 100vh">
         <SplitterPanel v-show="showSidebar" :size="20" style="max-width: 400px; min-width: 227px;">
-            <div class="sidebar min-w-[227px] h-full" style="display: grid; grid-template-rows: 50px 200px 1fr 48px;">
+            <div class="sidebar min-w-[227px] h-full" style="display: grid; grid-template-rows: 50px 240px 1fr 48px;">
                 <DogHeader :currentUser="currentUser" v-model:isSelectedFileMode="isSelectedFileMode"
                     @workspace-selected="handleWorkspaceSelected" @toggle-sidebar="onToggleSidebar" />
-                <div class="overflow-y-auto h-[200px]">
+                <div class="overflow-y-auto h-[240px]">
                     <DataProvider :isSelectedFileMode="isSelectedFileMode" @fileLoaded="handleFileLoaded"
                         @switchToListMode="isSelectedFileMode = false" />
                 </div>

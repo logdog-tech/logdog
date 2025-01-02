@@ -1,1 +1,0 @@
-export function logdog_decompress(data: Uint8Array, type: "gzip" | "zstd"): Uint8Array;

@@ -1,6 +1,5 @@
 import type { BaseLine } from "@/modules/base";
-import { DataAdapter, type BaseAdapter } from "../dataAdapter";
-import type { Provider } from "./define";
+import type { Observer, Provider } from "./define";
 import { decompress } from "../extractors";
 
 // archiveHandler.js
@@ -16,15 +15,21 @@ interface LogFile {
     size: number;
 }
 
-
 const handler = createArchiveHandler('libarchive.js/dist/worker-bundle.js');
 
 export class BrowserProvider implements Provider {
     files: LogFile[] = [];
+    currentFile: LogFile | null = null;
+    currentFilter: string = '';
+    allLines: BaseLine[] = [];
+    filteredLines: BaseLine[] = [];
+    observers: Set<Observer> = new Set();
+
 
     async setup(input: File[] | File | string): Promise<void> {
         if (typeof input === 'string') {
-            throw new Error('Not implemented');
+            console.log("dbg ignore input:", input);
+            return;
         }
         const files = Array.isArray(input) ? input : [input];
         this.files = [];
@@ -44,6 +49,57 @@ export class BrowserProvider implements Provider {
                 this.files.push(logFile);
             }
         }
+    }
+
+
+    getResources(): string[] {
+        return this.files.map(file => file.path);
+    }
+
+    async useResource(uri: string): Promise<void> {
+        const logFile = this.files.find(file => file.path === uri);
+        if (!logFile) {
+            throw new Error(`File not found: ${uri}`);
+        }
+        console.log("dbg useResource", uri);
+
+       this.allLines =await this.getLines(uri); 
+        console.log("dbgallLines=", this.allLines);
+       for (const observer of this.observers) {
+            observer.onChange();
+       }
+    }
+
+    async useFilter(search: string): Promise<void> {
+       this.currentFilter = search
+
+       const regex = new RegExp(search, 'g'); // TODO 
+       this.filteredLines = this.allLines.filter(line => {
+        regex.lastIndex = 0;
+        return regex.test(line.content);
+       });
+    }
+
+    async getTotalLineCount(): Promise<number> {
+        return this.allLines.length;
+    }
+    async getFilteredLineCount(): Promise<number> {
+        return this.filteredLines.length;
+    }
+
+    async getLine(index: number): Promise<BaseLine> {
+        return this.allLines[index];
+    }
+
+    async getFilteredLine(index: number): Promise<BaseLine> {
+        return this.filteredLines[index];
+    }
+
+    subscribe(observer: Observer): void {
+        this.observers.add(observer);
+    }
+    unsubscribe(observer: Observer): void {
+        this.observers.delete(observer);
     }
 
     shouldIncludeFile(fileName: string): boolean {
@@ -94,17 +150,6 @@ export class BrowserProvider implements Provider {
         return finalLines;
     }
 
-    async getAdapter(uri: string): Promise<BaseAdapter<BaseLine>> {
-        const dataAdapter = new DataAdapter<BaseLine>();
-        const finalLines = await this.getLines(uri);
-        dataAdapter.append(finalLines);
-        return dataAdapter;
-    }
-
-    getResources(): string[] {
-        return this.files.map(file => file.path);
-    }
-
     convertPathToLogFile(path: string, rawFile: File): LogFile {
         const logFile = {} as LogFile;
         logFile.rawFile = rawFile;
@@ -113,3 +158,5 @@ export class BrowserProvider implements Provider {
         return logFile;
     }
 }
+
+export const browserProvider = new BrowserProvider();

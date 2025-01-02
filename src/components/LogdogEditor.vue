@@ -37,7 +37,7 @@
                     </template>
                 </HugeList>
                 <div class="bottom-status-bar">
-                    共计 {{ dataSource.getCount() }} 行，找到 {{ searchDataSource.getCount() }} 行
+                    共计 {{ totalCount }} 行，找到 {{ searchCount }} 行
                 </div>
             </div>
         </SplitterPanel>
@@ -55,9 +55,11 @@ import ColorSelecter from "./ColorSelecter.vue";
 import SearchBar from "./SearchBar.vue";
 import type { BaseLine, Rule } from "../modules/base";
 import type { PropType } from "vue";
-import { dataAdapter, filterDataAdapter } from "@/utils/dataAdapter";
 import { defineComponent } from 'vue';
 import type { ComponentRefs } from './HugeList.vue';
+import type { DataSource } from './HugeList.vue';
+import { proxyProvider } from "../utils/providers/ProxyProvider";
+import { type Observer } from "../utils/providers/define";
 
 type StyleObject = Record<string, string>;
 
@@ -98,21 +100,28 @@ export default defineComponent({
     data() {
         return {
             dataSource: {
-                getCount() {
-                    return dataAdapter.getCount();
+                async getCount() {
+                    const count = await proxyProvider.getTotalLineCount();
+                    console.log("dbg getCount", count);
+                    return count;
                 },
-                getItem(index: number) {
-                    return dataAdapter.getItem(index);
+                async getItem(index: number) {
+                    const tmp = await proxyProvider.getLine(index);
+                    console.log("dbg getItem", tmp);
+                    return tmp;
                 }
-            },
+            } as DataSource<BaseLine>,
             searchDataSource: {
-                getCount() {
-                    return filterDataAdapter.getCount();
+                async getCount() {
+                    console.log("dbg getCount");
+                    return await proxyProvider.getFilteredLineCount();
                 },
-                getItem(index: number) {
-                    return filterDataAdapter.getItem(index);
+                async getItem(index: number) {
+                    const tmp = await proxyProvider.getFilteredLine(index);
+                    console.log("getItem", tmp);
+                    return tmp;
                 }
-            },
+            } as DataSource<BaseLine>,
             searchTerm: "",
             logFullView: HugeList,
             logSearchView: HugeList,
@@ -121,56 +130,22 @@ export default defineComponent({
             showColorSelecter: false,
             selectedText: "",
             sessionColors: {} as Record<string, StyleObject>,
+            totalCount: 0,
+            searchCount: 0,
+            updateCountTimer: null as any,
         };
     },
     mounted() {
-        const logFullView = this.$refs.logFullView as LogViewRef;
-        const logSearchView = this.$refs.logSearchView as LogViewRef;
-
-        const self = this;
-        dataAdapter.subscribe({
-            reset(): void {
-                logFullView.scrollToTop();
+        const myObserver = {
+            onChange: () => {
+                console.log("dbg onChange");
+                const logFullView = this.$refs.logFullView as LogViewRef;
+                const logSearchView = this.$refs.logSearchView as LogViewRef;
                 logFullView.flush();
-
-                self.searchTerm = "";
-                logSearchView.flush();
-            },
-            append(oldCount: number, newCount: number): void {
-                console.log("🔧subscribe append", oldCount, newCount);
-                logFullView.flush();
-                logFullView.scroolToBottomIfNecessary();
-            },
-            clear(): void {
-                logFullView.scrollToTop();
-                logFullView.flush();
-            }
-        });
-
-        filterDataAdapter.setFilterFunction((item: BaseLine) => {
-            if (!this.searchTerm) {
-                return false;
-            }
-
-            const regex = new RegExp(this.searchTerm, 'gi');
-            regex.lastIndex = 0; // 每次测试前重置lastIndex，否则匹配会有漏掉的行
-            return regex.test(item.content);
-        });
-
-        filterDataAdapter.subscribe({
-            reset(): void {
-                logSearchView.scrollToTop();
-                logSearchView.flush();
-            },
-            append(oldCount: number, newCount: number): void {
-                logSearchView.flush();
-                logSearchView.scroolToBottomIfNecessary();
-            },
-            clear(): void {
-                logSearchView.scrollToTop();
                 logSearchView.flush();
             }
-        });
+        } as Observer;
+        proxyProvider.subscribe(myObserver);
     },
     methods: {
         onClickSearchItem(item: BaseLine, index: number) {
@@ -389,10 +364,11 @@ export default defineComponent({
                 ff._checked = ff.pattern ? terms.includes(ff.pattern) : false;
             }
         },
-        searchLogs(currentTerm: string) {
+        async searchLogs(currentTerm: string) {
             this.searchTerm = currentTerm;
             console.log("Searching for:", this.searchTerm);
-            filterDataAdapter.flush();
+
+            await proxyProvider.useFilter(this.searchTerm);
             const logSearchView = this.$refs.logSearchView as LogViewRef;
             logSearchView.scrollToTop();
             logSearchView.flush();
@@ -402,7 +378,7 @@ export default defineComponent({
             logFullView.scrollToIndex(item.line - 8);
             this.selectedline = item.line;
         },
-        handleUserToggleItems(type: string, item: Rule) {
+        async handleUserToggleItems(type: string, item: Rule) {
             console.log('====handleUserToggleItems', type, item.pattern, item._checked, item);
             if (type === 'filter') { // 过滤器
                 let searchBoxPatterns = this.searchTerm.split("|");
@@ -417,9 +393,9 @@ export default defineComponent({
                 }
                 this.searchTerm = searchBoxPatterns.filter((f) => f).join("|");
 
-                this.searchLogs(this.searchTerm);
+                await this.searchLogs(this.searchTerm);
             }
-        },
+        }
     },
 });
 </script>
