@@ -232,19 +232,34 @@ export default defineComponent({
         },
         async processEntry(entry: FileSystemEntry, processedFiles: File[]): Promise<void> {
             if (entry.isFile) {
+                // 如果是文件，将其转换为 File 对象并添加到 processedFiles 中
                 const file = await new Promise<File>((resolve, reject) => {
                     (entry as FileSystemFileEntry).file(resolve, reject);
                 });
                 processedFiles.push(file);
             } else if (entry.isDirectory) {
+                // 如果是目录，创建目录读取器
                 const dirReader = (entry as FileSystemDirectoryEntry).createReader();
-                const entries = await new Promise<FileSystemEntry[]>((resolve, reject) => {
-                    dirReader.readEntries(resolve, reject);
-                });
 
-                for (const innerEntry of entries) {
-                    await this.processEntry(innerEntry, processedFiles);
-                }
+                // 定义一个递归函数来读取所有条目
+                const readAllEntries = async (): Promise<void> => {
+                    const entries = await new Promise<FileSystemEntry[]>((resolve, reject) => {
+                        dirReader.readEntries(resolve, reject);
+                    });
+
+                    // 处理当前批次的条目
+                    for (const innerEntry of entries) {
+                        await this.processEntry(innerEntry, processedFiles);
+                    }
+
+                    // 如果还有更多条目，继续读取
+                    if (entries.length > 0) {
+                        await readAllEntries();
+                    }
+                };
+
+                // 开始读取目录中的所有条目
+                await readAllEntries();
             }
         },
         async handleDrop(event: DragEvent) {
