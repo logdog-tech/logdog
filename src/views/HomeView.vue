@@ -1,6 +1,6 @@
 <template>
     <Splitter style="width: 100vw; height: 100vh">
-        <SplitterPanel v-show="showSidebar" :size="20" style="max-width: 400px; min-width: 227px;">
+        <SplitterPanel v-show="showSidebar" :size="20" style="max-width: 800px; min-width: 227px;">
             <div class="sidebar min-w-[227px] h-full" style="display: grid; grid-template-rows: 50px 240px 1fr 48px;">
                 <DogHeader :currentUser="currentUser" v-model:isSelectedFileMode="isSelectedFileMode"
                     @workspace-selected="handleWorkspaceSelected" @toggle-sidebar="onToggleSidebar" />
@@ -17,7 +17,7 @@
         </SplitterPanel>
 
         <!-- <DataProvider @fileLoaded="handleFileLoaded" /> -->
-        <SplitterPanel class="flex items-center justify-center">
+        <SplitterPanel class="flex items-center justify-center" size="80">
             <LogdogEditor ref="logdogEditorRef" :filters="filters" :colors="colors" :functions="functions" />
         </SplitterPanel>
     </Splitter>
