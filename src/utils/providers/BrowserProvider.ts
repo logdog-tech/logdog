@@ -139,7 +139,7 @@ export class BrowserProvider implements Provider {
         }
 
         const text = new TextDecoder('utf-8').decode(binaryData); // TODO 注意编码
-        const rawLines = text.split('\n');
+        const rawLines = text.split(/\r?\n/);
         const finalLines = rawLines.map((line, index) => {
             return {
                 filename: logFile.path,
