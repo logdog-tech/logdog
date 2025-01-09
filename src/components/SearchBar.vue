@@ -124,6 +124,10 @@ export default {
             return this.history.some(item => !item.isFavorite);
         },
     },
+    mounted() {
+        // 重要!!! initCopyHandler 函数用于修复”双击复制文本时自动添加多余空格的问题，详见：https://github.com/jasper9w/logdog/issues/21
+        this.initCopyHandler(); 
+    },
     
     methods: {
         toggleHistory() {
@@ -380,6 +384,28 @@ export default {
             } catch (error) {
                 console.error('Failed to clear history:', error);
             }
+        },
+        
+        /**
+         * 初始化复制事件处理器
+         * 修复双击复制文本时自动添加多余空格的问题
+         * Initialize copy event handler to fix the issue where double-clicking to copy text 
+         * and pasting into an input field adds extra spaces
+         */
+        initCopyHandler() {
+            document.addEventListener('copy', (e) => {
+                // 获取用户选中的内容
+                // Get the user's selected text content
+                const selection = window.getSelection()?.toString() || '';
+                
+                // 阻止默认的复制行为，以便我们可以自定义复制的内容
+                // Prevent the default copy behavior so we can customize the copied content
+                e.preventDefault();
+                
+                // 设置剪贴板的内容为原始选中文本，避免添加额外空格
+                // Set the clipboard content to the original selected text without extra spaces
+                e.clipboardData?.setData('text/plain', selection);
+            });
         }
     },
     
