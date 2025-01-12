@@ -1,4 +1,4 @@
-import type { BaseLine } from "@/modules/base";
+import type { BaseLine, LogFile } from "@/modules/base";
 import { type Provider, type Observer } from "./define";
 
 export class RemoteProvider implements Provider {
@@ -70,14 +70,20 @@ export class RemoteProvider implements Provider {
         this.observers.forEach(observer => observer.onChange());
     }
 
-    getResources(): string[] {
+    getResources(): LogFile[] {
         return [
-            'ws://127.0.0.1:8005/ws'
+            {
+                rawFile: new File([], ""),
+                path: "ws://127.0.0.1:8005/ws",
+                size: 0,
+                status: "extracted",
+                isLogFile: false
+            }
         ];
     }
-    async useResource(resource: string): Promise<void> {
+    async useResource(resource: LogFile): Promise<void> {
         console.log("useResource", resource);
-        await this.setup(resource);
+        // await this.setup(resource);
         this.publishOnChange();
     }
     async useFilter(search: string): Promise<void> {

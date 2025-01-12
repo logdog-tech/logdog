@@ -61,3 +61,24 @@ export interface ColorScheme {
     return schemes;
   }
   
+
+/**
+ * 计算一个字符串的hash颜色
+ * @param str 
+ * @returns 
+ */
+export function hashColor(str: string): string {
+    // 使用一个简单的hash算法
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    }
+
+    // 生成HSL颜色，使用hash来确定色相
+    // 使用固定的饱和度和亮度以确保颜色鲜艳且易于辨识
+    const hue = Math.abs(hash % 360);  // 0-360的色相角度
+    const saturation = 70;  // 固定70%的饱和度
+    const lightness = 60;   // 固定60%的亮度
+
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}

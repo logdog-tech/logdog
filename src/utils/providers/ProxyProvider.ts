@@ -1,7 +1,7 @@
 import { type Provider, type Observer } from "./define";
 import { browserProvider } from "./BrowserProvider";
 import { remoteProvider } from "./RemoteProvider";
-import type { BaseLine } from "@/modules/base";
+import type { BaseLine, LogFile } from "@/modules/base";
 
 export interface NamedPrivider {
     name: string,
@@ -52,9 +52,9 @@ class ProxyProvider implements Provider {
         console.log(`dbg Switched to provider2: ${name}`, this.currentProvider, this.observers);
     }
 
-    async setup(input: File[] | File | string): Promise<void> {
+    async setup(input: File[] | File | string, reset = false): Promise<void> {
         console.log("setup input:", input);
-        await this.currentProvider.provider.setup(input);
+        await this.currentProvider.provider.setup(input, reset);
 
 
         for (const observer of this.observers) {
@@ -62,14 +62,12 @@ class ProxyProvider implements Provider {
         }
     }
 
-    getResources(): string[] {
+    getResources(): LogFile[] {
         const tmp = this.currentProvider.provider.getResources();
-
-        console.log("dbg getResources", tmp);
         return tmp;
     }
 
-    async useResource(resource: string): Promise<void> {
+    async useResource(resource: LogFile): Promise<void> {
         console.log("dbg eResource input:", resource, this.observers);
         await this.currentProvider.provider.useResource(resource);
         for (const observer of this.observers) {

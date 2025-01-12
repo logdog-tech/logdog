@@ -5,7 +5,7 @@ export class ArchiveHandlerImpl {
     constructor(workerUrl = '/worker-bundle.js') {
       this.initialized = false;
       this.workerUrl = workerUrl;
-      this.debug = false;
+      this.debug = true;
       this.activeArchives = new Set(); // 跟踪打开的归档
     }
 
@@ -158,6 +158,90 @@ export class ArchiveHandlerImpl {
       }
     }
   
+    /**
+     * 处理压缩文件并为每个文件调用回调函数
+     * @param {File} file - 要处理的压缩文件
+     * @param {Function} isIgnoreFileFunction - 判断是否忽略文件的函数
+     * @param {Function} callback - 回调函数，接收文件名和二进制内容(ArrayBuffer)作为参数
+     * @param {string} [prefix=''] - 文件路径前缀，用于嵌套的归档文件
+     * @returns {Promise<void>}
+     */
+    async processArchiveWithCallbacks(file, isIgnoreFileFunction, callback, prefix = '') {
+        console.log('processArchiveWithCallbacks', file, isIgnoreFileFunction, callback, prefix);
+      await this.ensureInit();
+      console.log('ensureInit');
+      let archive = null;
+
+      console.log('processArchiveWithCallbacks', file, isIgnoreFileFunction, callback, prefix);
+      try {
+        this.log('Opening archive:', file);
+        archive = await Archive.open(file);
+        this.activeArchives.add(archive);
+        this.log('Archive opened:', file.name);
+        
+        const files = await archive.getFilesArray();
+        this.log('Files in archive:', files);
+
+        for (const entry of files) {
+            const fullPath = `${prefix}!${entry.file._path}`;
+            callback.onDiscoverFile(fullPath);
+        }
+        
+        for (const entry of files) {
+            const fullPath = `${prefix}!${entry.file._path}`;
+          this.log('Processing file:', fullPath);
+
+          // 跳过系统文件和目录
+          if (this.isSystemFile(fullPath) || isIgnoreFileFunction(fullPath)) {
+            this.log('Skipping file:', fullPath);
+            continue;
+          }
+
+          // 跳过目录
+          if (fullPath.endsWith('/')) {
+            this.log('Skipping directory:', fullPath);
+            continue;
+          }
+
+          try {
+            // 检查是否是嵌套的归档文件
+            if (this.isArchiveFile(fullPath)) {
+
+              const extracted = await entry.file.extract();
+              console.log('Found nested archive:', fullPath, extracted);
+              // 直接使用entry.file作为新的归档文件
+              await this.processArchiveWithCallbacks(
+                extracted,
+                isIgnoreFileFunction,
+                callback,
+                fullPath
+              );
+            } else {
+              // 直接从entry.file获取ArrayBuffer
+              this.log('Extracting file:', fullPath);
+              await callback.onBeforeExtractFile(fullPath);
+
+              const extracted = await entry.file.extract();
+              const buffer = await extracted.arrayBuffer();
+              this.log('Invoking callback for file:', fullPath);
+              await callback.onExtractFile(fullPath, buffer);
+            }
+          } catch (error) {
+            this.log(`Error processing file ${fullPath}:`, error);
+          }
+        }
+      } catch (error) {
+        this.log('Error processing archive:', error);
+        throw error;
+      } finally {
+        if (archive) {
+          this.log('Closing archive:', file.name);
+          await this.closeArchive(archive);
+          this.log('Archive closed:', file.name);
+        }
+      }
+    }
+
     /**
      * 提取指定路径的文件内容
      */

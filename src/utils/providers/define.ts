@@ -1,15 +1,15 @@
-import type { BaseLine } from "@/modules/base";
+import type { BaseLine, LogFile } from "@/modules/base";
 
 export interface Observer {
     onChange(): void;
 }
 
 export interface Provider {
-    setup(input: File[] | File | string): Promise<void>;
+    setup(input: File[] | File | string, reset?: boolean): Promise<void>;
 
-    getResources(): string[];
+    getResources(): LogFile[];
 
-    useResource(resource: string): Promise<void>;
+    useResource(resource: LogFile): Promise<void>;
     useFilter(search: string): Promise<void>;
 
     getTotalLineCount(): Promise<number>;

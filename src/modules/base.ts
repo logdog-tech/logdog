@@ -2,6 +2,34 @@ export interface BaseLine {
     filename: string;
     line: number;
     content: string;
+
+    time?: string;
+    pid?: number;
+    tid?: number;
+    level?: string;
+    body?: string;
+    originalIndex: number;
+
+    getContent(): string;
+
+    setContent(content: string): void;
+}
+
+export interface LogFile {
+    // 原始文件，即用户从浏览器选择的文件句柄
+    rawFile: File;
+
+    // 文件路径，如果是压缩文件，这个路径是一个组合格式，"/a/b/c@/d/e/f.txt"
+    path: string;
+
+    size: number;
+
+    status: "pending" | "extracting" | "extracted";
+
+    isLogFile: boolean;
+
+    // 日志行数
+    lineCount?: number;
 }
 
 export interface User {
@@ -60,4 +88,3 @@ export interface Favorite {
     rule_id: number;
     created_at: string;
 }
-

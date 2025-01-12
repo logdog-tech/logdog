@@ -60,6 +60,8 @@ import type { ComponentRefs } from './HugeList.vue';
 import type { DataSource } from './HugeList.vue';
 import { proxyProvider } from "../utils/providers/ProxyProvider";
 import { type Observer } from "../utils/providers/define";
+import { hashColor } from "../utils/colors";
+import { highlightIt } from "../utils/highlighter";
 
 type StyleObject = Record<string, string>;
 
@@ -102,23 +104,19 @@ export default defineComponent({
             dataSource: {
                 async getCount() {
                     const count = await proxyProvider.getTotalLineCount();
-                    console.log("dbg getCount", count);
                     return count;
                 },
                 async getItem(index: number) {
                     const tmp = await proxyProvider.getLine(index);
-                    console.log("dbg getItem", tmp);
                     return tmp;
                 }
             } as DataSource<BaseLine>,
             searchDataSource: {
                 async getCount() {
-                    console.log("dbg getCount");
                     return await proxyProvider.getFilteredLineCount();
                 },
                 async getItem(index: number) {
                     const tmp = await proxyProvider.getFilteredLine(index);
-                    console.log("getItem", tmp);
                     return tmp;
                 }
             } as DataSource<BaseLine>,
@@ -138,10 +136,13 @@ export default defineComponent({
     },
     mounted() {
         const myObserver = {
-            onChange: () => {
+            onChange: async () => {
                 console.log("dbg onChange");
                 const logFullView = this.$refs.logFullView as LogViewRef;
                 const logSearchView = this.$refs.logSearchView as LogViewRef;
+
+                this.totalCount = await proxyProvider.getTotalLineCount();
+                this.searchCount = await proxyProvider.getFilteredLineCount();
                 logFullView.flush();
                 logSearchView.flush();
             }
@@ -158,9 +159,9 @@ export default defineComponent({
         renderLogItem(line: BaseLine) {
             const functions = this.functions.filter((f) => f._checked);
 
-            let result = line.content;
+            let result = line.getContent();
 
-            // s1, 执行所有预处理任务
+            // s1, 执行所有预处理任务, TODO 将该方法向provider前移
             for (const func of functions) {
                 try {
                     const mem_func = new Function('return ' + func.custom_function)()
@@ -171,7 +172,12 @@ export default defineComponent({
             }
 
             // s2, 执行所有高亮任务
-            result = this.highlights(result);
+            const keywords = [
+                "" + line.pid + " ",
+                " " + line.tid + " ",
+                " " + line.level + " ",
+            ];
+            result = this.highlights(line);
 
             return result;
         },
@@ -232,12 +238,16 @@ export default defineComponent({
          * @param {string} content - 需要处理的原始文本内容
          * @returns {string} - 添加了高亮样式的HTML字符串
          */
-        highlights(content: string): string {
+        highlights(line: BaseLine, autoHashHightlightByKeyworkds: string[] = []): string {
             const useColors = [] as { pattern: string | RegExp; style: StyleObject }[]
 
             const colorItems = this.colors.filter((c) => c._checked)
             for (const c of colorItems) {
                 useColors.push({ pattern: c.pattern, style: { color: c.fg_color, "background-color": c.bg_color } } as { pattern: string | RegExp; style: StyleObject });
+            }
+
+            for (const keyword of autoHashHightlightByKeyworkds) {
+                useColors.push({ pattern: keyword, style: { color: hashColor(keyword) } } as { pattern: string | RegExp; style: StyleObject });
             }
             // TODO 添加临时高亮规则
             useColors.push(...Object.entries(this.sessionColors).map(([text, style]) => ({ pattern: text, style: style })));
@@ -252,112 +262,7 @@ export default defineComponent({
                 useColors.push({ pattern: regex, style: { color: "red" } });
             }
 
-            // 将 <br> 标签替换为空格
-            const formatted = content.replace(/<br>/g, " ");
-
-            type Event = {
-                position: number;
-                type: 'start' | 'end';
-                style: StyleObject;
-            };
-
-            const events: Event[] = [];
-
-            // 收集所有匹配事件（开始和结束位置）及其关联的样式
-            useColors.forEach((c) => {
-                // 确保 pattern 不为 undefined
-                if (!c.pattern) return;
-
-                const regex = new RegExp(c.pattern, 'gi');
-                let match;
-                while ((match = regex.exec(formatted)) !== null) {
-                    const start = match.index;
-                    const end = regex.lastIndex;
-                    events.push({ position: start, type: 'start', style: c.style });
-                    events.push({ position: end, type: 'end', style: c.style });
-
-                    // 避免零长度匹配导致的无限循环
-                    if (regex.lastIndex === match.index) {
-                        regex.lastIndex++;
-                    }
-                }
-            });
-
-            // 按位置排序事件；对于相同位置，结束事件排在开始事件之前
-            events.sort((a, b) => {
-                if (a.position !== b.position) {
-                    return a.position - b.position;
-                } else if (a.type === b.type) {
-                    return 0;
-                } else if (a.type === 'end') {
-                    return -1;
-                } else {
-                    return 1;
-                }
-            });
-
-            let position = 0;
-            const activeStyles: StyleObject[] = [];
-            let output = '';
-
-            // 辅助函数
-            const escapeHtml = (text: string): string => {
-                return text.replace(/&/g, '&amp;')
-                    .replace(/</g, '&lt;')
-                    .replace(/>/g, '&gt;')
-                    .replace(/"/g, '&quot;')
-                    .replace(/'/g, '&#39;');
-            };
-
-            const styleString = (styles: StyleObject[]): string => {
-                const combinedStyle = {};
-                styles.forEach((s) => {
-                    Object.assign(combinedStyle, s);
-                });
-                return Object.entries(combinedStyle)
-                    .map(([key, value]) => `${key}: ${value};`)
-                    .join(' ');
-            };
-
-            // 处理事件以构建最终的格式化字符串
-            events.forEach((event) => {
-                if (position < event.position) {
-                    const textSegment = formatted.slice(position, event.position);
-                    const escapedText = escapeHtml(textSegment);
-
-                    if (activeStyles.length > 0) {
-                        const styleStr = styleString(activeStyles);
-                        output += `<span style="${styleStr}">${escapedText}</span>`;
-                    } else {
-                        output += escapedText;
-                    }
-                    position = event.position;
-                }
-
-                if (event.type === 'start') {
-                    activeStyles.push(event.style);
-                } else if (event.type === 'end') {
-                    const index = activeStyles.indexOf(event.style);
-                    if (index > -1) {
-                        activeStyles.splice(index, 1);
-                    }
-                }
-            });
-
-            // 添加剩余的文本
-            if (position < formatted.length) {
-                const textSegment = formatted.slice(position);
-                const escapedText = escapeHtml(textSegment);
-
-                if (activeStyles.length > 0) {
-                    const styleStr = styleString(activeStyles);
-                    output += `<span style="${styleStr}">${escapedText}</span>`;
-                } else {
-                    output += escapedText;
-                }
-            }
-
-            return output;
+            return highlightIt(line.getContent() + " ", useColors);
         },
         handleSearchInput(currentTerm: string) {
             console.log("handleSearchInput")

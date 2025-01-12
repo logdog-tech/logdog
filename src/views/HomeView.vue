@@ -17,7 +17,7 @@
         </SplitterPanel>
 
         <!-- <DataProvider @fileLoaded="handleFileLoaded" /> -->
-        <SplitterPanel class="flex items-center justify-center" size="80">
+        <SplitterPanel class="flex items-center justify-center" :size="80">
             <LogdogEditor ref="logdogEditorRef" :filters="filters" :colors="colors" :functions="functions" />
         </SplitterPanel>
     </Splitter>
@@ -38,6 +38,7 @@ import DogHeader from "../components/sidebar/subviews/DogHeader.vue";
 import DogRulers from "../components/sidebar/subviews/DogRulers.vue";
 import type { Workspace, Rule } from '../modules/base';
 import { defineComponent } from 'vue';
+import { init } from "../utils/dataFormater";
 
 export default defineComponent({
     name: 'HomeView',
@@ -64,6 +65,7 @@ export default defineComponent({
         }
     },
     async mounted() {
+        await init();
     },
     methods: {
         createLocalTmpUser() {
@@ -84,7 +86,6 @@ export default defineComponent({
         },
 
         handleConfigChanged(config: Rule[]) {
-            console.log('handleConfigChanged', config);
             this.filters = config.filter(rule => rule.rule_type === 'filter');
             this.colors = config.filter(rule => rule.rule_type === 'color');
             this.functions = config.filter(rule => rule.rule_type === 'function');

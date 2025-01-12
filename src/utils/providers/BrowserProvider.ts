@@ -1,19 +1,41 @@
-import type { BaseLine } from "@/modules/base";
+import type { BaseLine, LogFile } from "@/modules/base";
 import type { Observer, Provider } from "./define";
 import { decompress } from "../extractors";
+import { AutoParser } from "../parsers/AutoParser";
 
 // archiveHandler.js
-import { createArchiveHandler } from './archiveHandler';
+import { createArchiveHandler, type ArchiveCallback } from './archiveHandler';
+import { isLogFile } from "../binaryCheck";
+import { logMemoryCompressor } from '../memory';
 
-interface LogFile {
-    // 原始文件，即用户从浏览器选择的文件句柄
-    rawFile: File;
-
-    // 文件路径，如果是压缩文件，这个路径是一个组合格式，"/a/b/c@/d/e/f.txt"
-    path: string;
-
-    size: number;
+interface ExtendedFile extends File {
+    path?: string;
 }
+
+class CompressLine implements BaseLine {
+    [key: string]: unknown;
+    filename: string = "";
+    line: number = 0;
+    content: string = "";
+    time?: string | undefined;
+    pid?: number | undefined;
+    tid?: number | undefined;
+    level?: string | undefined;
+    body?: string | undefined;
+    originalIndex: number = 0;
+    contentKey: unknown | null = null;
+
+    async setContent(content: string) {
+        this.contentKey = await logMemoryCompressor.compress(content);
+    }
+
+    getContent() {
+        return logMemoryCompressor.decompress(this.contentKey);
+    }
+
+}
+
+const parser = new AutoParser();
 
 const handler = createArchiveHandler('libarchive.js/dist/worker-bundle.js');
 
@@ -25,49 +47,213 @@ export class BrowserProvider implements Provider {
     filteredLines: BaseLine[] = [];
     observers: Set<Observer> = new Set();
 
+    // 用于去重
+    fileIds = new Set<string>();
 
-    async setup(input: File[] | File | string): Promise<void> {
+    status: string = "";
+    setuped: boolean = false
+
+
+    // 计算进度
+    getSetupProgress(): string {
+        if (this.setuped) {
+            return "";
+        }
+        const totalFiles = this.files.length;
+        const setupedFiles = this.files.filter(f => f.status === "extracted").length;
+        return `${setupedFiles}/${totalFiles}`
+    }
+
+    async appendToLines(logFile: LogFile, rawFile: ExtendedFile, path: string, binaryData: Uint8Array) {
+
+        const finalFinalExt = path.split('.').pop();
+        if (finalFinalExt === 'gz') {
+            binaryData = await decompress(binaryData, 'gzip');
+        } else if (finalFinalExt === 'zst') {
+            binaryData = await decompress(binaryData, 'zstd');
+        }
+
+
+        const text = new TextDecoder('utf-8').decode(binaryData); // TODO 注意编码
+        const rawLines = text.split('\n');
+
+        console.log("rawLines", path, rawLines.length);
+
+        const finalLines = rawLines.map((line, index) => {
+            const fields = parser.parseLine(line);
+
+            const compressLine = new CompressLine();
+            compressLine.line = index + 1;
+            compressLine.filename = path;
+            compressLine.setContent(line);
+
+            for (const key in fields) {
+                compressLine[key] = fields[key];
+            }
+
+            return compressLine;
+        });
+        console.log("finalLines", path, finalLines.length);
+
+        const BATCH_SIZE = 10000;
+        for (let i = 0; i < finalLines.length; i += BATCH_SIZE) {
+            console.log("i", i);
+            const batch = finalLines.slice(i, i + BATCH_SIZE);
+            this.allLines.push(...batch);
+        }
+
+        console.log("allLines", path, this.allLines.length);
+
+
+        this.status = `解压进度: ${this.getSetupProgress()}，当前文件:${path}`;
+        console.log("status", this.status);
+        logFile.status = "extracted";
+        logFile.lineCount = finalLines.length;
+        this.publishOnChange();
+    }
+
+    async setup(input: ExtendedFile[] | ExtendedFile | string, reset = false): Promise<void> {
         if (typeof input === 'string') {
             console.log("dbg ignore input:", input);
             return;
         }
-        const files = Array.isArray(input) ? input : [input];
-        this.files = [];
+        this.setuped = false;
+        this.status = "正在解析文件"
+
+
+        if (reset) {
+            this.files = [];
+            this.allLines = [];
+            this.filteredLines = [];
+            this.currentFile = null;
+            this.currentFilter = '';
+            this.fileIds = new Set();
+        }
+
+        let files = Array.isArray(input) ? input : [input];
+
+        files = files.filter(f => {
+            const identifier = `${f.name}_${f.size}_${f.lastModified}`;
+            if (!this.fileIds.has(identifier)) {
+                this.fileIds.add(identifier);
+                return true;
+            }
+            return false;
+        });
+
+        const waitContinueExtract = [];
+        console.log("dbg setup", files, reset);
         for (const rawFile of files) {
             if (handler.isArchiveFile(rawFile.name)) {
-                const fileList = await handler.getFileList(rawFile);
-                console.log("fileList=", fileList);
-                for (const path of fileList) {
-                    const logFile = this.convertPathToLogFile(path, rawFile);
-                    this.files.push(logFile);
-                }
+                console.log("archive", rawFile.name);
+
+                const archiveCallback: ArchiveCallback = {
+                    onDiscoverFile: (path: string) => {
+                        const logFile = this.convertPathToLogFile(path, rawFile as ExtendedFile);
+                        this.files.push(logFile);
+
+                        this.files.sort((a, b) => {
+                            if (a.isLogFile && !b.isLogFile) return -1;
+                            if (!a.isLogFile && b.isLogFile) return 1;
+                            if (a.path < b.path) return -1;
+                            if (a.path > b.path) return 1;
+                            return 0;
+                        });
+                        this.publishOnChange();
+                    },
+                    onBeforeExtractFile: (path: string) => {
+                        const logFile = this.files.find(f => f.path === path);
+                        logFile!.status = "extracting";
+                        this.publishOnChange();
+                    },
+                    onExtractFile: (path: string, data: ArrayBuffer) => {
+                        const logFile = this.files.find(f => f.path === path);
+
+                        this.appendToLines(logFile!, rawFile as ExtendedFile, path, new Uint8Array(data));
+                    }
+                };
+                await handler.processArchiveWithCallbacks(rawFile, path => !isLogFile(path), archiveCallback, rawFile.path);
             } else {
-                if (!this.shouldIncludeFile(rawFile.name)) {
-                    continue;
-                }
-                const logFile = this.convertPathToLogFile(rawFile.name, rawFile);
+                // if (!this.shouldIncludeFile(rawFile.name)) {
+                //     continue;
+                // }
+                console.log("file", rawFile);
+                const logFile = this.convertPathToLogFile(rawFile.path || rawFile.name, rawFile as ExtendedFile);
                 this.files.push(logFile);
+
+                this.files.sort((a, b) => {
+                    if (a.isLogFile && !b.isLogFile) return -1;
+                    if (!a.isLogFile && b.isLogFile) return 1;
+                    if (a.path < b.path) return -1;
+                    if (a.path > b.path) return 1;
+                    return 0;
+                });
+                this.publishOnChange();
+
+                waitContinueExtract.push(logFile)
             }
         }
-    }
 
-
-    getResources(): string[] {
-        return this.files.map(file => file.path);
-    }
-
-    async useResource(uri: string): Promise<void> {
-        const logFile = this.files.find(file => file.path === uri);
-        if (!logFile) {
-            throw new Error(`File not found: ${uri}`);
+        for (const logFile of waitContinueExtract) {
+            logFile.status = "extracting";
+            const binaryData = await new Uint8Array(await logFile.rawFile.arrayBuffer());
+            this.appendToLines(logFile, logFile.rawFile as ExtendedFile, logFile.rawFile.name, binaryData);
+            logFile.status = "extracted";
+            this.publishOnChange();
         }
-        console.log("dbg useResource", uri);
 
-       this.allLines =await this.getLines(uri); 
-        console.log("dbgallLines=", this.allLines);
-       for (const observer of this.observers) {
+        console.log("1111")
+
+        console.log("2222")
+        // this.allLines = this.allLines.filter(line => line.time);
+
+        // 为每个元素添加原始索引
+        this.allLines.forEach((item, index) => {
+            item.originalIndex = index;
+        });
+
+        // 排序
+        this.allLines.sort((a, b) => {
+            // 如果a或b没有time字段,将其放到最后
+            if (!a.time) return 1;
+            if (!b.time) return -1;
+
+            // 按time字符串的字典顺序排序
+            if (a.time < b.time) return -1;
+            if (a.time > b.time) return 1;
+
+            // 如果time相同，按原始索引排序（保持稳定性）
+            return a.originalIndex - b.originalIndex;
+        });
+
+        console.log("3333")
+        this.allLines.forEach((line, index) => {
+            line.line = index;
+        });
+        console.log("4444")
+
+
+        this.status = "ready"
+        this.setuped = true;
+    }
+
+
+    getResources(): LogFile[] {
+        console.log("dbg files", this.files);
+        return this.files;
+    }
+
+    async useResource(uri: LogFile): Promise<void> {
+        for (const observer of this.observers) {
             observer.onChange();
-       }
+        }
+    }
+
+    publishOnChange(): void {
+        console.log("publishOnChange", this.observers);
+        for (const observer of this.observers) {
+            observer.onChange();
+        }
     }
 
     async useFilter(search: string): Promise<void> {
@@ -86,11 +272,16 @@ export class BrowserProvider implements Provider {
         const regex = new RegExp(finalSearch, 'g'); // TODO 
        this.filteredLines = this.allLines.filter(line => {
         regex.lastIndex = 0;
-        return regex.test(line.content);
+           return regex.test(line.getContent());
        });
+
+        this.publishOnChange();
     }
 
     async getTotalLineCount(): Promise<number> {
+        if (!this.setuped) {
+            return 1;
+        }
         return this.allLines.length;
     }
     async getFilteredLineCount(): Promise<number> {
@@ -98,6 +289,13 @@ export class BrowserProvider implements Provider {
     }
 
     async getLine(index: number): Promise<BaseLine> {
+        if (!this.setuped) {
+            const line = new CompressLine();
+            line.line = index;
+            line.filename = '';
+            line.setContent(this.status)
+            return line;
+        }
         return this.allLines[index];
     }
 
@@ -151,21 +349,27 @@ export class BrowserProvider implements Provider {
         const text = new TextDecoder('utf-8').decode(binaryData); // TODO 注意编码
         const rawLines = text.split(/\r?\n/);
         const finalLines = rawLines.map((line, index) => {
+            const fields = parser.parseLine(line);
             return {
                 filename: logFile.path,
                 line: index + 1,
                 content: line,
+                ...fields
             } as BaseLine;
         });
+
         return finalLines;
     }
 
-    convertPathToLogFile(path: string, rawFile: File): LogFile {
-        const logFile = {} as LogFile;
-        logFile.rawFile = rawFile;
-        logFile.path = path;
-        console.log("convertPathToLogFile", path, rawFile, logFile);
-        return logFile;
+    convertPathToLogFile(path: string, rawFile: ExtendedFile): LogFile {
+        return {
+            rawFile,
+            path,
+            size: rawFile.size,
+            status: isLogFile(path) ? "pending" : "extracted",
+            isLogFile: isLogFile(path),
+            lineCount: undefined
+        }
     }
 }
 

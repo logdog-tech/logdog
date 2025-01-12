@@ -1,19 +1,107 @@
 <!-- DataProvider.vue -->
 <template>
     <div class="file-input-container h-full w-full relative flex flex-col bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800"
-        @dragenter="handleDragEnter" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop="handleDrop">
+        @dragenter="handleDragEnter" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop.prevent="handleDrop">
         <!-- 拖拽覆盖层 -->
         <div v-if="isDragging"
-            class="absolute inset-0 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm flex items-center justify-center z-10 transition-all duration-300">
-            <div
-                class="w-[90%] h-[90%] rounded-xl border-2 border-dashed border-blue-500 bg-blue-50 dark:bg-blue-900/20 flex flex-col items-center justify-center">
-                <div
-                    class="w-12 h-12 mb-4 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-500">
-                    <i class="pi pi-cloud-upload text-xl"></i>
-                </div>
-                <p class="text-sm mb-2 text-blue-600 dark:text-blue-400">
-                    松开以分析文件
+            class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center z-50"
+            @dragover.prevent="handleMainDragOver"
+            @dragleave.prevent="handleMainDragLeave"
+            @drop.prevent.stop>
+            <div v-if="hoverMode === null" 
+                class="absolute top-12 left-1/2 -translate-x-1/2 bg-gray-900/80 backdrop-blur px-8 py-6 rounded-2xl shadow-xl">
+                <p class="text-2xl font-medium text-white text-center">
+                    请选择您希望的操作方式<br>
+                    <span class="text-base font-normal text-white/70 mt-2 block">或直接放开以追加到当前列表</span>
                 </p>
+            </div>
+            <div class="w-[600px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl">
+                <div class="text-center p-8">
+                    <i class="pi pi-cloud-upload text-5xl text-gray-400 dark:text-gray-500 mb-5 block"></i>
+                    <p class="text-2xl font-medium text-gray-700 dark:text-gray-200 mb-2">
+                        选择日志文件的处理方式
+                    </p>
+                    <p class="text-base text-gray-500 dark:text-gray-400">
+                        请选择是添加到现有日志还是重新开始分析
+                    </p>
+                </div>
+                <div class="flex h-[300px]">
+                    <button 
+                        @mouseover="handleHover('append', $event)"
+                        @mouseleave="handleHover(null, $event)"
+                        @dragover.prevent.stop="handleHover('append', $event)"
+                        @dragleave.prevent="handleHover(null, $event)"
+                        @drop.stop.prevent="handleModeDrop('append', $event)"
+                        class="flex-1 p-8 transition-all duration-300 rounded-bl-2xl relative overflow-hidden group"
+                        :class="{
+                            'bg-blue-500 scale-[1.03] z-10': hoverMode === 'append',
+                            'hover:bg-blue-50 dark:hover:bg-blue-900/20': hoverMode !== 'append'
+                        }">
+                        <div class="absolute inset-0 bg-gradient-to-b from-blue-500/20 to-blue-500/5 opacity-0 transition-opacity duration-300"
+                            :class="{'!opacity-100': hoverMode === 'append'}"></div>
+                        <div class="absolute inset-0 border-2 border-blue-200 dark:border-blue-700 rounded-bl-2xl opacity-0 transition-opacity duration-300"
+                            :class="{'!opacity-100': hoverMode !== 'append'}"></div>
+                        <div class="h-full flex flex-col items-center justify-center gap-4 relative">
+                            <div class="w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 mb-2"
+                                :class="hoverMode === 'append' ? 'bg-white/20' : 'bg-blue-50 dark:bg-blue-900/30 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50'">
+                                <i class="pi pi-plus text-3xl transition-all duration-300" 
+                                    :class="hoverMode === 'append' ? 'text-white scale-125' : 'text-blue-500 dark:text-blue-400 group-hover:scale-110'"></i>
+                            </div>
+                            <div>
+                                <p class="text-xl font-medium mb-3 transition-all duration-300" 
+                                    :class="hoverMode === 'append' ? 'text-white' : 'text-blue-600 dark:text-blue-400'">
+                                    添加到当前列表
+                                </p>
+                                <p class="text-sm transition-all duration-300" 
+                                    :class="hoverMode === 'append' ? 'text-white/90' : 'text-blue-500/70 dark:text-blue-400/70'">
+                                    保留现有日志并添加新文件
+                                </p>
+                            </div>
+                            <div class="absolute inset-x-0 bottom-4 text-center transition-all duration-300"
+                                :class="{'opacity-100 translate-y-0': hoverMode === 'append', 'opacity-0 translate-y-2': hoverMode !== 'append'}">
+                                <p class="text-white text-sm font-medium">松开以添加文件</p>
+                            </div>
+                        </div>
+                    </button>
+                    <div class="w-px bg-gray-200 dark:bg-gray-700"></div>
+                    <button 
+                        @mouseover="handleHover('reset', $event)"
+                        @mouseleave="handleHover(null, $event)"
+                        @dragover.prevent.stop="handleHover('reset', $event)"
+                        @dragleave.prevent="handleHover(null, $event)"
+                        @drop.stop.prevent="handleModeDrop('reset', $event)"
+                        class="flex-1 p-8 transition-all duration-300 rounded-br-2xl relative overflow-hidden group"
+                        :class="{
+                            'bg-rose-500 scale-[1.03] z-10': hoverMode === 'reset',
+                            'hover:bg-rose-50 dark:hover:bg-rose-900/20': hoverMode !== 'reset'
+                        }">
+                        <div class="absolute inset-0 bg-gradient-to-b from-rose-500/20 to-rose-500/5 opacity-0 transition-opacity duration-300"
+                            :class="{'!opacity-100': hoverMode === 'reset'}"></div>
+                        <div class="absolute inset-0 border-2 border-rose-200 dark:border-rose-700 rounded-br-2xl opacity-0 transition-opacity duration-300"
+                            :class="{'!opacity-100': hoverMode !== 'reset'}"></div>
+                        <div class="h-full flex flex-col items-center justify-center gap-4 relative">
+                            <div class="w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 mb-2"
+                                :class="hoverMode === 'reset' ? 'bg-white/20' : 'bg-rose-50 dark:bg-rose-900/30 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/50'">
+                                <i class="pi pi-refresh text-3xl transition-all duration-300" 
+                                    :class="hoverMode === 'reset' ? 'text-white scale-125' : 'text-rose-500 dark:text-rose-400 group-hover:scale-110'"></i>
+                            </div>
+                            <div>
+                                <p class="text-xl font-medium mb-3 transition-all duration-300" 
+                                    :class="hoverMode === 'reset' ? 'text-white' : 'text-rose-600 dark:text-rose-400'">
+                                    重置并分析
+                                </p>
+                                <p class="text-sm transition-all duration-300" 
+                                    :class="hoverMode === 'reset' ? 'text-white/90' : 'text-rose-500/70 dark:text-rose-400/70'">
+                                    清空现有日志并分析新文件
+                                </p>
+                            </div>
+                            <div class="absolute inset-x-0 bottom-4 text-center transition-all duration-300"
+                                :class="{'opacity-100 translate-y-0': hoverMode === 'reset', 'opacity-0 translate-y-2': hoverMode !== 'reset'}">
+                                <p class="text-white text-sm font-medium">松开以重置并添加</p>
+                            </div>
+                        </div>
+                    </button>
+                </div>
             </div>
         </div>
         <!-- 标签栏 -->
@@ -62,7 +150,7 @@
                             <div v-if="currentProviderName === '文件日志'" class="relative group ml-2">
                                 <button
                                     class="p-1 rounded-lg text-gray-500 hover:text-blue-500 hover:bg-gray-100 dark:hover:bg-gray-700">
-                                    <i class="pi pi-bars"></i>
+                                    <i class="pi pi-plus"></i>
                                 </button>
                                 <!-- 下拉菜单 -->
                                 <div
@@ -71,15 +159,15 @@
                                     <label
                                         class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
                                         <input type="file" @change="handleFileSelection" multiple class="hidden" />
-                                        <i class="pi pi-file w-4 mr-2"></i>
-                                        <span>选择文件</span>
+                                        <i class="pi pi-file-plus w-4 mr-2"></i>
+                                        <span>添加日志文件</span>
                                     </label>
                                     <label
                                         class="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
                                         <input type="file" @change="handleFolderSelection" webkitdirectory directory
                                             class="hidden" />
-                                        <i class="pi pi-folder w-4 mr-2"></i>
-                                        <span>选择文件夹</span>
+                                        <i class="pi pi-folder-plus w-4 mr-2"></i>
+                                        <span>添加文件夹</span>
                                     </label>
                                     <button @click="handleReset"
                                         class="w-full flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
@@ -95,22 +183,53 @@
                     <template v-if="currentProviderName !== '文件日志' || resources.length > 0">
                         <ul v-if="filteredResources.length > 0"
                             class="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
-                            <li v-for="resource in filteredResources" :key="resource"
+                            <li v-for="resource in filteredResources" :key="resource.path"
                                 @click="handleResourceClick(resource)"
-                                class="px-3 py-2 cursor-pointer group flex items-center space-x-2 transition-colors duration-200"
-                                :class="[
-                                    resource === currentResource
-                                        ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
-                                        : 'hover:bg-gray-50 dark:hover:bg-gray-800/50 text-gray-700 dark:text-gray-300'
-                                ]" :title="resource">
-                                <i :class="[
-    'pi',
-    currentProviderName === '文件日志' ? 'pi-file' : 'pi-inbox',
-    resource === currentResource ? 'text-blue-500' : 'text-gray-400 group-hover:text-blue-500'
-]"></i>
-                                <span class="text-sm">
-                                    <HighlightText :text="resource" :highlight="filterText" />
-                                </span>
+                                class="group px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
+                                :class="{
+                                    'bg-blue-50/50 dark:bg-blue-900/20': currentResource === resource,
+                                    'opacity-75': !resource.isLogFile,
+                                    'bg-gray-100 dark:bg-gray-800/50': resource.status === 'pending',
+                                    'bg-yellow-50 dark:bg-yellow-900/40': resource.status === 'extracting',
+                                    'bg-white-50/50 dark:bg-white-900/20': resource.status === 'extracted'
+                                }">
+                                <div class="flex items-center space-x-3">
+                                    <div class="flex-shrink-0">
+                                        <i :class="[
+                                            'pi text-base',
+                                            {
+                                                'pi-code': resource.isLogFile,
+                                                'pi-file': !resource.isLogFile,
+                                                'text-blue-500': resource.isLogFile && resource.status === 'extracted',
+                                                'text-gray-400': !resource.isLogFile && resource.status === 'extracted',
+                                                'text-gray-500': resource.status === 'pending',
+                                                'text-yellow-500': resource.status === 'extracting'
+                                            }
+                                        ]"></i>
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between">
+                                            <div class="flex-1 min-w-0">
+                                                <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate"
+                                                    :class="{ 'font-normal': !resource.isLogFile }">
+                                                    <HighlightText :text="resource.path.split('/').slice(-1)[0]" :highlight="filterText" />
+                                                </p>
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                                    {{ resource.path }}
+                                                </p>
+                                            </div>
+                                            <div class="ml-2 flex-shrink-0 flex items-center space-x-2">
+                                                <span class="text-xs text-gray-500">{{ getDisplayStatus(resource) }}</span>
+                                                <i v-if="resource.status === 'pending'" 
+                                                   class="pi pi-clock text-gray-500 text-sm"
+                                                   title="等待处理"></i>
+                                                <i v-else-if="resource.status === 'extracting'" 
+                                                   class="pi pi-spin pi-spinner text-yellow-500 text-sm"
+                                                   title="正在处理"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </li>
                         </ul>
                         <div v-else class="flex-1 flex items-center justify-center text-gray-500 dark:text-gray-400">
@@ -159,6 +278,7 @@
 import { defineComponent } from 'vue';
 import HighlightText from './HighlightText.vue';
 import { proxyProvider } from '../utils/providers/ProxyProvider';
+import type { LogFile } from '@/modules/base';
 
 export default defineComponent({
     components: {
@@ -168,28 +288,30 @@ export default defineComponent({
         const providers = proxyProvider.availableProviders();
         return {
             isDragging: false,
-            currentResource: null as string | null,
+            currentResource: null as LogFile | null,
             filterText: '',
             providers,
             currentProviderName: providers[0].name,
             dragCounter: 0,
-            resources: [] as string[]
+            resources: [] as LogFile[],
+            dropMode: 'append', 
+            hoverMode: null as 'append' | 'reset' | null, 
         };
     },
     computed: {
-        filteredResources(): string[] {
+        filteredResources(): LogFile[] {
             if (!this.filterText) {
                 return this.resources;
             }
 
             const searchText = this.filterText.toLowerCase();
             return this.resources.filter(resource =>
-                resource.toLowerCase().includes(searchText)
+                resource.path.toLowerCase().includes(searchText)
             );
         }
     },
     methods: {
-        async handleResourceClick(resource: string) {
+        async handleResourceClick(resource: LogFile) {
             console.log("handleResourceClick", resource);
             if (this.currentResource === resource) {
                 return;
@@ -205,7 +327,12 @@ export default defineComponent({
             this.currentResource = null;
             this.filterText = '';
 
-            this.resources = proxyProvider.getResources();
+            // this.resources = proxyProvider.getResources();
+
+
+            const newResources = proxyProvider.getResources();
+            this.resources.length = 0;
+            this.resources.push(...newResources);
 
             if (this.resources.length > 0) {
                 this.handleResourceClick(this.resources[0]);
@@ -230,13 +357,20 @@ export default defineComponent({
                 this.isDragging = false;
             }
         },
-        async processEntry(entry: FileSystemEntry, processedFiles: File[]): Promise<void> {
+        async processEntry(entry: FileSystemEntry, processedFiles: File[], basePath: string = ''): Promise<void> {
+            const currentPath = basePath ? `${basePath}/${entry.name}` : entry.name;
+
             if (entry.isFile) {
                 // 如果是文件，将其转换为 File 对象并添加到 processedFiles 中
                 const file = await new Promise<File>((resolve, reject) => {
                     (entry as FileSystemFileEntry).file(resolve, reject);
                 });
-                processedFiles.push(file);
+                // 创建一个新的File对象，保留原始路径信息
+                const fileWithPath = Object.defineProperty(file, 'path', {
+                    value: currentPath,
+                    writable: false
+                });
+                processedFiles.push(fileWithPath);
             } else if (entry.isDirectory) {
                 // 如果是目录，创建目录读取器
                 const dirReader = (entry as FileSystemDirectoryEntry).createReader();
@@ -249,7 +383,7 @@ export default defineComponent({
 
                     // 处理当前批次的条目
                     for (const innerEntry of entries) {
-                        await this.processEntry(innerEntry, processedFiles);
+                        await this.processEntry(innerEntry, processedFiles, currentPath);
                     }
 
                     // 如果还有更多条目，继续读取
@@ -264,17 +398,19 @@ export default defineComponent({
         },
         async handleDrop(event: DragEvent) {
             event.preventDefault();
-            event.stopPropagation();
             this.isDragging = false;
             this.dragCounter = 0;
 
-            const items = Array.from(event.dataTransfer!.items);
+            const items = event.dataTransfer?.items;
+            if (!items) return;
+
             const processedFiles: File[] = [];
-            const promises = items.map((item) => {
+            const promises = Array.from(items).map((item) => {
                 if (item.kind === 'file') {
                     const entry = (item as any).webkitGetAsEntry();
                     if (entry) {
-                        return this.processEntry(entry, processedFiles);
+                        // 从根路径开始处理
+                        return this.processEntry(entry, processedFiles, '');
                     }
                 }
             });
@@ -285,20 +421,33 @@ export default defineComponent({
             }
         },
         async handleFileSelection(event: Event) {
-            const target = event.target as HTMLInputElement;
-            if (target.files && target.files.length > 0) {
-                await this.processFiles(Array.from(target.files));
+            const input = event.target as HTMLInputElement;
+            if (input.files && input.files.length > 0) {
+                const files = Array.from(input.files).map(file => {
+                    return Object.defineProperty(file, 'path', {
+                        value: file.name,
+                        writable: false
+                    });
+                });
+                await this.processFiles(files);
             }
         },
         async handleFolderSelection(event: Event) {
-            const target = event.target as HTMLInputElement;
-            if (target.files && target.files.length > 0) {
-                await this.processFiles(Array.from(target.files));
+            const input = event.target as HTMLInputElement;
+            if (input.files && input.files.length > 0) {
+                const files = Array.from(input.files).map(file => {
+                    // webkitRelativePath 包含了相对于选择文件夹的路径
+                    const path = file.webkitRelativePath || file.name;
+                    return Object.defineProperty(file, 'path', {
+                        value: path,
+                        writable: false
+                    });
+                });
+                await this.processFiles(files);
             }
         },
         async processFiles(selectedFiles: File[]) {
-            await proxyProvider.setup(selectedFiles);
-            this.resources = proxyProvider.getResources();
+            await proxyProvider.setup(selectedFiles, false);
             this.$emit('fileLoaded', null);
 
             if (this.resources.length > 0) {
@@ -306,17 +455,105 @@ export default defineComponent({
             }
         },
         handleReset() {
-            this.resources = [];
-            this.currentResource = null;
-            this.filterText = '';
+            window.location.reload();
+        },
+        getDisplayStatus(resource: LogFile): string {
+            if (!resource.isLogFile) {
+                return '非日志文件';
+            }
+            if (resource.status === 'pending') {
+                return '等待处理';
+            }
+            if (resource.status === 'extracting') {
+                return '正在处理';
+            }
+            return resource.lineCount !== undefined ? `${resource.lineCount} 行` : '加载中';
+        },
+        async handleModeDrop(mode: 'append' | 'reset', event: DragEvent) {
+            event.preventDefault();
+            this.isDragging = false;
+            this.dragCounter = 0;
+            this.hoverMode = null;
+
+            const items = event.dataTransfer?.items;
+            if (!items) return;
+
+            const processedFiles: File[] = [];
+            const promises = Array.from(items).map((item) => {
+                if (item.kind === 'file') {
+                    const entry = (item as any).webkitGetAsEntry();
+                    if (entry) {
+                        return this.processEntry(entry, processedFiles);
+                    }
+                }
+                return Promise.resolve();
+            });
+
+            await Promise.all(promises);
+            await proxyProvider.setup(processedFiles, mode === 'reset');
             this.$emit('fileLoaded', null);
-        }
+
+            if (this.resources.length > 0) {
+                await this.handleResourceClick(this.resources[0]);
+            }
+        },
+        handleHover(mode: 'append' | 'reset' | null, event: Event) {
+            // 检查事件目标是否在按钮内
+            const target = event.target as HTMLElement;
+            const button = target.closest('button');
+            if (!button) return;
+
+            // 如果是dragleave事件，检查是否真的离开了按钮
+            if (event.type === 'dragleave') {
+                const rect = button.getBoundingClientRect();
+                const mouseEvent = event as MouseEvent;
+                if (
+                    mouseEvent.clientX >= rect.left &&
+                    mouseEvent.clientX <= rect.right &&
+                    mouseEvent.clientY >= rect.top &&
+                    mouseEvent.clientY <= rect.bottom
+                ) {
+                    return;
+                }
+            }
+
+            this.hoverMode = mode;
+        },
+
+        handleMainDragOver(event: DragEvent) {
+            const target = event.target as HTMLElement;
+            if (!target.closest('button')) {
+                this.hoverMode = null;
+            }
+        },
+
+        handleMainDragLeave(event: DragEvent) {
+            // 检查是否真的离开了整个拖拽区域
+            const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+            if (
+                event.clientX <= rect.left ||
+                event.clientX >= rect.right ||
+                event.clientY <= rect.top ||
+                event.clientY >= rect.bottom
+            ) {
+                this.hoverMode = null;
+            }
+        },
     },
     mounted() {
         window.addEventListener('dragenter', this.handleDragEnter);
         window.addEventListener('dragover', this.handleDragOver);
         window.addEventListener('dragleave', this.handleDragLeave);
         window.addEventListener('drop', this.handleDrop);
+
+        proxyProvider.subscribe({
+            onChange: () => {
+                const newResources = proxyProvider.getResources();
+                this.resources.length = 0;
+                console.log("newResources", newResources);
+                this.resources.push(...newResources);
+            }
+        });
     },
     unmounted() {
         window.removeEventListener('dragenter', this.handleDragEnter);

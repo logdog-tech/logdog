@@ -129,8 +129,7 @@ class DB {
   }
 
   // 使用索引查询数据
-  async getByIndex(storeName: string, indexName: string, value: string|number) {
-    console.log("getByIndex ", storeName, indexName, value)
+    async getByIndex(storeName: string, indexName: string, value: string | number) {
     const db = await this.open() as IDBDatabase;
     return new Promise((resolve, reject) => {
       const transaction = db.transaction(storeName, 'readonly');
