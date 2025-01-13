@@ -155,6 +155,17 @@ export default {
                     rule._checked = true;
                 }
             }
+
+            // 按照创建时间排序
+            rules.sort((a: Rule, b: Rule) => {
+                if (a.created_at > b.created_at) {
+                    return -1;
+                } else if (a.created_at < b.created_at) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            });
             return rules;
         },
         handleUserToggleItems(type: 'filter' | 'color' | 'function', item: Rule) {
