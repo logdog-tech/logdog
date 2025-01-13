@@ -6,11 +6,11 @@
                     :dataSource="dataSource">
                     <template #default="{ item, index }">
                         <div class="log-item" :class="[
-                            'flex items-center hover:bg-red-50',
-                            { 'bg-red-100': item.line === selectedline },
-                            { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
-                        ]">
-
+    'flex items-center',
+    { 'glow-border': item.line === selectedline },
+    { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
+]">
+                            <div v-if="item.line === selectedline" :key="animationKey" class="border-animation" />
                             <div class="line-number" contenteditable="false" v-html="item.line" />
                             <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
                         </div>
@@ -26,11 +26,11 @@
                     style="flex-grow: 1; overflow: hidden;" ref="logSearchView" :dataSource="searchDataSource">
                     <template #default="{ item, index }">
                         <div class="log-item" @click="onClickSearchItem(item, index)" :class="[
-                            'flex items-center hover:bg-red-50',
-                            { 'bg-red-100': item.line === selectedline },
+                            'flex items-center',
+                            { 'glow-border': item.line === selectedline },
                             { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
                         ]">
-
+                            <div v-if="item.line === selectedline" :key="animationKey" class="border-animation" />
                             <div class="line-number" contenteditable="false" v-html="item.line" />
                             <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
                         </div>
@@ -125,7 +125,7 @@ export default defineComponent({
             searchTerm: "",
             logFullView: HugeList,
             logSearchView: HugeList,
-            selectedline: -1 as number,
+            selectedline: null as number,
             selectionRect: null as DOMRect | null,
             showColorSelecter: false,
             selectedText: "",
@@ -133,6 +133,7 @@ export default defineComponent({
             totalCount: 0,
             searchCount: 0,
             updateCountTimer: null as any,
+            animationKey: 0,  // 添加动画key
         };
     },
     mounted() {
@@ -150,6 +151,7 @@ export default defineComponent({
     methods: {
         onClickSearchItem(item: BaseLine, index: number) {
             this.selectedline = item.line;
+            this.animationKey++;  // 增加key触发新动画
             const logFullView = this.$refs.logFullView as LogViewRef;
             logFullView.scrollToIndex(item.line - 8);
         },
@@ -174,7 +176,7 @@ export default defineComponent({
             return result;
         },
         handleColorPicked(style: StyleObject) {
-            console.log("🔧handleColorPicked", style);
+            console.log("handleColorPicked", style);
             this.sessionColors[this.selectedText] = style;
             if (!style) {
                 delete this.sessionColors[this.selectedText];
@@ -437,6 +439,59 @@ export default defineComponent({
     height: 18px;
     white-space: pre;
     font-family: monospace;
+    position: relative;
+}
+
+.log-item:hover::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-top: 1px solid darkgray;
+    border-bottom: 1px solid darkgray;
+    pointer-events: none;
+    z-index: 9;
+}
+
+.glow-border {
+    position: relative;
+}
+
+.border-animation {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-top: 1px solid darkgray;
+    border-bottom: 1px solid darkgray;
+    pointer-events: none;
+    z-index: 10;
+    animation: borderPulse 500ms ease-in-out;
+}
+
+@keyframes borderPulse {
+    0% {
+        border-color: #10a37f;
+        box-shadow: 0 0 8px rgba(16, 163, 127, 0.6);
+    }
+
+    33% {
+        border-color: #0ea5e9;
+        box-shadow: 0 0 8px rgba(14, 165, 233, 0.6);
+    }
+
+    66% {
+        border-color: #8b5cf6;
+        box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
+    }
+
+    100% {
+        border-color: darkgray;
+        box-shadow: none;
+    }
 }
 
 .line-number {
