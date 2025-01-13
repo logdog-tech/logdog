@@ -1,0 +1,193 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+import sys
+import threading
+import asyncio
+from typing import List, Dict, Optional
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
+import uvicorn
+import json
+from queue import Queue
+import re
+
+app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+PORT = 8005
+lines: List[str] = []
+filtered_lines: List[int] = []  # Stores indices of filtered lines
+current_filter: str = ""
+connections: List[WebSocket] = []
+broadcast_queue = Queue()
+
+last_broadcast_line_count = 0
+
+
+async def broadcast_line_count():
+    global last_broadcast_line_count
+    new_line_count = len(lines)
+    if new_line_count == last_broadcast_line_count:
+        return
+    msg = {
+        "type": "newLineCount",
+        "payload": f"{last_broadcast_line_count},{new_line_count}",
+    }
+    last_broadcast_line_count = new_line_count
+    for ws in connections[:]:
+        try:
+            await ws.send_json(msg)
+        except:
+            connections.remove(ws)
+
+
+def apply_filter(search: str):
+    global filtered_lines, current_filter
+    current_filter = search
+    if not search:
+        filtered_lines = list(range(len(lines)))
+    else:
+        try:
+            pattern = re.compile(search, re.IGNORECASE)
+            filtered_lines = [i for i, line in enumerate(lines) if pattern.search(line)]
+        except re.error:
+            # If invalid regex, treat as plain text
+            search = re.escape(search)
+            filtered_lines = [
+                i for i, line in enumerate(lines) if search.lower() in line.lower()
+            ]
+
+
+async def handle_rpc_request(
+    method: str, params: Dict, requestId: str, websocket: WebSocket
+):
+    response = {"type": "response", "requestId": requestId}
+
+    try:
+        if method == "useFilter":
+            await apply_filter(params.get("search", ""))
+            response["payload"] = True
+
+        elif method == "getTotalLineCount":
+            response["payload"] = len(lines)
+
+        elif method == "getFilteredLineCount":
+            response["payload"] = len(filtered_lines)
+
+        elif method == "getLine":
+            index = params.get("index", 0)
+            if 0 <= index < len(lines):
+                response["payload"] = {
+                    "content": lines[index],
+                    "line": index,
+                    "filename": "",
+                }
+            else:
+                response["payload"] = None
+
+        elif method == "getFilteredLine":
+            index = params.get("index", 0)
+            if 0 <= index < len(filtered_lines):
+                line_index = filtered_lines[index]
+                response["payload"] = {
+                    "content": lines[line_index],
+                    "line": line_index,  # 修改这里：使用实际行号而不是过滤后的索引
+                    "index": line_index,
+                }
+            else:
+                response["payload"] = None
+
+        else:
+            response["payload"] = {"error": f"Unknown method: {method}"}
+
+        await websocket.send_json(response)
+
+    except Exception as e:
+        error_response = {
+            "type": "response",
+            "requestId": requestId,
+            "payload": {"error": str(e)},
+        }
+        await websocket.send_json(error_response)
+
+
+@app.on_event("startup")
+async def startup_event():
+    asyncio.create_task(process_broadcast_queue())
+
+
+async def process_broadcast_queue():
+    while True:
+        if not broadcast_queue.empty():
+            should_broadcast = broadcast_queue.get()
+            if should_broadcast:
+                await broadcast_line_count()
+        await asyncio.sleep(0.01)
+
+
+def read_stdin():
+    while True:
+        try:
+            line = sys.stdin.buffer.readline()  # Read in binary mode
+            if not line:  # EOF
+                break
+
+            # Try different encodings
+            encodings = ["utf-8", "latin1", "cp1252"]
+            decoded_line = None
+
+            for encoding in encodings:
+                try:
+                    decoded_line = line.decode(encoding).strip()
+                    break
+                except UnicodeDecodeError:
+                    continue
+
+            if decoded_line:  # Only add successfully decoded lines
+                lines.append(decoded_line)
+                if not current_filter or re.search(
+                    current_filter, decoded_line, re.IGNORECASE
+                ):
+                    filtered_lines.append(len(lines) - 1)
+                broadcast_queue.put(True)
+        except KeyboardInterrupt:
+            break
+
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    connections.append(websocket)
+    try:
+        while True:
+            data = await websocket.receive_json()
+            if data.get("type") == "request":
+                method = data.get("method")
+                params = data.get("params", {})
+                requestId = data.get("requestId")
+                await handle_rpc_request(method, params, requestId, websocket)
+    except WebSocketDisconnect:
+        connections.remove(websocket)
+    except Exception as e:
+        print(f"Error: {e}")
+        if websocket in connections:
+            connections.remove(websocket)
+
+
+def start_server():
+    if not sys.stdin.isatty():
+        stdin_thread = threading.Thread(target=read_stdin, daemon=True)
+        stdin_thread.start()
+
+    uvicorn.run(app, host="0.0.0.0", port=PORT)
+
+
+if __name__ == "__main__":
+    start_server()

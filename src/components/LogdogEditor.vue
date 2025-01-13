@@ -123,7 +123,7 @@ export default defineComponent({
             searchTerm: "",
             logFullView: HugeList,
             logSearchView: HugeList,
-            selectedline: null as number,
+            selectedline: -1 as number,
             selectionRect: null as DOMRect | null,
             showColorSelecter: false,
             selectedText: "",
@@ -159,7 +159,7 @@ export default defineComponent({
         renderLogItem(line: BaseLine) {
             const functions = this.functions.filter((f) => f._checked);
 
-            let result = line.getContent();
+            let result = line.content;
 
             // s1, 执行所有预处理任务, TODO 将该方法向provider前移
             for (const func of functions) {
@@ -262,7 +262,7 @@ export default defineComponent({
                 useColors.push({ pattern: regex, style: { color: "red" } });
             }
 
-            return highlightIt(line.getContent() + " ", useColors);
+            return highlightIt(line.content + " ", useColors);
         },
         handleSearchInput(currentTerm: string) {
             console.log("handleSearchInput")

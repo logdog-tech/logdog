@@ -1,4 +1,5 @@
 import type { BaseLine, LogFile } from "@/modules/base";
+import { SimpleLogFile } from "@/modules/base";
 import type { Observer, Provider } from "./define";
 import { decompress } from "../extractors";
 import { AutoParser } from "../parsers/AutoParser";
@@ -16,7 +17,7 @@ class CompressLine implements BaseLine {
     [key: string]: unknown;
     filename: string = "";
     line: number = 0;
-    content: string = "";
+    _content: string = "";
     time?: string | undefined;
     pid?: number | undefined;
     tid?: number | undefined;
@@ -25,13 +26,14 @@ class CompressLine implements BaseLine {
     originalIndex: number = 0;
     contentKey: unknown | null = null;
 
-    async setContent(content: string) {
-        this.contentKey = await logMemoryCompressor.compress(content);
+    set content(content: string) {
+        this.contentKey = logMemoryCompressor.compress(content);
     }
 
-    getContent() {
+    get content() {
         return logMemoryCompressor.decompress(this.contentKey);
     }
+
 
 }
 
@@ -85,7 +87,7 @@ export class BrowserProvider implements Provider {
             const compressLine = new CompressLine();
             compressLine.line = index + 1;
             compressLine.filename = path;
-            compressLine.setContent(line);
+            compressLine.content = line;
 
             for (const key in fields) {
                 compressLine[key] = fields[key];
@@ -272,7 +274,7 @@ export class BrowserProvider implements Provider {
         const regex = new RegExp(finalSearch, 'g'); // TODO 
        this.filteredLines = this.allLines.filter(line => {
         regex.lastIndex = 0;
-           return regex.test(line.getContent());
+           return regex.test(line.content);
        });
 
         this.publishOnChange();
@@ -293,7 +295,7 @@ export class BrowserProvider implements Provider {
             const line = new CompressLine();
             line.line = index;
             line.filename = '';
-            line.setContent(this.status)
+            line.content = this.status;
             return line;
         }
         return this.allLines[index];
@@ -362,14 +364,13 @@ export class BrowserProvider implements Provider {
     }
 
     convertPathToLogFile(path: string, rawFile: ExtendedFile): LogFile {
-        return {
+        return new SimpleLogFile(
             rawFile,
             path,
-            size: rawFile.size,
-            status: isLogFile(path) ? "pending" : "extracted",
-            isLogFile: isLogFile(path),
-            lineCount: undefined
-        }
+            rawFile.size,
+            isLogFile(path) ? "pending" : "extracted",
+            isLogFile(path)
+        );
     }
 }
 

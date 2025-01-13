@@ -212,14 +212,13 @@
                                             <div class="flex-1 min-w-0">
                                                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate"
                                                     :class="{ 'font-normal': !resource.isLogFile }">
-                                                    <HighlightText :text="resource.path.split('/').slice(-1)[0]" :highlight="filterText" />
+                                                    <HighlightText :text="resource.name" :highlight="filterText" />
                                                 </p>
-                                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate">
-                                                    {{ resource.path }}
+                                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate" v-html="resource.desc">
                                                 </p>
                                             </div>
                                             <div class="ml-2 flex-shrink-0 flex items-center space-x-2">
-                                                <span class="text-xs text-gray-500">{{ getDisplayStatus(resource) }}</span>
+                                                <span class="text-xs text-gray-500">{{ resource.getDisplayStatus() }}</span>
                                                 <i v-if="resource.status === 'pending'" 
                                                    class="pi pi-clock text-gray-500 text-sm"
                                                    title="等待处理"></i>
@@ -332,6 +331,7 @@ export default defineComponent({
 
             const newResources = proxyProvider.getResources();
             this.resources.length = 0;
+            console.log("newResources", newResources);
             this.resources.push(...newResources);
 
             if (this.resources.length > 0) {
@@ -456,18 +456,6 @@ export default defineComponent({
         },
         handleReset() {
             window.location.reload();
-        },
-        getDisplayStatus(resource: LogFile): string {
-            if (!resource.isLogFile) {
-                return '非日志文件';
-            }
-            if (resource.status === 'pending') {
-                return '等待处理';
-            }
-            if (resource.status === 'extracting') {
-                return '正在处理';
-            }
-            return resource.lineCount !== undefined ? `${resource.lineCount} 行` : '加载中';
         },
         async handleModeDrop(mode: 'append' | 'reset', event: DragEvent) {
             event.preventDefault();

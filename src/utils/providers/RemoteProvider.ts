@@ -1,4 +1,5 @@
 import type { BaseLine, LogFile } from "@/modules/base";
+import { SimpleLogFile } from "@/modules/base";
 import { type Provider, type Observer } from "./define";
 
 export class RemoteProvider implements Provider {
@@ -12,6 +13,7 @@ export class RemoteProvider implements Provider {
         timeout: NodeJS.Timeout;
     }> = new Map();
     currentResource: string | null = null;
+    private reconnectTimer: NodeJS.Timeout | null = null;
 
     async setup(input: File[] | File | string): Promise<void> {
         if (typeof input !== 'string') {
@@ -24,25 +26,57 @@ export class RemoteProvider implements Provider {
         }
         this.currentResource = input;
 
+        await this.connectWebSocket(input);
+        return Promise.resolve();
+    }
+
+    private async connectWebSocket(url: string): Promise<void> {
+        if (this.ws) {
+            this.ws.close();
+        }
+
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+
         this.stopFlag = false;
-        this.ws = new WebSocket(input);
+        this.ws = new WebSocket(url);
 
         this.ws.onopen = () => {
             console.log('WebSocket connection opened');
+            if (this.reconnectTimer) {
+                clearTimeout(this.reconnectTimer);
+                this.reconnectTimer = null;
+            }
             this.ws?.send(JSON.stringify({
                 type: 'request',
                 payload: { start: 0 }
             }));
+            this.publishOnChange();
         };
 
         this.ws.onclose = () => {
             console.log('WebSocket connection closed');
+            this.publishOnChange();
+            if (!this.stopFlag && !this.reconnectTimer) {
+                console.log('Attempting to reconnect in 5 seconds...');
+                this.reconnectTimer = setTimeout(() => {
+                    this.connectWebSocket(url);
+                }, 5000);
+            }
         };
 
         this.ws.onerror = (error) => {
             console.error('WebSocket error:', error);
+            this.publishOnChange();
+            if (!this.stopFlag && !this.reconnectTimer) {
+                console.log('Connection error, attempting to reconnect in 5 seconds...');
+                this.reconnectTimer = setTimeout(() => {
+                    this.connectWebSocket(url);
+                }, 5000);
+            }
         };
-
 
         this.ws.onmessage = async (event) => {
             if (this.stopFlag) return;
@@ -61,8 +95,6 @@ export class RemoteProvider implements Provider {
                 }
             }
         };
-
-        return Promise.resolve();
     }
 
     publishOnChange(): void {
@@ -71,28 +103,43 @@ export class RemoteProvider implements Provider {
     }
 
     getResources(): LogFile[] {
+        const androidLogFile = new SimpleLogFile(new File([], ""), "ws://127.0.0.1:8005/ws", 0, "notConnected", false);
+        androidLogFile.isRemoteMode = true;
+        androidLogFile.name = "默认设备";
+        androidLogFile.desc = "默认设备日志";
+
+        if (this.ws && this.ws.readyState === WebSocket.OPEN) {
+            androidLogFile.status = "isConnected";
+        } else {
+            // html片段的帮助内容，引导至/docs/index.html
+            const helpContent = `未找到设备, <a href="docs/index.html" target="_blank">查看文档</a>获取帮助`;
+            androidLogFile.status = "notConnected";
+            androidLogFile.desc = helpContent;
+        }
+
         return [
-            {
-                rawFile: new File([], ""),
-                path: "ws://127.0.0.1:8005/ws",
-                size: 0,
-                status: "extracted",
-                isLogFile: false
-            }
+            androidLogFile
         ];
     }
     async useResource(resource: LogFile): Promise<void> {
         console.log("useResource", resource);
-        // await this.setup(resource);
-        this.publishOnChange();
+        if (resource.isRemoteMode && resource.path) {
+            await this.connectWebSocket(resource.path);
+        }
     }
     async useFilter(search: string): Promise<void> {
         await this.rpcCall('useFilter', { search });
     }
     async getTotalLineCount(): Promise<number> {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            return 0;
+        }
         return await this.rpcCall('getTotalLineCount', {});
     }
     async getFilteredLineCount(): Promise<number> {
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            return 0;
+        }
         return await this.rpcCall('getFilteredLineCount', {});
     }
     async getLine(index: number): Promise<BaseLine> {
