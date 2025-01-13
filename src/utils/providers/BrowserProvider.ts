@@ -73,7 +73,17 @@ export class BrowserProvider implements Provider {
     async useFilter(search: string): Promise<void> {
        this.currentFilter = search
 
-       const regex = new RegExp(search, 'g'); // TODO 
+        let tmpPatterns = search.split('|');
+        // 为了提高，确保性能确保所有以.*，.+ 开头的模式都在最前面加上^
+        tmpPatterns = tmpPatterns.map(pattern => {
+            if (pattern.startsWith('.*') || pattern.startsWith('.+')) {
+                return `^${pattern}`;
+            }
+            return pattern;
+        });
+        const finalSearch = tmpPatterns.join('|');
+
+        const regex = new RegExp(finalSearch, 'g'); // TODO 
        this.filteredLines = this.allLines.filter(line => {
         regex.lastIndex = 0;
         return regex.test(line.content);
