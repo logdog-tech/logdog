@@ -30,12 +30,25 @@
     <pre id="markdown-content">
 # LogDog使用手册
 
-## 如何访问Android Logcat日志?
+## 1. 如何访问Android Logcat日志?
 
-你可以通过以下命令，一键访问Android Logcat日志：
-```
-adb logcat | bash <(curl -sSL logdog.tech)
-``` 
+> 你可以通过“管道日志”来实时查看Android Logcat日志
+
+### 1.1. 环境准备
+
+**1.1.1 安装Python环境**
+
+> 本功能依赖python3环境
+
+**1.1.2 安装fastapi和uvicorn库**
+
+> pip install fastapi uvicorn
+
+### 1.2. 使用方法
+
+> 终端执行以下命令一键访问Android Logcat日志
+
+> adb logcat | bash <(curl -sSL logdog.tech)
 
 </pre>
 </body>
