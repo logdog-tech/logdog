@@ -280,11 +280,49 @@ export default defineComponent({
             }
         },
         async searchLogs(currentTerm: string) {
+            const previousLine = this.selectedline;  // Store current line
             this.searchTerm = currentTerm;
             console.log("Searching for:", this.searchTerm);
 
             await proxyProvider.useFilter(this.searchTerm);
             const logSearchView = this.$refs.logSearchView as LogViewRef;
+
+            // 重新搜索后，使用二分法找到最近的匹配项
+            if (previousLine >= 0) {
+                const count = await proxyProvider.getFilteredLineCount();
+                if (count > 0) {
+                    let left = 0;
+                    let right = count - 1;
+                    let nearestIndex = 0;
+                    let nearestDiff = Number.MAX_VALUE;
+
+                    while (left <= right) {
+                        const mid = Math.floor((left + right) / 2);
+                        const item = await proxyProvider.getFilteredLine(mid);
+                        const diff = Math.abs(item.line - previousLine);
+
+                        if (diff < nearestDiff) {
+                            nearestDiff = diff;
+                            nearestIndex = mid;
+                        }
+
+                        if (item.line === previousLine) {
+                            break;
+                        } else if (item.line < previousLine) {
+                            left = mid + 1;
+                        } else {
+                            right = mid - 1;
+                        }
+                    }
+
+                    const nearestItem = await proxyProvider.getFilteredLine(nearestIndex);
+                    this.selectedline = nearestItem.line;
+                    this.animationKey++;
+                    logSearchView.scrollToIndex(nearestIndex - 4);
+                    return;
+                }
+            }
+
             logSearchView.scrollToTop();
             logSearchView.flush();
         },
