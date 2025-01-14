@@ -1,6 +1,6 @@
 <template>
     <div class="wrapper" ref="wrapper" @keydown="handleKeyDown" tabindex="0">
-        <div class="content-viewport" ref="viewport" @scroll="handleHorizontalScroll" @mousedown="handleMouseDown" @copy="handleCopy">
+        <div class="content-viewport" ref="viewport" @scroll="handleHorizontalScroll" @mousedown="handleMouseDown" @copy="handleCopy" @contextmenu="handleContextMenu">
             <div class="content-area" ref="contentArea">
                 <div v-for="i in visibleItems" :key="i.index" class="item"
                     :style="{ transform: `translateY(${i.top}px)` }">
@@ -12,6 +12,27 @@
         </div>
         <div class="fake-scrollbar" ref="fakeScrollbar">
             <div class="fake-thumb" ref="fakeThumb"></div>
+        </div>
+    </div>
+    <div v-if="showContextMenu" class="context-menu" :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }" @mousedown.stop>
+        <div class="context-menu-item" @click="handleCopy">
+            <span class="menu-icon">📋</span>
+            复制
+            <span class="shortcut">⌘C</span>
+        </div>
+        <div class="context-menu-item" @click="selectAll">
+            <span class="menu-icon">☑️</span>
+            全选
+            <span class="shortcut">⌘A</span>
+        </div>
+        <div class="menu-divider"></div>
+        <div class="context-menu-item" @click="exportSelectedLogs">
+            <span class="menu-icon">📥</span>
+            导出选中日志
+        </div>
+        <div class="context-menu-item" @click="scrollToSelection">
+            <span class="menu-icon">🔍</span>
+            定位到选中行
         </div>
     </div>
 </template>
@@ -61,8 +82,11 @@ export default defineComponent({
             items: [] as Array<{ index: number; item: any; top: number }>,
             selectionStart: -1,
             selectionEnd: -1,
-            selectionAnchor: -1, // 添加选择锚点
+            selectionAnchor: -1,
             isSelecting: false,
+            showContextMenu: false,
+            contextMenuX: 0,
+            contextMenuY: 0,
         };
     },
     computed: {
@@ -179,7 +203,7 @@ export default defineComponent({
         },
         scrollToIndex(index: number) {
             const offset = index * this.ITEM_HEIGHT;
-            this.userLockedToBottom = false; // 添加这一行，取消底部跟随
+            this.userLockedToBottom = false;
             this.setScrollOffset(offset);
         },
         updateScrollbar() {
@@ -294,6 +318,11 @@ export default defineComponent({
             });
         },
         handleMouseDown(e: MouseEvent) {
+            // 如果是右键点击，不处理任何选择逻辑
+            if (e.button === 2) {
+                return;
+            }
+
             const rect = this.refs.viewport.getBoundingClientRect();
             const y = e.clientY - rect.top + this.refs.viewport.scrollTop;
             const index = Math.floor((y + this.scrollOffsetPx) / this.ITEM_HEIGHT);
@@ -365,13 +394,9 @@ export default defineComponent({
         handleKeyDown(e: KeyboardEvent) {
             if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
                 e.preventDefault();
-                const selection = window.getSelection();
-                if (!selection) return;
-
-                const range = document.createRange();
-                range.selectNodeContents(this.refs.contentArea);
-                selection.removeAllRanges();
-                selection.addRange(range);
+                this.selectionStart = 0;
+                this.selectionEnd = this.totalCount - 1;
+                this.selectionAnchor = 0;
             }
             if (e.key === 'c' && (e.ctrlKey || e.metaKey)) {
                 this.handleCopy(e);
@@ -441,6 +466,84 @@ export default defineComponent({
             const newScrollOffset = scrollRatio * this.maxScrollPx;
 
             this.setScrollOffset(newScrollOffset);
+        },
+        async handleContextMenu(e: MouseEvent) {
+            e.preventDefault();
+
+            // 使用鼠标相对于页面的位置
+            this.contextMenuX = e.pageX;
+            this.contextMenuY = e.pageY;
+
+            const rect = this.refs.viewport.getBoundingClientRect();
+            const clickY = e.clientY + this.refs.viewport.scrollTop - rect.top;
+            const clickedIndex = Math.floor(clickY / this.ITEM_HEIGHT);
+
+            if (clickedIndex >= 0 && clickedIndex < this.totalCount) {
+                // 检查点击的行是否在选中范围内
+                const isClickedLineSelected = this.isItemSelected(clickedIndex);
+                if (!isClickedLineSelected) {
+                    // 如果点击的不是选中行，重置选择状态
+                    this.selectionStart = clickedIndex;
+                    this.selectionEnd = clickedIndex;
+                    this.selectionAnchor = clickedIndex;
+                }
+            }
+
+            this.showContextMenu = true;
+
+            const closeMenu = () => {
+                this.showContextMenu = false;
+                document.removeEventListener('click', closeMenu);
+            };
+            setTimeout(() => {
+                document.addEventListener('click', closeMenu);
+            }, 0);
+        },
+
+        async exportSelectedLogs() {
+            if (this.selectionStart === -1 || this.selectionEnd === -1) return;
+            
+            const start = Math.min(this.selectionStart, this.selectionEnd);
+            const end = Math.max(this.selectionStart, this.selectionEnd);
+            
+            try {
+                const logs = [];
+                for (let i = start; i <= end; i++) {
+                    const item = await this.dataSource.getItem(i);
+                    if (item && typeof item === 'object' && 'contentKey' in item) {
+                        logs.push(item.contentKey);
+                    } else {
+                        logs.push(String(item));
+                    }
+                }
+                
+                const content = logs.join('\n');
+                const blob = new Blob([content], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+                a.download = `logs_${start}_to_${end}_${timestamp}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error('导出日志失败:', error);
+            }
+        },
+        selectAll() {
+            this.selectionStart = 0;
+            this.selectionEnd = this.totalCount - 1;
+            this.selectionAnchor = 0;
+            this.showContextMenu = false;
+        },
+
+        scrollToSelection() {
+            if (this.selectionStart === -1 || this.selectionEnd === -1) return;
+            const targetIndex = this.selectionStart;
+            this.scrollToIndex(targetIndex);
+            this.showContextMenu = false;
         },
         validateScrollPosition() {
             const totalHeight = this.totalCount * this.ITEM_HEIGHT;
@@ -609,5 +712,49 @@ export default defineComponent({
 .wrapper .content-viewport .content-area .item.selected {
     background-color: rgba(0, 122, 255, 0.1) !important;
     z-index: 1;
+}
+
+.context-menu {
+    position: fixed;
+    background: white;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    padding: 6px 0;
+    min-width: 200px;
+    font-size: 13px;
+    color: #333;
+    user-select: none;
+}
+
+.context-menu-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    transition: background-color 0.2s;
+}
+
+.context-menu-item:hover {
+    background-color: #f5f7fa;
+}
+
+.menu-icon {
+    margin-right: 8px;
+    width: 16px;
+    text-align: center;
+}
+
+.shortcut {
+    margin-left: auto;
+    color: #999;
+    font-size: 12px;
+}
+
+.menu-divider {
+    height: 1px;
+    background-color: #eee;
+    margin: 4px 0;
 }
 </style>
