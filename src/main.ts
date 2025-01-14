@@ -10,6 +10,8 @@ import router from './router'
 import Aura from '@primevue/themes/aura';
 import { definePreset } from '@primevue/themes'
 
+import ToastService from 'primevue/toastservice';
+
 
 const app = createApp(App)
 
@@ -40,5 +42,6 @@ app.use(PrimeVue, {
     preset: MyPreset,
   },
 })
+app.use(ToastService);
 
 app.mount('#app')

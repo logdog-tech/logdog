@@ -4,7 +4,7 @@
             <div class="h-full flex flex-col">
                 <HugeList ref="logFullView" class="border border-surface-200 dark:border-surface-700 rounded m-[4px]"
                     :dataSource="dataSource">
-                    <template #default="{ item, index }">
+                    <template #default="{ isSelected, item, index }">
                         <div class="log-item" :class="[
     'flex items-center',
     { 'glow-border': item.line === selectedline },
@@ -12,7 +12,11 @@
 ]">
                             <div v-if="item.line === selectedline" :key="animationKey" class="border-animation" />
                             <div class="line-number" contenteditable="false" v-html="item.line" />
-                            <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
+                            <div class="content-wrapper relative">
+                                <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
+                                <div class="content-overlay absolute inset-0"
+                                    :class="{ 'content-selected': isSelected }"></div>
+                            </div>
                         </div>
                     </template>
                 </HugeList>
@@ -24,15 +28,19 @@
 
                 <HugeList class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px]"
                     style="flex-grow: 1; overflow: hidden;" ref="logSearchView" :dataSource="searchDataSource">
-                    <template #default="{ item, index }">
+                    <template #default="{ isSelected, item, index }">
                         <div class="log-item" @click="onClickSearchItem(item, index)" :class="[
                             'flex items-center',
-                            { 'glow-border': item.line === selectedline },
+    { 'glow-border': item.line === selectedline },
                             { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
                         ]">
                             <div v-if="item.line === selectedline" :key="animationKey" class="border-animation" />
                             <div class="line-number" contenteditable="false" v-html="item.line" />
-                            <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
+                            <div class="content-wrapper relative">
+                                <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
+                                <div class="content-overlay absolute inset-0"
+                                    :class="{ 'content-selected': isSelected }"></div>
+                            </div>
                         </div>
                     </template>
                 </HugeList>
@@ -412,9 +420,22 @@ export default defineComponent({
     user-select: none;
 }
 
+.content-wrapper {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+}
+
 .content {
-    overflow-x: auto;
-    flex-grow: 1;
-    padding-left: 4px;
+    padding: 2px 8px;
+}
+
+.content-overlay {
+    pointer-events: none;
+    z-index: 1;
+}
+
+.content-overlay.content-selected {
+    background-color: rgba(0, 0, 0, 0.1);
 }
 </style>

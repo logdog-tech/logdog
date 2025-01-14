@@ -1,10 +1,10 @@
 <template>
     <div class="wrapper" ref="wrapper" @keydown="handleKeyDown" tabindex="0">
-        <div class="content-viewport" ref="viewport" @scroll="handleHorizontalScroll">
+        <div class="content-viewport" ref="viewport" @scroll="handleHorizontalScroll" @mousedown="handleMouseDown" @copy="handleCopy">
             <div class="content-area" ref="contentArea">
                 <div v-for="i in visibleItems" :key="i.index" class="item"
                     :style="{ transform: `translateY(${i.top}px)` }">
-                    <slot :item="i.item" :index="i.index">
+                    <slot :isSelected="isItemSelected(i.index)" :item="i.item" :index="i.index">
                         {{ i.item }}
                     </slot>
                 </div>
@@ -59,6 +59,10 @@ export default defineComponent({
             userLockedToBottom: true,
             totalCount: 0,
             items: [] as Array<{ index: number; item: any; top: number }>,
+            selectionStart: -1,
+            selectionEnd: -1,
+            selectionAnchor: -1, // 添加选择锚点
+            isSelecting: false,
         };
     },
     computed: {
@@ -289,6 +293,75 @@ export default defineComponent({
                 }
             });
         },
+        handleMouseDown(e: MouseEvent) {
+            const rect = this.refs.viewport.getBoundingClientRect();
+            const y = e.clientY - rect.top + this.refs.viewport.scrollTop;
+            const index = Math.floor((y + this.scrollOffsetPx) / this.ITEM_HEIGHT);
+
+            if (!e.shiftKey) {
+                this.selectionStart = index;
+                this.selectionEnd = -1;
+                this.selectionAnchor = -1;
+            }
+            
+            if (index >= 0 && index < this.totalCount) {
+                // 记录初始点击位置
+                const initialY = y;
+                
+                if (e.shiftKey && this.selectionStart !== -1) {
+                    // Shift 键选择的逻辑保持不变
+                    if (this.selectionAnchor === -1) {
+                        this.selectionAnchor = this.selectionStart;
+                    }
+                    if (Math.abs(index - this.selectionAnchor) < Math.abs(this.selectionEnd - this.selectionAnchor)) {
+                        this.selectionEnd = this.selectionAnchor;
+                        this.selectionStart = index;
+                    } else {
+                        this.selectionStart = this.selectionAnchor;
+                        this.selectionEnd = index;
+                    }
+                    this.isSelecting = true;
+                    // 跨行选择时禁用默认文本选择
+                    e.preventDefault();
+                } else {
+                    // 普通点击，先不设置选择范围，等待可能的拖动
+                    this.selectionAnchor = index;
+                }
+
+                const handleMouseMove = (e: MouseEvent) => {
+                    const currentY = e.clientY - rect.top + this.refs.viewport.scrollTop;
+                    const currentIndex = Math.floor((currentY + this.scrollOffsetPx) / this.ITEM_HEIGHT);
+
+                    // 只有在跨行时才启用自定义选择
+                    if (currentIndex !== index) {
+                        // 如果开始跨行，禁用默认文本选择
+                        document.body.style.userSelect = 'none';
+                        this.isSelecting = true;
+                        this.selectionStart = Math.min(index, currentIndex);
+                        this.selectionEnd = Math.max(index, currentIndex);
+                    }
+                };
+
+                const handleMouseUp = () => {
+                    // 恢复默认文本选择
+                    document.body.style.userSelect = '';
+                    this.isSelecting = false;
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+
+                    // 如果没有跨行，清除选择状态
+                    if (this.selectionStart === this.selectionEnd) {
+                        this.selectionStart = -1;
+                        this.selectionEnd = -1;
+                        this.selectionAnchor = -1;
+                    }
+                };
+
+                document.addEventListener('mousemove', handleMouseMove);
+                document.addEventListener('mouseup', handleMouseUp);
+            }
+        },
+
         handleKeyDown(e: KeyboardEvent) {
             if ((e.metaKey || e.ctrlKey) && e.key === 'a') {
                 e.preventDefault();
@@ -300,6 +373,58 @@ export default defineComponent({
                 selection.removeAllRanges();
                 selection.addRange(range);
             }
+            if (e.key === 'c' && (e.ctrlKey || e.metaKey)) {
+                this.handleCopy(e);
+            }
+        },
+
+        isItemSelected(index: number) {
+            // 只在有效的选择范围时返回true
+            if (this.selectionStart === -1 || this.selectionEnd === -1) {
+                return false;
+            }
+            const start = Math.min(this.selectionStart, this.selectionEnd);
+            const end = Math.max(this.selectionStart, this.selectionEnd);
+            return index >= start && index <= end;
+        },
+
+        async handleCopy(e: Event) {
+            // 如果有自定义选择范围，处理多行复制
+            if (this.selectionStart !== -1 && this.selectionEnd !== -1) {
+                e.preventDefault();
+                const start = Math.min(this.selectionStart, this.selectionEnd);
+                const end = Math.max(this.selectionStart, this.selectionEnd);
+                
+                // 检查选中的行数
+                const selectedLines = end - start + 1;
+                if (selectedLines > 10000) {
+                    console.warn('选中内容超过10000行，请使用导出功能复制');
+
+                    // 使用 ElMessage 显示警告
+                    this.$toast.add({ severity: 'error', summary: '提示', detail: '选中内容超过10000行，请使用导出功能复制', life: 3000 });
+
+                    return;
+                }
+
+                try {
+                    const selectedContent = [];
+                    for (let i = start; i <= end; i++) {
+                        const item = await this.dataSource.getItem(i);
+                        // 如果item是对象，获取其显示文本
+                        const text = typeof item === 'object' ? 
+                            (item.text || item.content || item.toString() || JSON.stringify(item)) : 
+                            String(item);
+                        selectedContent.push(text);
+                    }
+                    
+                    await navigator.clipboard.writeText(selectedContent.join('\n'));
+                    console.log('Copied multi-line content:', selectedContent.length, 'lines');
+                } catch (err) {
+                    console.error('Failed to copy multi-line content:', err);
+                    this.$toast.add({ severity: 'error', summary: '提示', detail: '复制失败，请重试', life: 3000 });
+                }
+            }
+            // 否则让浏览器处理默认的复制行为
         },
         handleTrackClick(e: MouseEvent) {
             if (e.target === this.refs.fakeThumb) return;
@@ -384,149 +509,105 @@ export default defineComponent({
     width: 100%;
     height: 100%;
     outline: none;
+    border: 1px solid #ccc;
+    overflow: hidden;
+    min-width: 80px;
+    /* 移除聚焦时的默认边框 */
 }
 
 .content-viewport {
-    width: 100%;
-    height: 100%;
-    overflow-x: auto;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 16px;
+    bottom: 0;
+    overflow-x: scroll;
     overflow-y: hidden;
 }
 
 .content-area {
     position: relative;
-    min-height: 100%;
-}
-
-.item {
-    position: absolute;
-    width: 100%;
-    height: 18px;
-    left: 0;
+    min-width: 100%;
+    height: 100%;
 }
 
 .fake-scrollbar {
     position: absolute;
-    top: 0;
     right: 0;
-    width: 14px;
+    top: 0;
+    width: 16px;
     height: 100%;
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 7px;
+    background-color: transparent;
+    border-left: none;
+    transition: background-color 0.2s;
+}
+
+.fake-scrollbar:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+    /* 悬停时显示轨道 */
 }
 
 .fake-thumb {
     position: absolute;
     top: 0;
-    width: 100%;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 7px;
+    left: 3px;
+    width: 10px;
+    height: 80px;
+    min-height: 40px;
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 20px;
     cursor: pointer;
+    transition: all 0.2s ease;
 }
 
-.fake-thumb:hover {
-    background: rgba(0, 0, 0, 0.5);
+.fake-thumb:hover,
+.fake-thumb:active {
+    background-color: rgba(0, 0, 0, 0.25);
+    width: 12px;
+    left: 2px;
 }
-</style>
-<style scoped>
-.wrapper {
-    position: relative;
-        border: 1px solid #ccc;
-        overflow: hidden;
-        min-width: 80px;
-        height: 100%;
-        outline: none;
-        /* 移除聚焦时的默认边框 */
-    }
-    
-    .content-viewport {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 16px;
-        bottom: 0;
-        overflow-x: scroll;
-        /* 改为 scroll 确保始终显示横向滚动条 */
-        overflow-y: hidden;
-    }
-    
-    .content-area {
-        position: relative;
-        min-width: 100%;
-        height: 100%;
-    }
-    
-    .fake-scrollbar {
-        position: absolute;
-        right: 0;
-        top: 0;
-        width: 16px;
-        height: 100%;
-        background-color: transparent;
-        border-left: none;
-        transition: background-color 0.2s;
-    }
-    
-    .fake-scrollbar:hover {
-        background-color: rgba(0, 0, 0, 0.03);
-        /* 悬停时显示轨道 */
-    }
-    
-    .fake-thumb {
-        position: absolute;
-        top: 0;
-        left: 3px;
-        width: 10px;
-        height: 80px;
-            min-height: 40px;
-        background-color: rgba(0, 0, 0, 0.15);
-        border-radius: 20px;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-    
-    .fake-thumb:hover,
-    .fake-thumb:active {
-        background-color: rgba(0, 0, 0, 0.25);
-        width: 12px;
-        left: 2px;
-    }
-    
-    /* 横向滚动条样式 */
-    .content-viewport::-webkit-scrollbar {
-        height: 16px;
-    }
-    
-    .content-viewport::-webkit-scrollbar-track {
-        background: transparent;
-    }
-    
-    .content-viewport::-webkit-scrollbar-track:hover {
-        background: rgba(0, 0, 0, 0.03);
-    }
-    
-    .content-viewport::-webkit-scrollbar-thumb {
-        background-color: rgba(0, 0, 0, 0.15);
-        border-radius: 20px;
-        border: 4px solid transparent;
-        background-clip: padding-box;
-        min-width: 60px;
-    }
-    
-    .content-viewport::-webkit-scrollbar-thumb:hover {
-        background-color: rgba(0, 0, 0, 0.25);
-        border: 4px solid transparent;
-    }
-    
-    /* 每条数据样式 */
-    .item {
-        position: absolute;
-        left: 0;
-        height: 18px;
-        box-sizing: border-box;
-        white-space: nowrap;
-        padding: 0 4px;
-        width: fit-content;
-        min-width: 100%;
+
+/* 横向滚动条样式 */
+.content-viewport::-webkit-scrollbar {
+    height: 16px;
+}
+
+.content-viewport::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.content-viewport::-webkit-scrollbar-track:hover {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+.content-viewport::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.15);
+    border-radius: 20px;
+    border: 4px solid transparent;
+    background-clip: padding-box;
+    min-width: 60px;
+}
+
+.content-viewport::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.25);
+    border: 4px solid transparent;
+}
+
+/* 每条数据样式 */
+.item {
+    position: absolute;
+    left: 0;
+    height: 18px;
+    box-sizing: border-box;
+    white-space: nowrap;
+    padding: 0 4px;
+    width: fit-content;
+    min-width: 100%;
+}
+
+/* 增加选中样式的优先级 */
+.wrapper .content-viewport .content-area .item.selected {
+    background-color: rgba(0, 122, 255, 0.1) !important;
+    z-index: 1;
 }
 </style>
