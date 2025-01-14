@@ -168,10 +168,10 @@ export class BrowserProvider implements Provider {
                         logFile!.status = "extracting";
                         this.publishOnChange();
                     },
-                    onExtractFile: (path: string, data: ArrayBuffer) => {
+                    onExtractFile: async (path: string, data: ArrayBuffer) => {
                         const logFile = this.files.find(f => f.path === path);
 
-                        this.appendToLines(logFile!, rawFile as ExtendedFile, path, new Uint8Array(data));
+                        await this.appendToLines(logFile!, rawFile as ExtendedFile, path, new Uint8Array(data));
                     }
                 };
                 await handler.processArchiveWithCallbacks(rawFile, path => !isLogFile(path), archiveCallback, rawFile.path);
@@ -199,7 +199,7 @@ export class BrowserProvider implements Provider {
         for (const logFile of waitContinueExtract) {
             logFile.status = "extracting";
             const binaryData = await new Uint8Array(await logFile.rawFile.arrayBuffer());
-            this.appendToLines(logFile, logFile.rawFile as ExtendedFile, logFile.rawFile.name, binaryData);
+            await this.appendToLines(logFile, logFile.rawFile as ExtendedFile, logFile.rawFile.name, binaryData);
             logFile.status = "extracted";
             this.publishOnChange();
         }
