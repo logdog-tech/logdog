@@ -11,6 +11,31 @@ import Aura from '@primevue/themes/aura';
 import { definePreset } from '@primevue/themes'
 
 import ToastService from 'primevue/toastservice';
+import { Tolgee, DevTools, VueTolgee, FormatSimple, DevBackend, ObserverPlugin, BackendFetch, LanguageStorage, LanguageDetector } from '@tolgee/vue';
+
+
+const languageCodes = {
+    priority1: ['en', 'zh-CN', 'ja', 'hi'],
+    priority2: ['ru', 'de', 'fr', 'es', 'pt-BR'],
+    priority3: ['it', 'pl', 'ko', 'zh-TW']
+};
+const allLanguageCodes = [...languageCodes.priority1, ...languageCodes.priority2, ...languageCodes.priority3];
+
+
+const tolgee = Tolgee()
+    .use(DevTools())
+    .use(FormatSimple())
+    .use(BackendFetch())
+    .use(ObserverPlugin())
+    .use(LanguageDetector())
+    .use(LanguageStorage())
+    .init({
+        // language: 'zh',
+        availableLanguages: allLanguageCodes,
+        defaultLanguage: 'en',
+        fallbackLanguage: 'en'
+    });
+
 
 
 const app = createApp(App)
@@ -43,5 +68,6 @@ app.use(PrimeVue, {
   },
 })
 app.use(ToastService);
+app.use(VueTolgee, { tolgee });
 
 app.mount('#app')

@@ -17,6 +17,7 @@
   "dependencies": {
     "@js-temporal/polyfill": "^0.4.4",
     "@primevue/themes": "^4.2.1",
+    "@tolgee/vue": "^6.0.0",
     "@vueuse/core": "^10.9.0",
     "date-fns": "^4.1.0",
     "date-parser": "file:wasm/pkg",
