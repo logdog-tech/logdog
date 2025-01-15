@@ -87,7 +87,9 @@ export default defineComponent({
 
         handleConfigChanged(config: Rule[]) {
             this.filters = config.filter(rule => rule.rule_type === 'filter');
-            this.colors = config.filter(rule => rule.rule_type === 'color');
+            const colors = config.filter(rule => rule.rule_type === 'color');
+            colors.sort((a, b) => b.id - a.id); // 确保排序是最后创建的最后被应用，以避免被覆盖
+            this.colors = colors;
             this.functions = config.filter(rule => rule.rule_type === 'function');
 
             console.log('======filters', this.filters);
