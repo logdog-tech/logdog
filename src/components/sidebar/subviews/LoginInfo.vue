@@ -11,8 +11,8 @@
                 <div class="text-xs text-gray-500 max-w-[120px] truncate">{{ userInfo?.email }}</div>
             </template>
             <template v-else>
-                <div class="text-sm">未登录</div>
-                <div class="text-xs text-gray-500 max-w-[140px] truncate">登录后可使用更多功能</div>
+                <div class="text-sm">{{ $t('loginInfo.notLoggedIn') }}</div>
+                <div class="text-xs text-gray-500 max-w-[140px] truncate">{{ $t('loginInfo.moreFeatures') }}</div>
             </template>
         </div>
         <div>

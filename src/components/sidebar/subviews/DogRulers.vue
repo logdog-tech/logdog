@@ -135,9 +135,9 @@ export default {
         return {
             activeTab: 'filter',
             tabs: [
-                { label: '过滤', value: 'filter' },
-                { label: '颜色', value: 'color' },
-                { label: '函数', value: 'function' }
+                { label: this.$t('dogRulers.filter'), value: 'filter' },
+                { label: this.$t('dogRulers.color'), value: 'color' },
+                { label: this.$t('dogRulers.function'), value: 'function' }
             ],
             rules: [] as Rule[]
         }

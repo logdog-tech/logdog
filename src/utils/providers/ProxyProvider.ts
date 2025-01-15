@@ -19,11 +19,11 @@ class ProxyProvider implements Provider {
     availableProviders(): NamedPrivider[] {
         return [
             {
-                name: "文件日志",
+                name: "fileLog",
                 provider: browserProvider
             },
             {
-                name: "管道日志",
+                name: "pipeLog",
                 provider: remoteProvider
             }
         ];

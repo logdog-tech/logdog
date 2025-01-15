@@ -1,13 +1,13 @@
 <template>
     <div class="widget" :style="{ 'width': isExpanded ? '100%' : 'unset' }">
         <div class="widget-sider" @click="toggleExpand" >
-            <slot name="header">标题</slot>
+            <slot name="header">$t('widget.header')</slot>
         </div>
         <div class="widget-header" v-show="isExpanded">
-            <slot name="header">标题</slot>
+            <slot name="header">$t('widget.header')</slot>
         </div>
         <div class="widget-content" v-show="isExpanded">
-            <slot name="content">内容</slot>
+            <slot name="content">$t('widget.content')</slot>
         </div>
     </div>
     <div class="divider"></div>

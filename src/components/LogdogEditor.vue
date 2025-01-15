@@ -45,7 +45,7 @@
                     </template>
                 </HugeList>
                 <div class="bottom-status-bar">
-                    共计 {{ totalCount }} 行，找到 {{ searchCount }} 行
+                    {{ $t('logdogEditor.totalCount', { totalCount, searchCount }) }}
                 </div>
             </div>
         </SplitterPanel>

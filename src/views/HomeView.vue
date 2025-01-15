@@ -24,7 +24,7 @@
     <div v-if="!showSidebar" class="fixed top-0 left-0" @click="onToggleSidebar"><i
             class="pi pi-bars m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md"
             style="font-size: 16px;"></i></div>
-</template>¡
+</template>
 
 <script lang="ts">
 import DataProvider from "../components/DataProvider.vue";
@@ -71,7 +71,7 @@ export default defineComponent({
         createLocalTmpUser() {
             return {
                 id: -1,
-                nickname: '未登录用户',
+                nickname: this.$t('homeView.nickname'),
             } as User;
         },
         handleLoginStatusChanged(isLoggedIn: boolean, user: User) {
@@ -97,7 +97,7 @@ export default defineComponent({
             (this.$refs.logdogEditorRef as any)?.handleUserToggleItems(item.rule_type, item);
         },
         handleDogfileSelected(dogfile: string) {
-            console.log("🕘handleDogfileSelected", dogfile);
+            console.log("handleDogfileSelected", dogfile);
             this.selectedDogfile = dogfile;
         },
         onToggleSidebar() {

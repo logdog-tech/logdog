@@ -17,22 +17,22 @@
     <div v-if="showContextMenu" class="context-menu" :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }" @mousedown.stop>
         <div class="context-menu-item" @click="handleCopy">
             <span class="menu-icon">📋</span>
-            复制
+            {{$t('hugeList.copy')}}
             <span class="shortcut">⌘C</span>
         </div>
         <div class="context-menu-item" @click="selectAll">
             <span class="menu-icon">☑️</span>
-            全选
+            {{$t('hugeList.selectAll')}}
             <span class="shortcut">⌘A</span>
         </div>
         <div class="menu-divider"></div>
         <div class="context-menu-item" @click="exportSelectedLogs">
             <span class="menu-icon">📥</span>
-            导出选中日志
+            {{$t('hugeList.exportLogs')}}
         </div>
         <div class="context-menu-item" @click="scrollToSelection">
             <span class="menu-icon">🔍</span>
-            定位到选中行
+            {{$t('hugeList.locateRow')}}
         </div>
     </div>
 </template>
@@ -426,7 +426,7 @@ export default defineComponent({
                     console.warn('选中内容超过10000行，请使用导出功能复制');
 
                     // 使用 ElMessage 显示警告
-                    this.$toast.add({ severity: 'error', summary: '提示', detail: '选中内容超过10000行，请使用导出功能复制', life: 3000 });
+                    this.$toast.add({ severity: 'error', summary: $t('hugeList.error'), detail: $t('hugeList.copyFail'), life: 3000 });
 
                     return;
                 }
@@ -446,7 +446,7 @@ export default defineComponent({
                     console.log('Copied multi-line content:', selectedContent.length, 'lines');
                 } catch (err) {
                     console.error('Failed to copy multi-line content:', err);
-                    this.$toast.add({ severity: 'error', summary: '提示', detail: '复制失败，请重试', life: 3000 });
+                    this.$toast.add({ severity: 'error', summary: $t('hugeList.error'), detail: $t('hugeList.copyFail'), life: 3000 });
                 }
             }
             // 否则让浏览器处理默认的复制行为

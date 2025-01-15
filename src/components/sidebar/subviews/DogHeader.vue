@@ -4,13 +4,13 @@
             <div @click="toggleFileMode"><i :class="{'pi-folder-open': isSelectedFileMode, 'pi-folder': !isSelectedFileMode, 'bg-gray-200': isSelectedFileMode}" class="pi m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md" style="font-size: 16px;"></i></div>
             <div class="text-lg font-bold text-gray-800">
                 <span @click="isOpen = !isOpen" :class="{'bg-gray-200': isOpen}" class="hover:cursor-pointer hover:bg-gray-200 rounded-md p-2">
-                    <span>{{ currentWorkspace.workspace_name || '选择工作区' }}</span>
+                    <span>{{ currentWorkspace.workspace_name || $t('dogHeader.selectWorkspace') }}</span>
                     <i class="pi pi-chevron-down p-2"></i>
                 </span>
             </div>
             <div v-if="currentWorkspace.id && !currentWorkspace._is_local" 
                  @click="showMemberManagement"
-                 title="管理成员">
+                 :title="$t('dogHeader.manageMembers')">
                 <i class="pi pi-users m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md" 
                    style="font-size: 16px;"></i>
             </div>
@@ -25,7 +25,7 @@
         <div v-if="isOpen" class="absolute bg-white shadow-lg rounded-md mt-2 w-64 z-50 ml-4 border border-gray-200">
             <div class="p-2">
                 <button @click="createWorkspace" class="w-full text-left p-2 hover:bg-gray-100 rounded-md">
-                    <i class="pi pi-plus mr-2"></i>新建工作区
+                    <i class="pi pi-plus mr-2"></i>{{ $t('dogHeader.newWorkspace') }}
                 </button>
             </div>
             <div v-for="workspace in myWorkspaces" :key="workspace.id" class="p-2 flex justify-between items-center">
@@ -35,7 +35,7 @@
                 <i v-if="canDeleteWorkspace(workspace)" 
                    @click="deleteWorkspace(workspace)" 
                    class="pi pi-trash p-2 hover:bg-gray-100 rounded-md cursor-pointer"
-                   title="删除工作区"></i>
+                   :title="$t('dogHeader.deleteWorkspace')"></i>
             </div>
         </div>
 
@@ -43,7 +43,7 @@
         <div v-if="showMemberDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div class="bg-white rounded-lg p-6 w-[480px]">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold">成员管理</h3>
+                    <h3 class="text-xl font-bold">{{ $t('dogHeader.memberManagement') }}</h3>
                     <button @click="showMemberDialog = false" 
                             class="text-gray-500 hover:text-gray-700">
                         <i class="pi pi-times text-lg"></i>
@@ -57,7 +57,7 @@
                             <i class="pi pi-search text-gray-400 mx-3"></i>
                             <input v-model="searchQuery" 
                                    type="text" 
-                                   placeholder="输入 UID、昵称或邮箱搜索"
+                                   :placeholder="$t('dogHeader.searchPlaceholder')"
                                    @input="handleSearch"
                                    class="flex-1 p-3 outline-none border-none">
                         </div>
@@ -93,17 +93,14 @@
                 <div class="mt-4">
                     <button @click="generateInvitation" 
                             class="flex items-center px-4 py-2 text-sm text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100">
-                        <i class="pi pi-link mr-2"></i>
-                        生成邀请链接
+                        <i class="pi pi-link mr-2"></i>{{ $t('dogHeader.generateInviteLink') }}
                     </button>
                 </div>
                 
                 <!-- 显示邀请链接 -->
                 <div v-if="invitationLink" class="mt-2 p-4 bg-gray-50 rounded-md">
                     <div class="flex items-center justify-between">
-                        <div class="text-sm text-gray-600">
-                            邀请链接 (7天内有效):
-                        </div>
+                        <div class="text-sm text-gray-600">{{ $t('dogHeader.inviteLinkValid') }}</div>
                         <button @click="copyInvitationLink" 
                                 class="text-blue-600 hover:text-blue-800">
                             <i class="pi pi-copy"></i>
@@ -133,7 +130,7 @@
                             </div>
                             <div>
                                 <div class="font-medium">
-                                    {{ member.nickname || `用户${member.user_id}` }}
+                                    {{ member.nickname || $t('dogHeader.localWorkspace') }}
                                 </div>
                                 <div class="text-sm">
                                     <span class="px-2 py-1 rounded-full text-xs" 
@@ -283,7 +280,7 @@ export default {
             if (!exitLocalWorkspace) {
                 const localWorkspace = {
                     id: 0,
-                    workspace_name: '本地工作区',
+                    workspace_name: this.$t('dogHeader.localWorkspace'),
                     is_public: false,
                     created_by: this.currentUser.id || 0,
                     _is_local: true,
@@ -294,7 +291,7 @@ export default {
             }
         },
         async createWorkspace() {
-            const name = prompt('请输入工作区名称');
+            const name = prompt(this.$t('dogHeader.promptWorkspaceName'));
             if (!name) return;
             
             const workspace = await workspaceApi.createWorkspace({
@@ -329,7 +326,7 @@ export default {
         },
         
         async deleteWorkspace(workspace: Workspace) {
-            if (!confirm(`确定要删除工作区 "${workspace.workspace_name}" 吗？`)) return;
+            if (!confirm(this.$t('dogHeader.deleteWorkspaceConfirm', { workspaceName: workspace.workspace_name }))) return;
             
             const index = this.myWorkspaces.findIndex(w => w.id === workspace.id);
             if (index > -1) {
@@ -380,7 +377,7 @@ export default {
             return this.isWorkspaceAdmin();
         },
         async removeMember(member: WorkspaceMember) {
-            if (!confirm(`确定要移除成员 "${member.nickname}" 吗？`)) return;
+            if (!confirm(this.$t('dogHeader.removeMemberConfirm', { memberNickname: member.nickname }))) return;
             
             try {
                 await workspaceApi.removeWorkspaceMember(
@@ -390,7 +387,7 @@ export default {
                 await this.syncWorkspace();
             } catch (error: unknown) {
                 const err = error as Error;
-                alert('移除成员失败：' + err.message);
+                alert(this.$t('dogHeader.removeMemberFailed', { message: err.message }));
             }
         },
         async handleSearch() {
@@ -412,7 +409,7 @@ export default {
                 } catch (error: unknown) {
                     const err = error as Error;
                     console.error('搜索用户失败:', err);
-                    alert('搜索用户失败：' + err.message);
+                    alert(this.$t('dogHeader.removeMemberFailed', { message: err.message }));
                 }
             }, 300);
         },
@@ -428,7 +425,7 @@ export default {
                 await this.syncWorkspace();
             } catch (error: unknown) {
                 const err = error as Error;
-                alert('添加成员失败：' + err.message);
+                alert(this.$t('dogHeader.removeMemberFailed', { message: err.message }));
             }
         },
         handleAvatarError(e: Event) {
@@ -475,23 +472,23 @@ export default {
                 this.invitationLink = `${baseUrl}/join/${response.code}`;
             } catch (error: unknown) {
                 const err = error as Error;
-                alert('生成邀请链接失败：' + err.message);
+                alert(this.$t('dogHeader.removeMemberFailed', { message: err.message }));
             }
         },
         
         async copyInvitationLink() {
             try {
                 await navigator.clipboard.writeText(this.invitationLink);
-                alert('邀请链接已复制到剪贴板');
+                alert(this.$t('dogHeader.inviteLinkCopied'));
             } catch (_error) {
-                alert('复制失败，请手动复制');
+                alert(this.$t('dogHeader.inviteLinkCopyFailed'));
             }
         },
         getRoleText(role: string): string {
             const roleMap = {
-                'owner': '所有者',
-                'admin': '管理员',
-                'member': '成员'
+                'owner': this.$t('dogHeader.owner'),
+                'admin': this.$t('dogHeader.admin'),
+                'member': this.$t('dogHeader.member')
             };
             return roleMap[role as keyof typeof roleMap] || role;
         },

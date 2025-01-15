@@ -12,7 +12,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 group-hover:scale-110 transition duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
             </svg>
-            添加{{ typeLabel }}
+            {{ $t('ruleList.addRuleButton', { typeLabel }) }}
         </button>
 
         <!-- 规则列表 -->
@@ -56,7 +56,7 @@
                             v-model="editingItem!.rule_name"
                             @keyup.enter="handleSave"
                             @keyup.esc="cancelEdit"
-                            placeholder="输入名称"
+                            :placeholder="$t('ruleList.placeholderName')"
                             ref="titleInput"
                             class="flex-1 px-2 py-1 text-sm rounded border dark:border-gray-600
                                    bg-white dark:bg-gray-700 
@@ -71,7 +71,7 @@
                                    bg-blue-50 dark:bg-blue-900/30 
                                    text-blue-600 dark:text-blue-400"
                         >
-                            只读
+                            {{ $t('ruleList.readOnly') }}
                         </span>
                     </div>
                     
@@ -119,7 +119,7 @@
                 <div class="space-y-2 editing-area">
                     <!-- 颜色预览 -->
                     <div v-if="type === 'color'" class="flex items-center space-x-2">
-                        <div class="text-sm text-gray-500 dark:text-gray-400">预览：</div>
+                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ $t('ruleList.preview') }}：</div>
                         <div 
                             class="px-3 py-1 rounded text-sm"
                             :style="{
@@ -127,7 +127,7 @@
                                 backgroundColor: item._is_editing ? editingItem!.bg_color : item.bg_color
                             }"
                         >
-                            示例文本
+                            {{ $t('ruleList.exampleText') }}
                         </div>
                     </div>
 
@@ -137,7 +137,7 @@
                         <input 
                             v-if="type !== 'function'"
                             v-model="editingItem!.pattern"
-                            placeholder="输入匹配模式"
+                            :placeholder="$t('ruleList.placeholderMatchPattern')"
                             class="w-full px-2 py-1 text-sm rounded border dark:border-gray-600
                                    bg-white dark:bg-gray-700 
                                    text-gray-900 dark:text-gray-100
@@ -149,7 +149,7 @@
                         <textarea 
                             v-if="type === 'function'"
                             v-model="editingItem!.custom_function"
-                            placeholder="输入函数代码"
+                            :placeholder="$t('ruleList.placeholderFunctionCode')"
                             rows="6"
                             class="w-full px-2 py-1 text-sm rounded border dark:border-gray-600
                                    bg-white dark:bg-gray-700 
@@ -162,7 +162,7 @@
                         <!-- 描述编辑器 -->
                         <textarea 
                             v-model="editingItem!.rule_desc"
-                            placeholder="输入描述"
+                            :placeholder="$t('ruleList.placeholderDescription')"
                             rows="2"
                             class="w-full px-2 py-1 text-sm rounded border dark:border-gray-600
                                    bg-white dark:bg-gray-700 
@@ -200,7 +200,7 @@
 
                         <!-- 标签编辑 -->
                         <div class="space-y-1">
-                            <label class="text-sm text-gray-700 dark:text-gray-300">标签</label>
+                            <label class="text-sm text-gray-700 dark:text-gray-300">{{ $t('ruleList.label') }}</label>
                             <div class="flex flex-wrap gap-1 p-2 border rounded-lg dark:border-gray-600 bg-white dark:bg-gray-700 min-h-[38px]">
                                 <!-- 现有标签 -->
                                 <div 
@@ -225,7 +225,7 @@
                                     v-model="newTag"
                                     @keyup.enter="addTag"
                                     @keyup.backspace="handleBackspace"
-                                    placeholder="输入标签按回车添加"
+                                    :placeholder="$t('ruleList.placeholderTag')"
                                     class="flex-1 min-w-[120px] bg-transparent border-none outline-none 
                                            text-sm text-gray-900 dark:text-gray-100
                                            placeholder-gray-400 dark:placeholder-gray-500"
@@ -248,7 +248,7 @@
                                     for="is_public"
                                     class="text-sm text-gray-700 dark:text-gray-300"
                                 >
-                                    公开
+                                    {{ $t('ruleList.public') }}
                                 </label>
                             </div>
 
@@ -260,7 +260,7 @@
                                            text-gray-600 dark:text-gray-400
                                            hover:bg-gray-100 dark:hover:bg-gray-700"
                                 >
-                                    取消
+                                    {{ $t('ruleList.cancel') }}
                                 </button>
                                 <button 
                                     @click.stop="handleSave"
@@ -268,7 +268,7 @@
                                            bg-blue-500 hover:bg-blue-600
                                            text-white"
                                 >
-                                    保存
+                                    {{ $t('ruleList.save') }}
                                 </button>
                             </div>
                         </div>
@@ -318,7 +318,7 @@
                         <!-- 模态框标题 -->
                         <div class="flex items-center justify-between">
                             <h2 class="text-xl font-medium text-gray-900 dark:text-gray-100">
-                                编辑{{ typeLabel }}
+                                {{ $t('ruleList.editRule', { typeLabel }) }}
                             </h2>
                             <button 
                                 @click="closeExpandedEdit"
@@ -337,11 +337,11 @@
                             <!-- 名称 -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    名称
+                                    {{ $t('ruleList.name') }}
                                 </label>
                                 <input 
                                     v-model="expandedContent.rule_name"
-                                    placeholder="输入名称"
+                                    :placeholder="$t('ruleList.placeholderName')"
                                     class="w-full px-3 py-2 rounded-lg border dark:border-gray-600
                                            bg-white dark:bg-gray-700 
                                            text-gray-900 dark:text-gray-100
@@ -353,11 +353,11 @@
                             <!-- 匹配模式 -->
                             <div v-if="type !== 'function'">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    匹配模式
+                                    {{ $t('ruleList.matchPattern') }}
                                 </label>
                                 <input 
                                     v-model="expandedContent.pattern"
-                                    placeholder="输入匹配模式"
+                                    :placeholder="$t('ruleList.placeholderMatchPattern')"
                                     class="w-full px-3 py-2 rounded-lg border dark:border-gray-600
                                            bg-white dark:bg-gray-700 
                                            text-gray-900 dark:text-gray-100
@@ -369,11 +369,11 @@
                             <!-- 函数代码 -->
                             <div v-if="type === 'function'">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    函数代码
+                                    {{ $t('ruleList.functionCode') }}
                                 </label>
                                 <textarea 
                                     v-model="expandedContent.custom_function"
-                                    placeholder="输入函数代码"
+                                    :placeholder="$t('ruleList.placeholderFunctionCode')"
                                     rows="12"
                                     class="w-full px-3 py-2 rounded-lg border dark:border-gray-600
                                            bg-white dark:bg-gray-700 
@@ -387,11 +387,11 @@
                             <!-- 描述 -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    描述
+                                    {{ $t('ruleList.description') }}
                                 </label>
                                 <textarea 
                                     v-model="expandedContent.rule_desc"
-                                    placeholder="输入描述"
+                                    :placeholder="$t('ruleList.placeholderDescription')"
                                     rows="3"
                                     class="w-full px-3 py-2 rounded-lg border dark:border-gray-600
                                            bg-white dark:bg-gray-700 
@@ -406,7 +406,7 @@
                                 <!-- 预览 -->
                                 <div class="flex items-center space-x-2">
                                     <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        预览
+                                        {{ $t('ruleList.preview') }}
                                     </label>
                                     <div 
                                         class="px-3 py-1.5 rounded text-sm"
@@ -415,14 +415,14 @@
                                             backgroundColor: expandedContent.bg_color
                                         }"
                                     >
-                                        示例文本
+                                        {{ $t('ruleList.exampleText') }}
                                     </div>
                                 </div>
 
                                 <!-- 颜色选择器 -->
                                 <div class="space-y-2">
                                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">
-                                        颜色方案
+                                        {{ $t('ruleList.colorScheme') }}
                                     </label>
                                     <div class="flex items-center space-x-2">
                                         <button
@@ -436,7 +436,7 @@
                                             }"
                                             @click="applyExpandedColorScheme(scheme)"
                                         >
-                                            示例文本
+                                            {{ $t('ruleList.exampleText') }}
                                         </button>
                                         <button
                                             @click="regenerateColorSchemes"
@@ -455,7 +455,7 @@
                             <!-- 标签 -->
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    标签
+                                    {{ $t('ruleList.label') }}
                                 </label>
                                 <div class="flex flex-wrap gap-2 p-3 border rounded-lg dark:border-gray-600 bg-white dark:bg-gray-700 min-h-[48px]">
                                     <div 
@@ -478,7 +478,7 @@
                                     <input 
                                         v-model="newTag"
                                         @keyup.enter="addTag"
-                                        placeholder="输入标签按回车添加"
+                                        :placeholder="$t('ruleList.placeholderTag')"
                                         class="flex-1 min-w-[120px] bg-transparent border-none outline-none 
                                                text-sm text-gray-900 dark:text-gray-100
                                                placeholder-gray-400 dark:placeholder-gray-500"
@@ -499,7 +499,7 @@
                                     for="expanded_is_public"
                                     class="text-sm text-gray-700 dark:text-gray-300"
                                 >
-                                    公开
+                                    {{ $t('ruleList.public') }}
                                 </label>
                             </div>
                         </div>
@@ -513,7 +513,7 @@
                                    text-gray-600 dark:text-gray-400
                                    hover:bg-gray-100 dark:hover:bg-gray-700"
                         >
-                            取消
+                            {{ $t('ruleList.cancel') }}
                         </button>
                         <button 
                             @click="handleExpandedSave"
@@ -521,7 +521,7 @@
                                    bg-blue-500 hover:bg-blue-600
                                    text-white"
                         >
-                            保存
+                            {{ $t('ruleList.save') }}
                         </button>
                     </div>
                 </div>
@@ -575,9 +575,9 @@ export default {
     computed: {
         typeLabel(): string {
             const labels = {
-                filter: '过滤器',
-                color: '颜色规则',
-                function: '函数'
+                filter: this.$t('ruleList.filter'),
+                color: this.$t('ruleList.color'),
+                function: this.$t('ruleList.function')
             };
             return labels[this.type];
         },
@@ -610,16 +610,16 @@ export default {
         },
         getItemTitle(item: Rule): string {
             if (item.rule_name) return item.rule_name;
-            return `未命名${this.typeLabel}`;
+            return `${this.$t('ruleList.unnamed')}${this.typeLabel}`;
         },
         getItemDescription(item: Rule): string {
             if (this.type === 'filter') {
-                return item.rule_desc || item.pattern || '点击编辑匹配模式';
+                return item.rule_desc || item.pattern || this.$t('ruleList.editMatchPattern');
             }
             if (this.type === 'color') {
-                return item.rule_desc || `匹配模式: ${item.pattern}` || '点击编辑匹配模式';
+                return item.rule_desc || `${this.$t('ruleList.matchPattern')}: ${item.pattern}` || this.$t('ruleList.editMatchPattern');
             }
-            return item.rule_desc || '无描述';
+            return item.rule_desc || this.$t('ruleList.noDescription');
         },
         startEdit(item: Rule) {
             this.editingItem = item;

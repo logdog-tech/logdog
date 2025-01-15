@@ -1,53 +1,35 @@
 <template>
     <div class="search-container">
         <InputGroup class="search-input">
-            <InputGroupAddon @click="toggleHistory" class="cursor-pointer hover:bg-gray-100" >
+            <InputGroupAddon @click="toggleHistory" class="cursor-pointer hover:bg-gray-100">
                 <i class="pi pi-clock"></i>
             </InputGroupAddon>
-            <InputText 
-                ref="searchInput"
-                :value="localSearchTerm"
-                @input="handleSearchInput"
-                @focus="showHistory = true && loadHistory()"
-                @blur="handleBlur"
-                @keyup.enter="doSearch"
-                @keyup.esc="hideHistory"
-                @keydown.up.prevent="navigateHistory('up')"
-                @keydown.down.prevent="navigateHistory('down')"
-                placeholder="输入搜索关键词"
-            />
-            <PrimeButton label="搜索" @click="doSearch" />
+            <InputText ref="searchInput" :value="localSearchTerm" @input="handleSearchInput"
+                @focus="showHistory = true && loadHistory()" @blur="handleBlur" @keyup.enter="doSearch"
+                @keyup.esc="hideHistory" @keydown.up.prevent="navigateHistory('up')"
+                @keydown.down.prevent="navigateHistory('down')" :placeholder="$t('search.placeholder')" />
+            <PrimeButton :label="$t('search.button')" @click="doSearch" />
         </InputGroup>
 
-        <div v-show="showHistory" 
-            class="history-dropdown" 
-            @mousedown.prevent
-            ref="historyDropdown"
-        >
+        <div v-show="showHistory" class="history-dropdown" @mousedown.prevent ref="historyDropdown">
             <div class="history-header" v-if="history.length > 0">
-                <span>搜索历史</span>
-                <span class="clear-history" 
-                    v-if="hasNonFavorites"
-                    @click="clearNonFavorites"
-                >
+                <span>{{ $t('searchBar.searchHistory') }}</span>
+                <span class="clear-history" v-if="hasNonFavorites" @click="clearNonFavorites">
                     <i class="pi pi-trash"></i>
-                    清除历史
+                    {{ $t('searchBar.clearHistory') }}
                 </span>
             </div>
             <div v-if="filteredHistory.length === 0" class="history-empty">
-                {{ history.length === 0 ? '暂无搜索历史' : '没有匹配的历史记录' }}
+                {{ $t(history.length === 0 ? 'search.no_history' : 'search.no_matches') }}
             </div>
-            <div v-else v-for="(item, index) in filteredHistory" 
-                :key="index" 
-                class="history-items"
-                :class="{ 'history-item-selected': selectedIndex === index }"
-            >
+            <div v-else v-for="(item, index) in filteredHistory" :key="index" class="history-items"
+                :class="{ 'history-item-selected': selectedIndex === index }">
                 <div class="favorite-icon" @click="toggleFavorite(item)">
-                    <i class="pi" :class="{'pi-star-fill': item.isFavorite, 'pi-star': !item.isFavorite}"></i>
+                    <i class="pi" :class="{ 'pi-star-fill': item.isFavorite, 'pi-star': !item.isFavorite }"></i>
                 </div>
                 <div class="history-term" @click="useHistoryTerm(item)">{{ item.term }}</div>
                 <div class="history-info">
-                    <span class="use-count">{{ item.useCount }}次</span>
+                    <span class="use-count">{{ item.useCount }}{{ $t('searchBar.times') }}</span>
                     <span class="update-time">{{ formatTime(item.updateTime) }}</span>
                 </div>
                 <div class="remove-icon" @click.stop="handleRemove(item)">
@@ -88,9 +70,9 @@ export default {
             default: ""
         }
     },
-    
+
     emits: ['search', 'update:searchTerm'],
-    
+
     data() {
         return {
             localSearchTerm: this.searchTerm,
@@ -100,35 +82,35 @@ export default {
             selectedIndex: -1
         }
     },
-    
+
     watch: {
         searchTerm(newValue) {
             this.localSearchTerm = newValue;
         }
     },
-    
+
     computed: {
         filteredHistory(): HistoryItem[] {
             const sorted = [...this.history];
-            
+
             if (!this.filterText) {
                 return sorted;
             }
             const searchLower = this.filterText.toLowerCase();
-            return sorted.filter(item => 
+            return sorted.filter(item =>
                 item.term.toLowerCase().includes(searchLower)
             );
         },
-        
+
         hasNonFavorites(): boolean {
             return this.history.some(item => !item.isFavorite);
         },
     },
     mounted() {
         // 重要!!! initCopyHandler 函数用于修复”双击复制文本时自动添加多余空格的问题，详见：https://github.com/jasper9w/logdog/issues/21
-        this.initCopyHandler(); 
+        this.initCopyHandler();
     },
-    
+
     methods: {
         toggleHistory() {
             this.showHistory = !this.showHistory;
@@ -136,32 +118,32 @@ export default {
                 this.loadHistory();
             }
         },
-        
+
         hideHistory() {
             this.showHistory = false;
             this.selectedIndex = -1;
         },
-        
+
         doSearch() {
             const currentTerm = this.localSearchTerm.trim();
             if (!currentTerm) {
                 this.$emit('search', "");
                 return;
             };
-            
+
             this.updateHistory(currentTerm);
             this.hideHistory();
             this.$emit('search', currentTerm);
         },
-        
+
         generateId(): string {
             return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
         },
-        
+
         async updateHistory(term: string) {
             const existingIndex = this.history.findIndex(item => item.term === term);
             const now = Date.now();
-            
+
             if (existingIndex !== -1) {
                 const existingItem = this.history[existingIndex];
                 const updatedItem = {
@@ -169,10 +151,10 @@ export default {
                     useCount: existingItem.useCount + 1,
                     updateTime: now
                 };
-                
+
                 this.history.splice(existingIndex, 1);
                 this.history.unshift(updatedItem);
-                
+
                 try {
                     await searchTableHelper.put(updatedItem);
                 } catch (error) {
@@ -186,7 +168,7 @@ export default {
                     useCount: 1,
                     updateTime: now
                 };
-                
+
                 this.history.unshift(newItem);
                 try {
                     await searchTableHelper.add(newItem);
@@ -194,12 +176,12 @@ export default {
                     console.error('Failed to save search history:', error);
                 }
             }
-            
+
             const nonFavorites = this.history.filter(item => !item.isFavorite);
             if (nonFavorites.length > 100) {
                 const sortedNonFavorites = nonFavorites.sort((a, b) => b.updateTime - a.updateTime);
                 const itemsToRemove = sortedNonFavorites.slice(100);
-                
+
                 for (const item of itemsToRemove) {
                     const index = this.history.findIndex(h => h.uuid === item.uuid);
                     if (index !== -1) {
@@ -209,13 +191,13 @@ export default {
                 }
             }
         },
-        
+
         async toggleFavorite(item: HistoryItem) {
             item.isFavorite = !item.isFavorite;
             item.updateTime = Date.now();
-            await searchTableHelper.put({...item});
+            await searchTableHelper.put({ ...item });
         },
-        
+
         useHistoryTerm(item: HistoryItem) {
             this.localSearchTerm = item.term;
             this.$emit('update:searchTerm', item.term);
@@ -226,7 +208,7 @@ export default {
                 input.focus();
             }
         },
-        
+
         async handleRemove(item: HistoryItem) {
             const index = this.history.findIndex(h => h.uuid === item.uuid);
             if (index !== -1) {
@@ -237,17 +219,17 @@ export default {
                     console.error('Failed to delete search history:', error);
                 }
             }
-            
+
             const input = this.$refs.searchInput as HTMLElement;
             if (input && 'focus' in input) {
                 input.focus();
             }
-            
+
             if (this.filteredHistory.length === 0) {
                 this.hideHistory();
             }
         },
-        
+
         handleSearchInput(event: Event) {
             const target = event.target as HTMLInputElement;
             this.localSearchTerm = target.value;
@@ -257,18 +239,18 @@ export default {
             this.selectedIndex = -1;
             this.loadHistory();
         },
-        
+
         handleBlur(event: FocusEvent) {
             const relatedTarget = event.relatedTarget as HTMLElement;
             if (relatedTarget && this.$el.contains(relatedTarget)) {
                 return;
             }
-            
+
             setTimeout(() => {
                 this.hideHistory();
             }, 200);
         },
-        
+
         navigateHistory(direction: 'up' | 'down') {
             if (!this.showHistory) {
                 this.showHistory = true;
@@ -302,15 +284,15 @@ export default {
                 });
             }
         },
-        
+
         scrollToSelected() {
             const dropdown = this.$refs.historyDropdown as HTMLElement;
             const selectedElement = dropdown.querySelector('.history-item-selected') as HTMLElement;
-            
+
             if (dropdown && selectedElement) {
                 const dropdownRect = dropdown.getBoundingClientRect();
                 const selectedRect = selectedElement.getBoundingClientRect();
-                
+
                 if (selectedRect.top < dropdownRect.top) {
                     dropdown.scrollTop -= (dropdownRect.top - selectedRect.top);
                 } else if (selectedRect.bottom > dropdownRect.bottom) {
@@ -318,33 +300,33 @@ export default {
                 }
             }
         },
-        
+
         formatTime(timestamp: number): string {
             const now = Date.now();
             const diff = now - timestamp;
-            
+
             // 1分钟内
             if (diff < 60000) {
-                return '刚刚';
+                return this.$t('searchBar.justNow');
             }
             // 1小时内
             if (diff < 3600000) {
                 const minutes = Math.floor(diff / 60000);
-                return `${minutes}分钟前`;
+                return this.$t('searchBar.minutesAgo', { minutes });
             }
             // 24小时内
             if (diff < 86400000) {
                 const hours = Math.floor(diff / 3600000);
-                return `${hours}小时前`;
+                return this.$t('searchBar.hoursAgo', { hours });
             }
             // 30天内
             if (diff < 2592000000) {
                 const days = Math.floor(diff / 86400000);
-                return `${days}天前`;
+                return this.$t('searchBar.daysAgo', { days });
             }
             // 超过30天
             const date = new Date(timestamp);
-            return `${date.getMonth() + 1}月${date.getDate()}日`;
+            return this.$t('searchBar.dateFormat', { month: date.getMonth() + 1, day: date.getDate() });
         },
 
         async sortHistory() {
