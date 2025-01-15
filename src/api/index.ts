@@ -13,7 +13,7 @@ const defaultConfig = {
 } 
 
 if (config.DEBUG) {
-  defaultConfig.headers['Authorization'] = `Bearer ${config.DEBUG_TOKEN}`
+    //   defaultConfig.headers['Authorization'] = `Bearer ${config.DEBUG_TOKEN}`
 }
 
 // 用户相关的 API

@@ -429,7 +429,7 @@ export default defineComponent({
                     console.warn('选中内容超过10000行，请使用导出功能复制');
 
                     // 使用 ElMessage 显示警告
-                    this.$toast.add({ severity: 'error', summary: $t('hugeList.error'), detail: $t('hugeList.copyFail'), life: 3000 });
+                    this.$toast.add({ severity: 'error', summary: this.$t('hugeList.error'), detail: this.$t('hugeList.copyFail'), life: 3000 });
 
                     return;
                 }
@@ -448,7 +448,7 @@ export default defineComponent({
                     await navigator.clipboard.writeText(selectedContent.join('\n'));
                 } catch (err) {
                     console.error('Failed to copy multi-line content:', err);
-                    this.$toast.add({ severity: 'error', summary: $t('hugeList.error'), detail: $t('hugeList.copyFail'), life: 3000 });
+                    this.$toast.add({ severity: 'error', summary: this.$t('hugeList.error'), detail: this.$t('hugeList.copyFail'), life: 3000 });
                 }
             }
             // 否则让浏览器处理默认的复制行为

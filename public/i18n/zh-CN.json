@@ -92,6 +92,19 @@
   "joinWorkspace.returnHome": "立即返回首页",
   "joinWorkspace.title": "工作区邀请",
   "logdogEditor.totalCount": "共计 {totalCount} 行，找到 {searchCount} 行",
+    "login.title": "登录继续",
+    "login.subtitle": "随时随地管理您的项目",
+    "login.wechat": "微信登录",
+    "login.google": "Google 登录",
+    "login.github": "GitHub 登录",
+    "login.email": "邮箱登录",
+    "login.linuxdo": "Linux.do 登录",
+    "login.or": "或",
+    "login.terms_prefix": "登录即表示同意",
+    "login.terms": "使用条款",
+    "login.and": "和",
+    "login.privacy": "隐私政策",
+    "login.other_login": "其他登录方式",
   "loginInfo.moreFeatures": "登录后可使用更多功能",
   "loginInfo.notLoggedIn": "未登录",
   "ruleList.addRuleButton": "添加{ typeLabel }",
@@ -161,5 +174,6 @@
   "workspace.search_placeholder": "输入 UID、昵称或邮箱搜索",
   "workspace.select": "选择工作区",
   "userdropdown.language": "语言",
-  "userdropdown.logout": "退出登录"
+  "userdropdown.logout": "退出登录",
+  "userdropdown.login": "登录"
 }

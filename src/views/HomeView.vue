@@ -74,7 +74,7 @@ export default defineComponent({
                 nickname: this.$t('homeView.nickname'),
             } as User;
         },
-        handleLoginStatusChanged(isLoggedIn: boolean, user: User) {
+        handleLoginStatusChanged(isLoggedIn: boolean, user: User | null) {
             this.currentUser = user;
         },
         handleWorkspaceSelected(workspace: Workspace) {

@@ -94,6 +94,19 @@
   "logdogEditor.totalCount": "合計 {totalCount} 行、{searchCount} 行が見つかりました",
   "loginInfo.moreFeatures": "ログインするとより多くの機能が利用可能です",
   "loginInfo.notLoggedIn": "未ログイン",
+    "login.title": "サインインして続行",
+    "login.subtitle": "いつでもどこでもプロジェクトを管理",
+    "login.wechat": "WeChatでサインイン",
+    "login.google": "Googleでサインイン",
+    "login.github": "GitHubでサインイン",
+    "login.email": "メールでサインイン",
+    "login.linuxdo": "Linux.doでサインイン",
+    "login.or": "または",
+    "login.terms_prefix": "LogDogの利用により、以下に同意したことになります：",
+    "login.terms": "利用規約",
+    "login.and": "および",
+    "login.privacy": "プライバシーポリシー",
+    "login.other_login": "その他のログイン方法",
   "ruleList.addRuleButton": "{ typeLabel }を追加",
   "ruleList.cancel": "キャンセル",
   "ruleList.color": "色ルール",
@@ -161,5 +174,6 @@
   "workspace.search_placeholder": "UID、ニックネームまたはメールアドレスを入力して検索",
   "workspace.select": "ワークスペースを選択",
   "userdropdown.language": "言語",
-  "userdropdown.logout": "ログアウト"
+  "userdropdown.logout": "ログアウト",
+  "userdropdown.login": "ログイン"
 }

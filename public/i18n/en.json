@@ -92,6 +92,19 @@
     "joinWorkspace.returnHome": "Return to Homepage",
     "joinWorkspace.title": "Workspace Invitation",
     "logdogEditor.totalCount": "Total {totalCount} lines, Found {searchCount} lines",
+    "login.title": "Sign in to continue",
+    "login.subtitle": "Create and manage your projects anytime on any device",
+    "login.wechat": "Sign in with WeChat",
+    "login.google": "Sign in with Google",
+    "login.github": "Sign in with GitHub",
+    "login.email": "Sign in with Email",
+    "login.linuxdo": "Sign in with Linux.do",
+    "login.or": "or",
+    "login.terms_prefix": "By using LogDog, you agree to our",
+    "login.terms": "Terms of Use",
+    "login.and": "and",
+    "login.privacy": "Privacy Policy",
+    "login.other_login": "Other login methods",
     "loginInfo.moreFeatures": "Login to access more features",
     "loginInfo.notLoggedIn": "Not Logged In",
     "ruleList.addRuleButton": "Add {typeLabel}",
@@ -161,5 +174,6 @@
     "workspace.search_placeholder": "Search by UID, nickname or email",
     "workspace.select": "Select Workspace",
     "userdropdown.language": "Language",
-    "userdropdown.logout": "Sign Out"
+    "userdropdown.logout": "Sign Out",
+    "userdropdown.login": "Sign In"
 }
