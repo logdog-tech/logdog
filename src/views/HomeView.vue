@@ -92,18 +92,14 @@ export default defineComponent({
             this.colors = colors;
             this.functions = config.filter(rule => rule.rule_type === 'function');
 
-            console.log('======filters', this.filters);
         },
         handleUserToggleItems(type: number, item: Rule) {
-            console.log('handleUserToggleItems', type, item);
             (this.$refs.logdogEditorRef as any)?.handleUserToggleItems(item.rule_type, item);
         },
         handleDogfileSelected(dogfile: string) {
-            console.log("handleDogfileSelected", dogfile);
             this.selectedDogfile = dogfile;
         },
         onToggleSidebar() {
-            console.log('onToggleSidebar');
             this.showSidebar = !this.showSidebar;
         }
     }

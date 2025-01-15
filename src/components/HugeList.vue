@@ -446,7 +446,6 @@ export default defineComponent({
                     }
                     
                     await navigator.clipboard.writeText(selectedContent.join('\n'));
-                    console.log('Copied multi-line content:', selectedContent.length, 'lines');
                 } catch (err) {
                     console.error('Failed to copy multi-line content:', err);
                     this.$toast.add({ severity: 'error', summary: $t('hugeList.error'), detail: $t('hugeList.copyFail'), life: 3000 });

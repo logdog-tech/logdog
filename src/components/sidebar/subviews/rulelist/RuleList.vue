@@ -596,7 +596,6 @@ export default {
         items: {
             immediate: true,
             handler(newItems) {
-                console.log("items changed, newItems=", newItems)
                 this.localItems = newItems;
             }
         }
@@ -637,7 +636,6 @@ export default {
             }, 0);
         },
         cancelEdit() {
-            console.log("cancelEdit, editingItem=", this.editingItem, this.editingItem!._is_adding)
             if (this.editingItem!._is_adding) {
                 this.localItems.shift();
             }
@@ -649,7 +647,6 @@ export default {
             }
         },
         handleAddRule() {
-            console.log("handleAddRule, currentUser=", this.currentUser)
             this.editingItem = {
                 uuid: crypto.randomUUID(),
                 workspace_id: this.workspace.id,
@@ -662,8 +659,7 @@ export default {
                 _is_editing: true,
                 _is_adding: true,
             } as Rule;
-            
-            console.log("handleAddRule, newItem=", this.localItems)
+
             this.localItems.unshift(this.editingItem);
         },
         async handleSave() {
@@ -719,17 +715,12 @@ export default {
                 this.editingItem!.tags = '';
             }
             const tags = this.editingItem!.tags.split(',').filter(Boolean);
-            console.log("addTag, this.editingItem!.tags=", this.editingItem!.tags)
-            console.log("addTag, tags=", tags)
-            console.log("addTag, this.newTag.trim()=", this.newTag.trim())
             
             if (!tags.includes(this.newTag.trim())) {
                 tags.push(this.newTag.trim());
             }
             this.editingItem!.tags = tags.join(',');
-            
             this.newTag = '';
-            console.log("addTag, this.editingItem!.tags=", this.editingItem!.tags)
         },
         removeTag(index: number) {
             const tags = this.editingItem!.tags?.split(',');

@@ -145,7 +145,6 @@ export default defineComponent({
     mounted() {
         const myObserver = {
             onChange: async () => {
-                console.log("dbg onChange");
                 const logFullView = this.$refs.logFullView as LogViewRef;
                 const logSearchView = this.$refs.logSearchView as LogViewRef;
 
@@ -190,7 +189,6 @@ export default defineComponent({
             return result;
         },
         handleColorPicked(style: StyleObject) {
-            console.log("handleColorPicked", style);
             this.sessionColors[this.selectedText] = style;
             if (!style) {
                 delete this.sessionColors[this.selectedText];
@@ -273,7 +271,6 @@ export default defineComponent({
             return highlightIt(line.content + " ", useColors);
         },
         handleSearchInput(currentTerm: string) {
-            console.log("handleSearchInput")
             const terms = currentTerm.split("|");
             for (const ff of this.filters) {
                 ff._checked = ff.pattern ? terms.includes(ff.pattern) : false;
@@ -332,7 +329,6 @@ export default defineComponent({
             this.selectedline = item.line;
         },
         async handleUserToggleItems(type: string, item: Rule) {
-            console.log('====handleUserToggleItems', type, item.pattern, item._checked, item);
             if (type === 'filter') { // 过滤器
                 let searchBoxPatterns = this.searchTerm.split("|");
                 if (!item._checked) {

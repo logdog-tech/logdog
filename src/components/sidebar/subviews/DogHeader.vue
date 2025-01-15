@@ -307,7 +307,6 @@ export default {
             await this.syncWorkspace();
         },
         clickMenuButton() {
-            console.log('clickMenuButton');
             this.$emit('toggle-sidebar');
         },
         clickReselectFiles() {
@@ -441,9 +440,6 @@ export default {
             }
         },
         getAvatarText(user: UserInfo | WorkspaceMember): string {
-            // 添加日志
-            console.log('getAvatarText user:', user);
-            
             // 只有当昵称存在且不为空字符串时才使用昵称首字母
             if (user.nickname?.trim()) {
                 return user.nickname.charAt(0).toUpperCase();

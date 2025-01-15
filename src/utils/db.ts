@@ -63,18 +63,17 @@ class DB {
   }
 
   // 添加数据
-  async add(storeName: string, data: object) {
-    console.log("add", storeName, data);
-    const db = await this.open() as IDBDatabase;
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(storeName, 'readwrite');
-      const store = transaction.objectStore(storeName);
-      const request = store.add(JSON.parse(JSON.stringify(data)));
+    async add(storeName: string, data: object) {
+        const db = await this.open() as IDBDatabase;
+        return new Promise((resolve, reject) => {
+            const transaction = db.transaction(storeName, 'readwrite');
+            const store = transaction.objectStore(storeName);
+            const request = store.add(JSON.parse(JSON.stringify(data)));
       
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
-  }
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
 
   // 获取数据
   async get(storeName: string, key: string|number) {

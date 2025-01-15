@@ -79,8 +79,6 @@ export class BrowserProvider implements Provider {
         const text = new TextDecoder('utf-8').decode(binaryData); // TODO 注意编码
         const rawLines = text.split('\n');
 
-        console.log("rawLines", path, rawLines.length);
-
         const finalLines = rawLines.map((line, index) => {
             const fields = parser.parseLine(line);
 
@@ -95,20 +93,15 @@ export class BrowserProvider implements Provider {
 
             return compressLine;
         });
-        console.log("finalLines", path, finalLines.length);
 
         const BATCH_SIZE = 10000;
         for (let i = 0; i < finalLines.length; i += BATCH_SIZE) {
-            console.log("i", i);
             const batch = finalLines.slice(i, i + BATCH_SIZE);
             this.allLines.push(...batch);
         }
 
-        console.log("allLines", path, this.allLines.length);
-
-
         this.status = `解压进度: ${this.getSetupProgress()}，当前文件:${path}`;
-        console.log("status", this.status);
+
         logFile.status = "extracted";
         logFile.lineCount = finalLines.length;
         this.publishOnChange();
@@ -144,11 +137,8 @@ export class BrowserProvider implements Provider {
         });
 
         const waitContinueExtract = [];
-        console.log("dbg setup", files, reset);
         for (const rawFile of files) {
             if (handler.isArchiveFile(rawFile.name)) {
-                console.log("archive", rawFile.name);
-
                 const archiveCallback: ArchiveCallback = {
                     onDiscoverFile: (path: string) => {
                         const logFile = this.convertPathToLogFile(path, rawFile as ExtendedFile);
@@ -176,10 +166,6 @@ export class BrowserProvider implements Provider {
                 };
                 await handler.processArchiveWithCallbacks(rawFile, path => !isLogFile(path), archiveCallback, rawFile.path);
             } else {
-                // if (!this.shouldIncludeFile(rawFile.name)) {
-                //     continue;
-                // }
-                console.log("file", rawFile);
                 const logFile = this.convertPathToLogFile(rawFile.path || rawFile.name, rawFile as ExtendedFile);
                 this.files.push(logFile);
 
@@ -204,11 +190,6 @@ export class BrowserProvider implements Provider {
             this.publishOnChange();
         }
 
-        console.log("1111")
-
-        console.log("2222")
-        // this.allLines = this.allLines.filter(line => line.time);
-
         // 为每个元素添加原始索引
         this.allLines.forEach((item, index) => {
             item.originalIndex = index;
@@ -228,11 +209,9 @@ export class BrowserProvider implements Provider {
             return a.originalIndex - b.originalIndex;
         });
 
-        console.log("3333")
         this.allLines.forEach((line, index) => {
             line.line = index;
         });
-        console.log("4444")
 
 
         this.status = "ready"
@@ -241,7 +220,6 @@ export class BrowserProvider implements Provider {
 
 
     getResources(): LogFile[] {
-        console.log("dbg files", this.files);
         return this.files;
     }
 
@@ -252,7 +230,6 @@ export class BrowserProvider implements Provider {
     }
 
     publishOnChange(): void {
-        console.log("publishOnChange", this.observers);
         for (const observer of this.observers) {
             observer.onChange();
         }

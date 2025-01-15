@@ -75,7 +75,6 @@ export class ArchiveHandlerImpl {
       const isArchive = archiveExtensions.some(ext => 
         filename.toLowerCase().endsWith(ext)
       );
-      this.log('Checking if file is archive:', { filename, isArchive });
       return isArchive;
     }
   

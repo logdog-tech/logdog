@@ -309,7 +309,6 @@ export default defineComponent({
     },
     methods: {
         async handleResourceClick(resource: LogFile) {
-            console.log("handleResourceClick", resource);
             if (this.currentResource === resource) {
                 return;
             }
@@ -319,7 +318,6 @@ export default defineComponent({
         },
         setActiveProvider(name: string) {
             if (this.currentProviderName === name) return;
-            console.log("setActiveProvider", name)
             this.currentProviderName = name;
             proxyProvider.setProvider(name);
             this.currentResource = null;
@@ -330,7 +328,6 @@ export default defineComponent({
 
             const newResources = proxyProvider.getResources();
             this.resources.length = 0;
-            console.log("newResources", newResources);
             this.resources.push(...newResources);
 
             if (this.resources.length > 0) {
@@ -537,7 +534,6 @@ export default defineComponent({
             onChange: () => {
                 const newResources = proxyProvider.getResources();
                 this.resources.length = 0;
-                console.log("newResources", newResources);
                 this.resources.push(...newResources);
             }
         });

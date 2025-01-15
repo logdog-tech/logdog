@@ -36,7 +36,6 @@ class ProxyProvider implements Provider {
             return;
         }
 
-        console.log(`dbg Switched to provider1: ${name}`, this.currentProvider, this.observers);
         // Unsubscribe all observers from old provider
         this.observers.forEach(observer => {
             this.currentProvider.provider.unsubscribe(observer);
@@ -48,14 +47,10 @@ class ProxyProvider implements Provider {
         this.observers.forEach(observer => {
             this.currentProvider.provider.subscribe(observer);
         });
-
-        console.log(`dbg Switched to provider2: ${name}`, this.currentProvider, this.observers);
     }
 
     async setup(input: File[] | File | string, reset = false): Promise<void> {
-        console.log("setup input:", input);
         await this.currentProvider.provider.setup(input, reset);
-
 
         for (const observer of this.observers) {
             observer.onChange();
@@ -68,7 +63,6 @@ class ProxyProvider implements Provider {
     }
 
     async useResource(resource: LogFile): Promise<void> {
-        console.log("dbg eResource input:", resource, this.observers);
         await this.currentProvider.provider.useResource(resource);
         for (const observer of this.observers) {
             observer.onChange();
@@ -98,7 +92,6 @@ class ProxyProvider implements Provider {
     subscribe(observer: Observer): void {
         this.observers.add(observer);
         this.currentProvider.provider.subscribe(observer);
-        console.log("dbg subscribe", this.observers);
     }
 
     unsubscribe(observer: Observer): void {
