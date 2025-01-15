@@ -1,6 +1,7 @@
 <template>
     <div class="wrapper" ref="wrapper" @keydown="handleKeyDown" tabindex="0">
-        <div class="content-viewport" ref="viewport" @scroll="handleHorizontalScroll" @mousedown="handleMouseDown" @copy="handleCopy" @contextmenu="handleContextMenu">
+        <div class="content-viewport" ref="viewport" @scroll="handleHorizontalScroll" @mousedown="handleMouseDown"
+            @copy="handleCopy" @contextmenu="handleContextMenu">
             <div class="content-area" ref="contentArea">
                 <div v-for="i in visibleItems" :key="i.index" class="item"
                     :style="{ transform: `translateY(${i.top}px)` }">
@@ -13,26 +14,28 @@
         <div class="fake-scrollbar" ref="fakeScrollbar">
             <div class="fake-thumb" ref="fakeThumb"></div>
         </div>
-    </div>
-    <div v-if="showContextMenu" class="context-menu" :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }" @mousedown.stop>
-        <div class="context-menu-item" @click="handleCopy">
-            <span class="menu-icon">📋</span>
-            {{$t('hugeList.copy')}}
-            <span class="shortcut">⌘C</span>
-        </div>
-        <div class="context-menu-item" @click="selectAll">
-            <span class="menu-icon">☑️</span>
-            {{$t('hugeList.selectAll')}}
-            <span class="shortcut">⌘A</span>
-        </div>
-        <div class="menu-divider"></div>
-        <div class="context-menu-item" @click="exportSelectedLogs">
-            <span class="menu-icon">📥</span>
-            {{$t('hugeList.exportLogs')}}
-        </div>
-        <div class="context-menu-item" @click="scrollToSelection">
-            <span class="menu-icon">🔍</span>
-            {{$t('hugeList.locateRow')}}
+
+        <div v-if="showContextMenu" class="context-menu"
+            :style="{ left: contextMenuX + 'px', top: contextMenuY + 'px' }" @mousedown.stop>
+            <div class="context-menu-item" @click="handleCopy">
+                <span class="menu-icon">📋</span>
+                {{ $t('hugeList.copy') }}
+                <span class="shortcut">⌘C</span>
+            </div>
+            <div class="context-menu-item" @click="selectAll">
+                <span class="menu-icon">☑️</span>
+                {{ $t('hugeList.selectAll') }}
+                <span class="shortcut">⌘A</span>
+            </div>
+            <div class="menu-divider"></div>
+            <div class="context-menu-item" @click="exportSelectedLogs">
+                <span class="menu-icon">📥</span>
+                {{ $t('hugeList.exportLogs') }}
+            </div>
+            <div class="context-menu-item" @click="scrollToSelection">
+                <span class="menu-icon">🔍</span>
+                {{ $t('hugeList.locateRow') }}
+            </div>
         </div>
     </div>
 </template>
