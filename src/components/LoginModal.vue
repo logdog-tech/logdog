@@ -58,7 +58,12 @@ const handleWechatLogin = () => {
 }
 
 const handleLinuxdoLogin = () => {
-    window.location.href = "https://connect.linux.do/oauth2/authorize?response_type=code&client_id=0zjnSRcIJ4kwusuVleRcfgEbVE90H5f8&state=ttt1" + window.location.href;
+    const debugClientId = "0zjnSRcIJ4kwusuVleRcfgEbVE90H5f8"
+    const onlineClientId = "nVAdQBve5N82hqyWIJ9WCHwoG63Hz0BS"
+
+    // 如果location的domain是本地
+    const clientId = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1" || window.location.hostname === "0.0.0.0" ? debugClientId : onlineClientId
+    window.location.href = `https://connect.linux.do/oauth2/authorize?response_type=code&client_id=${clientId}&state=ttt1` + window.location.href;
 }
 
 const handleGoogleLogin = async () => {
