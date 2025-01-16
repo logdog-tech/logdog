@@ -77,6 +77,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue'
+import { useRouter } from 'vue-router'
 import { workspaceApi, userApi } from '../api'
 
 interface ApiError {
@@ -92,6 +93,10 @@ export default defineComponent({
       type: String,
       required: true
     }
+  },
+  setup() {
+    const router = useRouter()
+    return { router }
   },
   data() {
     return {
@@ -110,7 +115,7 @@ export default defineComponent({
         this.countdown--;
         if (this.countdown <= 0) {
           this.clearCountdown();
-          this.$router.push('/');
+          this.router.push('/');
         }
       }, 1000);
     },
