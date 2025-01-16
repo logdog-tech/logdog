@@ -19,9 +19,9 @@
                 </div>
 
                 <div class="other-login-methods">
-                    <button class="icon-btn google" @click="handleGoogleLogin" :title="$t('login.google')">
+                    <!-- <button class="icon-btn google" @click="handleGoogleLogin" :title="$t('login.google')">
                         <img src="@/assets/google-icon.svg" alt="Google" />
-                    </button>
+                    </button> -->
                     <button class="icon-btn github" @click="handleGithubLogin" :title="$t('login.github')">
                         <img src="@/assets/github-icon.svg" alt="GitHub" />
                     </button>
@@ -67,11 +67,18 @@ const handleLinuxdoLogin = () => {
 }
 
 const handleGoogleLogin = async () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/google`
+    const googleClientId = "212600849938-557l08cnt75g60mh98esipmqoeie1m7q.apps.googleusercontent.com"
+    const googleRedirectUri = "https://api.logdog.tech/auth/google/callback"
+    const googleScope = "openid%20profile%20email"
+    const googleState = "YOUR_STATE"
+
+    const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${googleClientId}&redirect_uri=${googleRedirectUri}&response_type=code&scope=${googleScope}&state=${googleState}`
+    window.location.href = googleAuthUrl
 }
 
 const handleGithubLogin = async () => {
-    window.location.href = `${import.meta.env.VITE_API_BASE_URL}/auth/github`
+    const githubClientId = "Ov23liqILuMhl2F37bvi"
+    window.location.href = `https://github.com/login/oauth/authorize?client_id=${githubClientId}&scope=read:user`
 }
 
 const openTerms = () => {
