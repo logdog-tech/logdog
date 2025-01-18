@@ -258,13 +258,10 @@ export default defineComponent({
             // TODO 添加临时高亮规则
             useColors.push(...Object.entries(this.sessionColors).map(([text, style]) => ({ pattern: text, style: style })));
 
-            const searchPatternItems = this.searchTerm.split("|");
-            for (const pattern of searchPatternItems) {
-                const regex = new RegExp(pattern, 'gi');
-                // 避免regex为空
-                if (!pattern) {
-                    continue;
-                }
+            // 直接使用完整的搜索词作为正则表达式
+            if (this.searchTerm) {
+                console.log("搜索模式", this.searchTerm);
+                const regex = new RegExp(this.searchTerm, 'gi');
                 useColors.push({ pattern: regex, style: { color: "red" } });
             }
 
