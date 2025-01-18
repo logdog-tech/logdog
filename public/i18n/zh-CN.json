@@ -142,6 +142,8 @@
   "rules.pattern_placeholder": "输入匹配模式",
   "rules.pattern_with_desc": "匹配模式: {pattern}",
   "rules.tags_placeholder": "输入标签按回车添加",
+  "ruleList.anonymousWarningTitle": "温馨提示",
+  "ruleList.anonymousWarningDetail": "您当前未登录，规则仅会保存在本地设备",
   "search.button": "搜索",
   "search.filter_placeholder": "输入{provider}过滤...",
   "search.no_history": "暂无搜索历史",

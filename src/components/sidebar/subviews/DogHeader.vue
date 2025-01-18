@@ -176,7 +176,7 @@ export default {
         },
         currentUser: {
             type: Object as PropType<User>,
-            required: true
+            required: false
         }
     },
     emits: ['toggle-sidebar', 'workspace-selected', 'reselect-files', 'update:isSelectedFileMode'],
@@ -230,7 +230,7 @@ export default {
     },
     methods: {
         canDeleteWorkspace(workspace: Workspace): boolean {
-            return !workspace._is_local && workspace.created_by === this.currentUser.id;
+            return !workspace._is_local && workspace.created_by === this.currentUser?.id;
         },
         async syncWorkspace() {
             // 同步工作区列表
@@ -268,7 +268,7 @@ export default {
                     id: 0,
                     workspace_name: this.$t('dogHeader.localWorkspace'),
                     is_public: false,
-                    created_by: this.currentUser.id || 0,
+                    created_by: this.currentUser?.id || 0,
                     _is_local: true,
                 } as Workspace;
                 await workspaceTableHelper.add(localWorkspace);
@@ -352,13 +352,13 @@ export default {
         isWorkspaceAdmin(): boolean {
             if (!this.currentWorkspace?.members) return false;
             const currentUserMember = this.currentWorkspace.members.find(
-                (m: WorkspaceMember) => m.user_id === this.currentUser.id
+                (m: WorkspaceMember) => m.user_id === this.currentUser?.id
             );
             return currentUserMember?.role === 'owner' || currentUserMember?.role === 'admin';
         },
         canRemoveMember(member: WorkspaceMember): boolean {
             if (member.role === 'owner') return false;
-            if (member.user_id === this.currentUser.id) return false;
+            if (member.user_id === this.currentUser?.id) return false;
             return this.isWorkspaceAdmin();
         },
         async removeMember(member: WorkspaceMember) {

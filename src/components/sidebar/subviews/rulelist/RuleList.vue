@@ -536,6 +536,7 @@ import type { Rule, User, Workspace } from '../../../../modules/base';
 import { generateColorSchemes, type ColorScheme } from '../../../../utils/colors';
 import { ruleTableHelper } from '@/utils/db';
 import { ruleApi } from '@/api';
+import { useToast } from 'primevue/usetoast';
 
 export default {
     name: 'RuleList',
@@ -546,7 +547,8 @@ export default {
     props: {
         currentUser: {
             type: Object as PropType<User>,
-            required: true
+            required: false,
+            default: null
         },
         workspace: {
             type: Object as PropType<Workspace>,
@@ -600,6 +602,10 @@ export default {
             }
         }
     },
+    setup() {
+        const toast = useToast()
+        return { toast }
+    },
     methods: {
         emitUpdate() {
             this.$emit('update:items', this.type, this.localItems);
@@ -647,10 +653,16 @@ export default {
             }
         },
         handleAddRule() {
+            this.toast.add({
+                severity: 'warn',
+                summary: this.$t('ruleList.anonymousWarningTitle'),
+                detail: this.$t('ruleList.anonymousWarningDetail'),
+                life: 8000
+            });
             this.editingItem = {
                 uuid: crypto.randomUUID(),
                 workspace_id: this.workspace.id,
-                user_id: this.currentUser.id,
+                user_id: this.currentUser?.id,
                 rule_type: this.type,
                 rule_name: '',
                 is_public: false,

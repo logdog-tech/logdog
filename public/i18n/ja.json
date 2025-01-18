@@ -142,6 +142,8 @@
   "rules.pattern_placeholder": "マッチパターンを入力",
   "rules.pattern_with_desc": "マッチパターン: {pattern}",
   "rules.tags_placeholder": "タグを入力してEnterキーを押してください",
+  "ruleList.anonymousWarningTitle": "ご注意",
+  "ruleList.anonymousWarningDetail": "現在ログインしていないため、ルールはローカルデバイスにのみ保存されます",
   "search.button": "検索",
   "search.filter_placeholder": "{provider}を入力してフィルター...",
   "search.no_history": "検索履歴がありません",

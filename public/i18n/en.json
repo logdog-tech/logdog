@@ -142,6 +142,8 @@
     "rules.pattern_placeholder": "Enter match pattern",
     "rules.pattern_with_desc": "Match Pattern: {pattern}",
     "rules.tags_placeholder": "Enter tag and press Enter to add",
+    "ruleList.anonymousWarningTitle": "Friendly Reminder",
+    "ruleList.anonymousWarningDetail": "You are currently not logged in, and the rules will only be saved locally on your device.",
     "search.button": "Search",
     "search.filter_placeholder": "Enter {provider} to filter...",
     "search.no_history": "No search history",

@@ -91,7 +91,8 @@ export default {
         },
         currentUser: {
             type: Object as PropType<User>,
-            required: true
+            required: false,
+            default: null
         }
     },
     watch: {
@@ -106,6 +107,10 @@ export default {
 
             // remoteRules 中不存在的，直接删除
             for (const rule of localRules) {
+                if (rule.workspace_id === 0) {
+                    console.log('local rule workspace_id is 0, skip', rule);
+                    continue;
+                }
                 if (!remoteRules.some(r => r.uuid === rule.uuid)) {
                     await ruleTableHelper.delete(rule.uuid);
                 }
