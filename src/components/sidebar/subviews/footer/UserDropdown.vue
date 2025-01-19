@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="flex justify-start flex-col w-[240px] bg-white border border-gray-200 shadow-lg rounded-md p-4">
+        <div class="flex justify-start flex-col w-[260px] bg-white border border-gray-200 shadow-lg rounded-md p-4">
             <!-- <div class="flex items-center gap-2 p-3"><i class="pi pi-user" /> My Profile</div>
         <div class="flex items-center gap-2 p-3"><i class="pi pi-cog" /> Preferences</div>
         <div class="flex items-center gap-2 p-3"><i class="pi pi-phone" /> Support</div>
@@ -18,13 +18,19 @@
         </div>
         <div class="h-[1px] bg-gray-200" /> -->
             <div class="flex items-center justify-between p-2">
-                <span>{{ $t('userdropdown.language') }}</span>
+                <span>
+                    <i class="pi pi-language pr-2" />{{ $t('userdropdown.language') }}</span>
                 <select :value="tolgee.getLanguage()" @change="changeLanguage"
                     class="border border-gray-200 rounded-md px-2 py-1">
                     <option v-for="lang in allLanguageCodes" :key="lang" :value="lang">
                         {{ getLanguageDisplayName(lang) }}
                     </option>
                 </select>
+            </div>
+            <div class="h-[1px] bg-gray-200" />
+            <div class="p-2 flex items-center hover:cursor-pointer hover:bg-gray-100 rounded-md"
+                @click="showFeedbackModal = true">
+                <i class="pi pi-comments pr-2" />{{ $t('userdropdown.feedback') }}
             </div>
             <div class="h-[1px] bg-gray-200" />
             <template v-if="isLoggedIn">
@@ -39,6 +45,22 @@
             </template>
         </div>
         <LoginModal v-model="showLoginModal" />
+        <div v-if="showFeedbackModal"
+            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-semibold">{{ $t('feedback.title') }}</h3>
+                    <button @click="showFeedbackModal = false" class="text-gray-500 hover:text-gray-700">
+                        <i class="pi pi-times" />
+                    </button>
+                </div>
+                <div class="text-center">
+                    <p class="mb-4">{{ $t('feedback.scanQRCode') }}</p>
+                    <img src="/wechat-qr.jpg" alt="WeChat QR Code" class="mx-auto w-120 h-160 mb-4" />
+                    <p class="text-sm text-gray-600">{{ $t('feedback.description') }}</p>
+                </div>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -52,6 +74,7 @@ import LoginModal from '@/components/LoginModal.vue';
 const theme = ref('light');
 const tolgee = useTolgee(['language']);
 const showLoginModal = ref(false);
+const showFeedbackModal = ref(false);
 
 const props = defineProps<{
     currentUser: User | null;

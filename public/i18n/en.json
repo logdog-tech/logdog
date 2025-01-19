@@ -176,6 +176,10 @@
     "workspace.search_placeholder": "Search by UID, nickname or email",
     "workspace.select": "Select Workspace",
     "userdropdown.language": "Language",
-    "userdropdown.logout": "Sign Out",
-    "userdropdown.login": "Sign In"
+    "userdropdown.logout": "Logout",
+    "userdropdown.login": "Login",
+    "userdropdown.feedback": "Technical Support",
+    "feedback.title": "Contact Us",
+    "feedback.scanQRCode": "Scan WeChat QR Code",
+    "feedback.description": "For any questions, you can provide feedback via WeChat. We also welcome customization requests"
 }

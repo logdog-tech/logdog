@@ -81,12 +81,8 @@ const toggleNotifications = (event: Event) => {
 }
 
 const handleClick = () => {
-    if (isLoggedIn.value) {
         showNotifications.value = false  // 关闭通知
-        showUserDropdown.value = !showUserDropdown.value
-    } else {
-        showLoginModal.value = true
-    }
+    showUserDropdown.value = !showUserDropdown.value
 }
 
 checkLoginStatus()

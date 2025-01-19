@@ -177,5 +177,9 @@
   "workspace.select": "ワークスペースを選択",
   "userdropdown.language": "言語",
   "userdropdown.logout": "ログアウト",
-  "userdropdown.login": "ログイン"
+  "userdropdown.login": "ログイン",
+  "userdropdown.feedback": "テクニカルサポート",
+  "feedback.title": "お問い合わせ",
+  "feedback.scanQRCode": "WeChatのQRコードをスキャン",
+  "feedback.description": "ご質問はWeChatでフィードバックをお寄せください。カスタマイズのご要望も歓迎します"
 }
