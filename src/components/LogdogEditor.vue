@@ -449,6 +449,7 @@ export default defineComponent({
     font-family: monospace;
     background-color: #f3f3f3;
     user-select: none;
+    z-index: 1;
 }
 
 .content-wrapper {
