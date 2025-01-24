@@ -176,8 +176,9 @@ export class BrowserProvider implements Provider {
                     },
                     onExtractFile: async (path: string, data: ArrayBuffer) => {
                         const logFile = this.files.find(f => f.path === path);
-
-                        await this.appendToLines(logFile!, rawFile as ExtendedFile, path, new Uint8Array(data));
+                        if (logFile?.isLogFile) {
+                            await this.appendToLines(logFile!, rawFile as ExtendedFile, path, new Uint8Array(data));
+                        }
                     }
                 };
                 await handler.processArchiveWithCallbacks(rawFile, path => !isLogFile(path), archiveCallback, rawFile.path);
@@ -199,6 +200,9 @@ export class BrowserProvider implements Provider {
         }
 
         for (const logFile of waitContinueExtract) {
+            if (!logFile.isLogFile) {
+                continue;
+            }
             logFile.status = "extracting";
             const binaryData = await new Uint8Array(await logFile.rawFile.arrayBuffer());
             await this.appendToLines(logFile, logFile.rawFile as ExtendedFile, logFile.rawFile.name, binaryData);
