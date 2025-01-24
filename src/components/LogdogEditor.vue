@@ -70,6 +70,9 @@ import { proxyProvider } from "../utils/providers/ProxyProvider";
 import { type Observer } from "../utils/providers/define";
 import { hashColor } from "../utils/colors";
 import { highlightIt } from "../utils/highlighter";
+import { escapeRegExp } from "../utils/regex";
+
+import { useToast } from 'primevue/usetoast';
 
 type StyleObject = Record<string, string>;
 
@@ -106,6 +109,10 @@ export default defineComponent({
             required: true,
             default: () => [],
         },
+    },
+    setup() {
+        const toast = useToast()
+        return { toast }
     },
     data() {
         return {
@@ -258,7 +265,7 @@ export default defineComponent({
                 useColors.push({ pattern: keyword, style: { color: hashColor(keyword) } } as { pattern: string | RegExp; style: StyleObject });
             }
             // TODO 添加临时高亮规则
-            useColors.push(...Object.entries(this.sessionColors).map(([text, style]) => ({ pattern: text, style: style })));
+            useColors.push(...Object.entries(this.sessionColors).map(([text, style]) => ({ pattern: escapeRegExp(text), style: style })));
 
             // 直接使用完整的搜索词作为正则表达式
             if (this.searchTerm) {
@@ -275,6 +282,14 @@ export default defineComponent({
             }
         },
         async searchLogs(currentTerm: string) {
+            try { // 判断finalSearch是否是合法的正则表达式
+                new RegExp(currentTerm);
+            } catch (e) {
+                console.warn('无效的正则表达式，中断:', currentTerm);
+                this.toast.add({ severity: 'error', summary: this.$t('logdogEditor.invalidRegex'), detail: currentTerm, life: 3000 });
+                return;
+            }
+
             const previousLine = this.selectedline;  // Store current line
             this.searchTerm = currentTerm;
             console.log("Searching for:", this.searchTerm);
@@ -338,8 +353,16 @@ export default defineComponent({
                         searchBoxPatterns.push(item.pattern!);
                     }
                 }
-                this.searchTerm = searchBoxPatterns.filter((f) => f).join("|");
+                const tmpSearchTerm = searchBoxPatterns.filter((f) => f).join("|");
+                try {
+                    new RegExp(tmpSearchTerm);
+                } catch (error) {
+                    this.toast.add({ severity: 'error', summary: this.$t('logdogEditor.invalidRegex'), detail: tmpSearchTerm, life: 3000 });
+                    console.warn('无效的正则表达式，中断:', tmpSearchTerm);
+                    return;
+                }
 
+                this.searchTerm = tmpSearchTerm;
                 await this.searchLogs(this.searchTerm);
             }
         }

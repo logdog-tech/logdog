@@ -92,6 +92,7 @@
     "joinWorkspace.returnHome": "Return to Homepage",
     "joinWorkspace.title": "Workspace Invitation",
     "logdogEditor.totalCount": "Total {totalCount} lines, Found {searchCount} lines, Search Progress {searchProgress}%",
+    "logdogEditor.invalidRegex": "Invalid regular expression",
     "login.title": "Sign in to continue",
     "login.subtitle": "Sign in to access more features",
     "login.wechat": "Sign in with WeChat",

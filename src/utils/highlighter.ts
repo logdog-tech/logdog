@@ -82,6 +82,12 @@ export function highlightIt(content: string, useColors: { pattern: string | RegE
         // 确保 pattern 不为 undefined
         if (!c.pattern) return;
 
+        try {
+            new RegExp(c.pattern);
+        } catch (error) {
+            console.warn('无效的正则表达式：', c.pattern);
+            return;
+        }
         const regex = new RegExp(c.pattern, 'gi');
         let match;
         while ((match = regex.exec(formatted)) !== null) {
