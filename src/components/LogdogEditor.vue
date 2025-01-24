@@ -11,7 +11,10 @@
     { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
 ]">
                             <div v-if="item.line === selectedline" :key="animationKey" class="border-animation" />
-                            <div class="line-number" contenteditable="false" v-html="item.line" />
+                            <div class="line-number" :class="{
+                                'filtered-line': item.isSearched,
+                                'marked-line': item.isMarked
+                            }" contenteditable="false" @click.stop="toggleLineMarked(item)" v-html="item.line" />
                             <div class="content-wrapper relative">
                                 <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
                                 <div class="content-overlay absolute inset-0"
@@ -32,10 +35,13 @@
                         <div class="log-item" @click="onClickSearchItem(item, index)" :class="[
                             'flex items-center',
     { 'glow-border': item.line === selectedline },
-                            { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
-                        ]">
+    { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
+]">
                             <div v-if="item.line === selectedline" :key="animationKey" class="border-animation" />
-                            <div class="line-number" contenteditable="false" v-html="item.line" />
+                            <div class="line-number" :class="{
+                                'filtered-line': item.isSearched,
+                                'marked-line': item.isMarked
+                            }" contenteditable="false" @click.stop="toggleLineMarked(item)" v-html="item.line" />
                             <div class="content-wrapper relative">
                                 <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
                                 <div class="content-overlay absolute inset-0"
@@ -383,6 +389,11 @@ export default defineComponent({
             this.currentEncoding = encoding;
             await proxyProvider.useEncoding(encoding);
         },
+        async toggleLineMarked(item: BaseLine) {
+            item.isMarked = !item.isMarked;
+            // 强制渲染
+            this.animationKey++;
+        }
     },
 });
 </script>
@@ -407,7 +418,7 @@ export default defineComponent({
     height: 20px;
     background-color: #f0f0f0;
     padding: 0 8px;
-        display: grid;
+    display: grid;
         grid-template-columns: 1fr 80px 1fr;
         align-items: center;
     }
@@ -433,6 +444,7 @@ export default defineComponent({
         white-space: pre;
         font-family: monospace;
         position: relative;
+        min-width: 1200px;
     }
     
     .log-item:hover::before {
@@ -499,6 +511,24 @@ export default defineComponent({
         background-color: #f3f3f3;
         user-select: none;
         z-index: 1;
+        cursor: pointer;
+    }
+    
+    .line-number:hover::after {
+        content: "点击添加标记";
+        position: absolute;
+        left: 100%;
+        top: 50%;
+        transform: translateY(-50%);
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        white-space: nowrap;
+        margin-left: 8px;
+        z-index: 1000;
+        pointer-events: none;
     }
     
     .content-wrapper {
@@ -519,5 +549,15 @@ export default defineComponent({
     .content-overlay.content-selected {
         background-color: rgba(0, 0, 0, 0.1);
     }
+    
+    .filtered-line {
+        font-weight: 700;
+        color: #333;
+        text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .marked-line {
+        background-color: #e3f2fd;
+        border-left: 2px solid #2196f3;
+    }
 </style>
-

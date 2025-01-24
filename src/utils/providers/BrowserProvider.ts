@@ -264,6 +264,7 @@ export class BrowserProvider implements Provider {
         this.filteredLines = [];
         let lastDelayTime = Date.now();
         for (let i = 0; i < this.allLines.length; i++) {
+            const currentLine = this.allLines[i];
             // !!! 重要A
             // 由于本函数增加[重要B]的逻辑，可能导致useFilter函数存在并行调用问题，因此增加版本号判断，确保只处理最新的任务
             if (this.filterVersion !== currentFilterVersion) {
@@ -272,9 +273,10 @@ export class BrowserProvider implements Provider {
             }
             regex.lastIndex = 0;
             const match = regex.test(this.allLines[i].content);
-            if (match) {
+            if (match || currentLine.isMarked) { // TODO 支持选项选择是否包含标记
                 this.filteredLines.push(this.allLines[i])
             }
+            this.allLines[i].isSearched = match;
 
             // !!! 重要B
             // 为了避免allLines过大+复杂的过滤规则时ANR，这里增加2个逻辑

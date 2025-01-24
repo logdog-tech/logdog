@@ -9,6 +9,8 @@ export interface BaseLine {
     level?: string;
     body?: string;
     originalIndex: number;
+    isSearched?: boolean;
+    isMarked?: boolean;
 }
 
 
