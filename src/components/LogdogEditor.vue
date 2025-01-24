@@ -45,13 +45,19 @@
                     </template>
                 </HugeList>
                 <div class="bottom-status-bar">
-                    {{ $t('logdogEditor.totalCount', { totalCount, searchCount, searchProgress }) }}
+                    <span>{{ $t('logdogEditor.totalCount', { totalCount, searchCount, searchProgress }) }}</span>
+                    <a class="encoding-selector" @click="showEncodingSelector = true">{{ currentEncoding.toUpperCase()
+                        || "UTF-8" }}</a>
+                    <span></span>
                 </div>
+
             </div>
         </SplitterPanel>
     </Splitter>
     <ColorSelecter @picked="handleColorPicked" :show="showColorSelecter" :x="selectionRect?.right"
         :y="selectionRect?.top" />
+    <EncodingSelector @update:show="showEncodingSelector = $event" @update:encoding="handleEncodingChange"
+        :show="showEncodingSelector" :encoding="currentEncoding" />
 </template>
 
 <script lang="ts">
@@ -61,6 +67,7 @@ import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
 import ColorSelecter from "./ColorSelecter.vue";
 import SearchBar from "./SearchBar.vue";
+import EncodingSelector from "./EncodingSelector.vue";
 import type { BaseLine, Rule } from "../modules/base";
 import type { PropType } from "vue";
 import { defineComponent } from 'vue';
@@ -71,6 +78,7 @@ import { type Observer } from "../utils/providers/define";
 import { hashColor } from "../utils/colors";
 import { highlightIt } from "../utils/highlighter";
 import { escapeRegExp } from "../utils/regex";
+import { settingsTableHelper } from "../utils/db";
 
 import { useToast } from 'primevue/usetoast';
 
@@ -92,6 +100,7 @@ export default defineComponent({
         ColorSelecter,
         SearchBar,
         HugeList,
+        EncodingSelector,
     },
     props: {
         filters: {
@@ -148,9 +157,11 @@ export default defineComponent({
             searchProgress: 100,
             updateCountTimer: null as any,
             animationKey: 0,  // 添加动画key
+            currentEncoding: "utf8",
+            showEncodingSelector: false,
         };
     },
-    mounted() {
+    async mounted() {
         const myObserver = {
             onChange: async () => {
                 const logFullView = this.$refs.logFullView as LogViewRef;
@@ -164,6 +175,8 @@ export default defineComponent({
             }
         } as Observer;
         proxyProvider.subscribe(myObserver);
+        this.currentEncoding = await settingsTableHelper.getDefaultEncoding() as string || "utf-8";
+        proxyProvider.useEncoding(this.currentEncoding);
     },
     methods: {
         onClickSearchItem(item: BaseLine, index: number) {
@@ -365,7 +378,11 @@ export default defineComponent({
                 this.searchTerm = tmpSearchTerm;
                 await this.searchLogs(this.searchTerm);
             }
-        }
+        },
+        async handleEncodingChange(encoding: string) {
+            this.currentEncoding = encoding;
+            await proxyProvider.useEncoding(encoding);
+        },
     },
 });
 </script>
@@ -389,109 +406,118 @@ export default defineComponent({
 .bottom-status-bar {
     height: 20px;
     background-color: #f0f0f0;
-    padding-left: 4px;
-}
-
-.virtual-scroller {
-    height: calc(100% - 8px) !important;
-    min-height: 0px;
-    width: calc(100% - 8px) !important;
-    margin: 4px 4px;
-}
-
-.log-search-view {
-    height: calc(100% - 64px) !important;
-}
-
-.log-item {
-    height: 18px;
-    white-space: pre;
-    font-family: monospace;
-    position: relative;
-}
-
-.log-item:hover::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-top: 1px solid darkgray;
-    border-bottom: 1px solid darkgray;
-    pointer-events: none;
-    z-index: 9;
-}
-
-.glow-border {
-    position: relative;
-}
-
-.border-animation {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    border-top: 1px solid darkgray;
-    border-bottom: 1px solid darkgray;
-    pointer-events: none;
-    z-index: 10;
-    animation: borderPulse 500ms ease-in-out;
-}
-
-@keyframes borderPulse {
-    0% {
-        border-color: #10a37f;
-        box-shadow: 0 0 8px rgba(16, 163, 127, 0.6);
+    padding: 0 8px;
+        display: grid;
+        grid-template-columns: 1fr 80px 1fr;
+        align-items: center;
     }
-
-    33% {
-        border-color: #0ea5e9;
-        box-shadow: 0 0 8px rgba(14, 165, 233, 0.6);
+    
+    .bottom-status-bar .encoding-selector {
+        cursor: pointer;
+        text-align: center;
     }
-
-    66% {
-        border-color: #8b5cf6;
-        box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
+    
+    .virtual-scroller {
+        height: calc(100% - 8px) !important;
+        min-height: 0px;
+        width: calc(100% - 8px) !important;
+        margin: 4px 4px;
     }
-
-    100% {
-        border-color: darkgray;
-        box-shadow: none;
+    
+    .log-search-view {
+        height: calc(100% - 64px) !important;
     }
-}
-
-.line-number {
-    position: sticky;
-    left: 0;
-    min-width: 50px;
-    text-align: right;
-    padding-right: 4px;
-    padding-left: 8px;
-    color: gray;
-    font-family: monospace;
-    background-color: #f3f3f3;
-    user-select: none;
-    z-index: 1;
-}
-
-.content-wrapper {
-    flex: 1;
-    position: relative;
-    overflow: hidden;
-}
-
-.content {
-    padding: 2px 8px;
-}
-
-.content-overlay {
-    pointer-events: none;
-    z-index: 1;
-}
-
-.content-overlay.content-selected {
-    background-color: rgba(0, 0, 0, 0.1);
-}
+    
+    .log-item {
+        height: 18px;
+        white-space: pre;
+        font-family: monospace;
+        position: relative;
+    }
+    
+    .log-item:hover::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-top: 1px solid darkgray;
+        border-bottom: 1px solid darkgray;
+        pointer-events: none;
+        z-index: 9;
+    }
+    
+    .glow-border {
+        position: relative;
+    }
+    
+    .border-animation {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-top: 1px solid darkgray;
+        border-bottom: 1px solid darkgray;
+        pointer-events: none;
+        z-index: 10;
+        animation: borderPulse 500ms ease-in-out;
+    }
+    
+    @keyframes borderPulse {
+        0% {
+            border-color: #10a37f;
+            box-shadow: 0 0 8px rgba(16, 163, 127, 0.6);
+        }
+    
+        33% {
+            border-color: #0ea5e9;
+            box-shadow: 0 0 8px rgba(14, 165, 233, 0.6);
+        }
+    
+        66% {
+            border-color: #8b5cf6;
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
+        }
+    
+        100% {
+            border-color: darkgray;
+            box-shadow: none;
+        }
+    }
+    
+    .line-number {
+        position: sticky;
+        left: 0;
+        min-width: 50px;
+        text-align: right;
+        padding-right: 4px;
+        padding-left: 8px;
+        color: gray;
+        font-family: monospace;
+        background-color: #f3f3f3;
+        user-select: none;
+        z-index: 1;
+    }
+    
+    .content-wrapper {
+        flex: 1;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .content {
+        padding: 2px 8px;
+    }
+    
+    .content-overlay {
+        pointer-events: none;
+        z-index: 1;
+    }
+    
+    .content-overlay.content-selected {
+        background-color: rgba(0, 0, 0, 0.1);
+    }
 </style>
+

@@ -51,13 +51,13 @@ class DB {
           ruleStore.createIndex('uuid', 'uuid', { unique: true });
         }
 
-        // 设置表
-        
+          // 设置表
+          
         if (!db.objectStoreNames.contains('settings')) {
             const settingsStore = db.createObjectStore('settings', { keyPath: 'key' });
             settingsStore.createIndex('key', 'key', { unique: true });
             settingsStore.createIndex('value', 'value', { unique: false });
-          } 
+        }
       };
     });
   }
@@ -234,5 +234,11 @@ export const settingsTableHelper = {
         } else {
             return db.add('settings', { key, value });
         }
+    },
+    getDefaultEncoding: async () => {
+        return await settingsTableHelper.get('defaultEncoding', 'utf-8');
+    },
+    setDefaultEncoding: async (value: string) => {
+        return await settingsTableHelper.set('defaultEncoding', value);
     },
 }

@@ -48,6 +48,8 @@ export class BrowserProvider implements Provider {
     allLines: BaseLine[] = [];
     filteredLines: BaseLine[] = [];
     observers: Set<Observer> = new Set();
+    encoding: string = "utf-8";
+
 
     // 用于去重
     fileIds = new Set<string>();
@@ -77,7 +79,7 @@ export class BrowserProvider implements Provider {
         }
 
 
-        const text = new TextDecoder('utf-8').decode(binaryData); // TODO 注意编码
+        const text = new TextDecoder(this.encoding).decode(binaryData); // TODO 注意编码
         const rawLines = text.split(/\r?\n/);
 
         const finalLines = rawLines.map((line, index) => {
@@ -108,11 +110,19 @@ export class BrowserProvider implements Provider {
         this.publishOnChange();
     }
 
+    setupedRawFiles: ExtendedFile[] = [];
+
     async setup(input: ExtendedFile[] | ExtendedFile | string, reset = false): Promise<void> {
         if (typeof input === 'string') {
             console.log("dbg ignore input:", input);
             return;
         }
+
+        if (reset) {
+            this.setupedRawFiles = [];
+        }
+        this.setupedRawFiles.push(...Array.isArray(input) ? input : [input]);
+
         this.setuped = false;
         this.status = "正在解析文件"
 
@@ -314,6 +324,11 @@ export class BrowserProvider implements Provider {
         return this.searchSearchProcess;
     }
 
+    async useEncoding(encoding: string): Promise<void> {
+        this.encoding = encoding;
+        return await this.setup(this.setupedRawFiles, true);
+    }
+
     subscribe(observer: Observer): void {
         this.observers.add(observer);
     }
@@ -326,50 +341,6 @@ export class BrowserProvider implements Provider {
             !fileName.startsWith('.') &&
             !fileName.includes('/.') &&
             !fileName.includes('DS_Store')
-    }
-
-    async getLines(uri: string): Promise<BaseLine[]> {
-        const logFile = this.files.find(file => file.path === uri);
-        if (!logFile) {
-            throw new Error(`File not found: ${uri}`);
-        }
-
-        let binaryData = null;
-
-        if (handler.isArchiveFile(logFile.rawFile.name)) {
-            try {
-                binaryData = await handler.extractFile(logFile.rawFile, uri);
-            } finally {
-                await handler.dispose(); // 完成后清理资源，避免内存泄漏
-            }
-            // 如果binaryData是一个ArrayBuffer，那么需要转换成Uint8Array
-            if (binaryData instanceof ArrayBuffer) { // archiveHandler这个库，对于zst格式返回的是ArrayBuffer格式
-                binaryData = new Uint8Array(binaryData);
-            }
-        } else {
-            binaryData = await new Uint8Array(await logFile.rawFile.arrayBuffer());
-        }
-
-        const finalFinalExt = uri.split('.').pop(); // TODO 支持更多格式，以及是否与handler的解压逻辑共用
-        if (finalFinalExt === 'gz') {
-            binaryData = await decompress(binaryData, 'gzip');
-        } else if (finalFinalExt === 'zst') {
-            binaryData = await decompress(binaryData, 'zstd');
-        }
-
-        const text = new TextDecoder('utf-8').decode(binaryData); // TODO 注意编码
-        const rawLines = text.split(/\r?\n/);
-        const finalLines = rawLines.map((line, index) => {
-            const fields = parser.parseLine(line);
-            return {
-                filename: logFile.path,
-                line: index + 1,
-                content: line,
-                ...fields
-            } as BaseLine;
-        });
-
-        return finalLines;
     }
 
     convertPathToLogFile(path: string, rawFile: ExtendedFile): LogFile {

@@ -17,7 +17,7 @@ export interface Provider {
     getLine(index: number): Promise<BaseLine>;
     getFilteredLine(index: number): Promise<BaseLine>;
     getSearchProcess(): Promise<number>;
-
+    useEncoding(encoding: string): Promise<void>;
     subscribe(observer: Observer): void;
     unsubscribe(observer: Observer): void;
 }

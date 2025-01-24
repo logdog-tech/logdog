@@ -151,6 +151,9 @@ export class RemoteProvider implements Provider {
     async getSearchProcess(): Promise<number> {
         return 100; // TODO 
     }
+    async useEncoding(encoding: string): Promise<void> {
+        await this.rpcCall('useEncoding', { encoding }); // TODO 实现useEncoding
+    }
     subscribe(observer: Observer): void {
         this.observers.add(observer);
     }

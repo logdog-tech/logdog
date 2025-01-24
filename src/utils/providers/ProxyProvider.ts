@@ -94,6 +94,10 @@ class ProxyProvider implements Provider {
         return await this.currentProvider.provider.getSearchProcess();
     }
 
+    async useEncoding(encoding: string): Promise<void> {
+        await this.currentProvider.provider.useEncoding(encoding);
+    }
+
     subscribe(observer: Observer): void {
         this.observers.add(observer);
         this.currentProvider.provider.subscribe(observer);
