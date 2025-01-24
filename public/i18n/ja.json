@@ -91,7 +91,7 @@
   "joinWorkspace.requireLogin": "ログインが必要です",
   "joinWorkspace.returnHome": "すぐにホームに戻る",
   "joinWorkspace.title": "ワークスペース招待",
-  "logdogEditor.totalCount": "合計 {totalCount} 行、{searchCount} 行が見つかりました",
+  "logdogEditor.totalCount": "合計 {totalCount} 行、{searchCount} 行が見つかりました，検索進捗 {searchProgress}%",
   "loginInfo.moreFeatures": "ログインで全機能が利用可能に",
   "loginInfo.notLoggedIn": "未ログイン",
     "login.title": "サインインして続行",

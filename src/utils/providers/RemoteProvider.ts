@@ -148,6 +148,9 @@ export class RemoteProvider implements Provider {
     async getFilteredLine(index: number): Promise<BaseLine> {
         return await this.rpcCall('getFilteredLine', { index });
     }
+    async getSearchProcess(): Promise<number> {
+        return 100; // TODO 
+    }
     subscribe(observer: Observer): void {
         this.observers.add(observer);
     }

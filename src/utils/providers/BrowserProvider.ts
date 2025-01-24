@@ -53,8 +53,9 @@ export class BrowserProvider implements Provider {
     fileIds = new Set<string>();
 
     status: string = "";
+    searchSearchProcess: number = 100; // 检索进度
     setuped: boolean = false
-
+    filterVersion: number = 0; // 用于记录当前活跃的过滤器的版本号号
 
     // 计算进度
     getSetupProgress(): string {
@@ -236,7 +237,8 @@ export class BrowserProvider implements Provider {
     }
 
     async useFilter(search: string): Promise<void> {
-       this.currentFilter = search
+        const currentFilterVersion = ++this.filterVersion;
+        this.currentFilter = search
 
         let tmpPatterns = search.split('|');
         // 为了提高，确保性能确保所有以.*，.+ 开头的模式都在最前面加上^
@@ -249,11 +251,37 @@ export class BrowserProvider implements Provider {
         const finalSearch = tmpPatterns.join('|');
 
         const regex = new RegExp(finalSearch, 'g'); // TODO 
-       this.filteredLines = this.allLines.filter(line => {
-        regex.lastIndex = 0;
-           return regex.test(line.content);
-       });
+        this.filteredLines = [];
+        let lastDelayTime = Date.now();
+        for (let i = 0; i < this.allLines.length; i++) {
+            // !!! 重要A
+            // 由于本函数增加[重要B]的逻辑，可能导致useFilter函数存在并行调用问题，因此增加版本号判断，确保只处理最新的任务
+            if (this.filterVersion !== currentFilterVersion) {
+                console.log(`当前过滤任务已过期，提前中断。filterVersion: ${this.filterVersion}, currentFilterVersion: ${currentFilterVersion}`);
+                return;
+            }
+            regex.lastIndex = 0;
+            const match = regex.test(this.allLines[i].content);
+            if (match) {
+                this.filteredLines.push(this.allLines[i])
+            }
 
+            // !!! 重要B
+            // 为了避免allLines过大+复杂的过滤规则时ANR，这里增加2个逻辑
+            // 1. 每隔1000次，则把主线程让出一次，
+            // 2. 但又为了避免让出的过于频繁，设置让出的最短间隔为50ms，即保证20的帧率
+            if (i % 1000 === 0) {
+                this.searchSearchProcess = Math.floor(i / this.allLines.length * 100);
+                const now = Date.now();
+                if (now - lastDelayTime >= 50) {
+                    await new Promise(resolve => setTimeout(resolve, 0));
+                    lastDelayTime = now;
+                    this.publishOnChange();
+                }
+            }
+        }
+
+        this.searchSearchProcess = 100;
         this.publishOnChange();
     }
 
@@ -280,6 +308,10 @@ export class BrowserProvider implements Provider {
 
     async getFilteredLine(index: number): Promise<BaseLine> {
         return this.filteredLines[index];
+    }
+
+    async getSearchProcess(): Promise<number> {
+        return this.searchSearchProcess;
     }
 
     subscribe(observer: Observer): void {
@@ -317,7 +349,7 @@ export class BrowserProvider implements Provider {
         } else {
             binaryData = await new Uint8Array(await logFile.rawFile.arrayBuffer());
         }
-        
+
         const finalFinalExt = uri.split('.').pop(); // TODO 支持更多格式，以及是否与handler的解压逻辑共用
         if (finalFinalExt === 'gz') {
             binaryData = await decompress(binaryData, 'gzip');

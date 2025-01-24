@@ -91,7 +91,7 @@
   "joinWorkspace.requireLogin": "需要登录",
   "joinWorkspace.returnHome": "立即返回首页",
   "joinWorkspace.title": "工作区邀请",
-  "logdogEditor.totalCount": "共计 {totalCount} 行，找到 {searchCount} 行",
+  "logdogEditor.totalCount": "共计 {totalCount} 行，找到 {searchCount} 行，搜索进度 {searchProgress}%",
   "login.title": "登录继续",
   "login.subtitle": "登录后可使用更多功能",
   "login.wechat": "微信登录",

@@ -89,6 +89,11 @@ class ProxyProvider implements Provider {
         return await this.currentProvider.provider.getFilteredLine(index);
     }
 
+
+    async getSearchProcess(): Promise<number> {
+        return await this.currentProvider.provider.getSearchProcess();
+    }
+
     subscribe(observer: Observer): void {
         this.observers.add(observer);
         this.currentProvider.provider.subscribe(observer);

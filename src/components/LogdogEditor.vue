@@ -45,7 +45,7 @@
                     </template>
                 </HugeList>
                 <div class="bottom-status-bar">
-                    {{ $t('logdogEditor.totalCount', { totalCount, searchCount }) }}
+                    {{ $t('logdogEditor.totalCount', { totalCount, searchCount, searchProgress }) }}
                 </div>
             </div>
         </SplitterPanel>
@@ -138,6 +138,7 @@ export default defineComponent({
             sessionColors: {} as Record<string, StyleObject>,
             totalCount: 0,
             searchCount: 0,
+            searchProgress: 100,
             updateCountTimer: null as any,
             animationKey: 0,  // 添加动画key
         };
@@ -150,6 +151,7 @@ export default defineComponent({
 
                 this.totalCount = await proxyProvider.getTotalLineCount();
                 this.searchCount = await proxyProvider.getFilteredLineCount();
+                this.searchProgress = await proxyProvider.getSearchProcess();
                 logFullView.flush();
                 logSearchView.flush();
             }
@@ -260,7 +262,6 @@ export default defineComponent({
 
             // 直接使用完整的搜索词作为正则表达式
             if (this.searchTerm) {
-                console.log("搜索模式", this.searchTerm);
                 const regex = new RegExp(this.searchTerm, 'gi');
                 useColors.push({ pattern: regex, style: { color: "red" } });
             }

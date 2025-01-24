@@ -16,6 +16,7 @@ export interface Provider {
     getFilteredLineCount(): Promise<number>;
     getLine(index: number): Promise<BaseLine>;
     getFilteredLine(index: number): Promise<BaseLine>;
+    getSearchProcess(): Promise<number>;
 
     subscribe(observer: Observer): void;
     unsubscribe(observer: Observer): void;
