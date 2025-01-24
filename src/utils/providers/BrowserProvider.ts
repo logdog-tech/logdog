@@ -82,6 +82,7 @@ export class BrowserProvider implements Provider {
         const text = new TextDecoder(this.encoding).decode(binaryData); // TODO 注意编码
         const rawLines = text.split(/\r?\n/);
 
+        let lastTimeFieldValue = "";
         const finalLines = rawLines.map((line, index) => {
             const fields = parser.parseLine(line);
 
@@ -93,6 +94,10 @@ export class BrowserProvider implements Provider {
             for (const key in fields) {
                 compressLine[key] = fields[key];
             }
+            if (!compressLine.time) {
+                compressLine.time = lastTimeFieldValue;
+            }
+            lastTimeFieldValue = compressLine.time;
 
             return compressLine;
         });
