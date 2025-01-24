@@ -8,6 +8,7 @@ import { AutoParser } from "../parsers/AutoParser";
 import { createArchiveHandler, type ArchiveCallback } from './archiveHandler';
 import { isLogFile } from "../binaryCheck";
 import { logMemoryCompressor } from '../memory';
+import { howToUseFile } from './how-to-use';
 
 interface ExtendedFile extends File {
     path?: string;
@@ -123,6 +124,11 @@ export class BrowserProvider implements Provider {
             return;
         }
 
+        if (this.setupedRawFiles.length === 1 && this.setupedRawFiles[0] === howToUseFile) {
+            console.warn("发现示例文件，强制改为重置模式");
+            reset = true;
+        }
+
         if (reset) {
             this.setupedRawFiles = [];
         }
@@ -184,7 +190,10 @@ export class BrowserProvider implements Provider {
                 await handler.processArchiveWithCallbacks(rawFile, path => !isLogFile(path), archiveCallback, rawFile.path);
             } else {
                 const logFile = this.convertPathToLogFile(rawFile.path || rawFile.name, rawFile as ExtendedFile);
-                this.files.push(logFile);
+
+                if (howToUseFile !== logFile.rawFile) { // 如果是示例文件，不添加，TODO 改成更易阅读和维护的方案
+                    this.files.push(logFile);
+                }
 
                 this.files.sort((a, b) => {
                     if (a.isLogFile && !b.isLogFile) return -1;
@@ -366,3 +375,5 @@ export class BrowserProvider implements Provider {
 }
 
 export const browserProvider = new BrowserProvider();
+browserProvider.setup(howToUseFile); // 打开示例
+

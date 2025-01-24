@@ -283,14 +283,23 @@ export default defineComponent({
             for (const keyword of autoHashHightlightByKeyworkds) {
                 useColors.push({ pattern: keyword, style: { color: hashColor(keyword) } } as { pattern: string | RegExp; style: StyleObject });
             }
+            // 直接使用完整的搜索词作为正则表达式
+            if (this.searchTerm) {
+                this.searchTerm.split("|").forEach((f) => {
+                    if (f) {
+                        try {
+                            new RegExp(f);
+                            useColors.push({ pattern: f, style: { "background-color": hashColor(f) } });
+                        } catch (error) {
+                            console.error(`Error in regex "${f}":`, error)
+                        }
+                    }
+                });
+            }
+
             // TODO 添加临时高亮规则
             useColors.push(...Object.entries(this.sessionColors).map(([text, style]) => ({ pattern: escapeRegExp(text), style: style })));
 
-            // 直接使用完整的搜索词作为正则表达式
-            if (this.searchTerm) {
-                const regex = new RegExp(this.searchTerm, 'gi');
-                useColors.push({ pattern: regex, style: { color: "red" } });
-            }
 
             return highlightIt(line.content + " ", useColors);
         },

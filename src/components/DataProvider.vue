@@ -264,6 +264,10 @@
                                     {{ $t('dataProvider.selectFolder') }}
                                 </label>
                             </div>
+                            <div class="mt-8"><a
+                                    href="https://nhwc-app.oss-cn-hangzhou.aliyuncs.com/logdog/logdog_sample_data.zip"
+                                    class="text-blue-500" target="_blank">下载日志示例</a>
+                            </div>
                         </div>
                     </div>
                 </div>

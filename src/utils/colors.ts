@@ -78,7 +78,7 @@ export function hashColor(str: string): string {
     // 使用固定的饱和度和亮度以确保颜色鲜艳且易于辨识
     const hue = Math.abs(hash % 360);  // 0-360的色相角度
     const saturation = 70;  // 固定70%的饱和度
-    const lightness = 60;   // 固定60%的亮度
+    const lightness = 80;   // 固定80%的亮度
 
     return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
