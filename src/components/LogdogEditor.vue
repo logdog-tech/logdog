@@ -199,7 +199,7 @@ export default defineComponent({
             // s1, 执行所有预处理任务, TODO 将该方法向provider前移
             for (const func of functions) {
                 try {
-                    const mem_func = new Function('return ' + func.custom_function)()
+                    const mem_func = new Function('' + func.custom_function)()
                     result = mem_func(line.filename, line.line, result)
                 } catch (error) {
                     console.error(`Error in function "${func.custom_function}":`, error)
@@ -212,7 +212,7 @@ export default defineComponent({
                 " " + line.tid + " ",
                 " " + line.level + " ",
             ];
-            result = this.highlights(line);
+            result = this.highlights(result);
 
             return result;
         },
@@ -272,7 +272,7 @@ export default defineComponent({
          * @param {string} content - 需要处理的原始文本内容
          * @returns {string} - 添加了高亮样式的HTML字符串
          */
-        highlights(line: BaseLine, autoHashHightlightByKeyworkds: string[] = []): string {
+        highlights(content: string, autoHashHightlightByKeyworkds: string[] = []): string {
             const useColors = [] as { pattern: string | RegExp; style: StyleObject }[]
 
             const colorItems = this.colors.filter((c) => c._checked)
@@ -301,7 +301,7 @@ export default defineComponent({
             useColors.push(...Object.entries(this.sessionColors).map(([text, style]) => ({ pattern: escapeRegExp(text), style: style })));
 
 
-            return highlightIt(line.content + " ", useColors);
+            return highlightIt(content + " ", useColors);
         },
         handleSearchInput(currentTerm: string) {
             const terms = currentTerm.split("|");
