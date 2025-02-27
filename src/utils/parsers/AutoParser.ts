@@ -8,6 +8,7 @@ interface FormatConfig {
         [name: string]: {
             pattern: string;
             timestamp_format: string;
+            samples?: string[];
         };
     };
     level_field: string;
@@ -34,6 +35,18 @@ const formatConfig: FormatConfig = {
         android1: {
             pattern: "^(?<time>[\\d- ]+\\d\\d:\\d\\d:\\d\\d\\.\\d\\d\\d)\\s+(?<pid>\\d+)\\s+(?<tid>\\d+)\\s+(?<level>\\w)\\s+",
             timestamp_format: "m-%d %H:%M:%S.%f",
+            samples: [ 
+                "12-17 20:52:03.168  3218  3218 I QImsService: ImsServiceSub : handleSsac voice = 255",
+                "12-17 20:52:03.168  3218  3218 I SendBroadcastPermission: action:org.codeaurora.VOIP_VOPS_SSAC_STATUS, mPermissionType:0",
+            ],
+        },
+        android3: { // 带有android uid的日志
+            pattern: "^(?<time>[\\d- ]+\\d\\d:\\d\\d:\\d\\d\\.\\d\\d\\d)\\s+(?<uid>\\d+)\\s+(?<pid>\\d+)\\s+(?<tid>\\d+)\\s+(?<level>\\w)\\s+",
+            timestamp_format: "m-%d %H:%M:%S.%f",
+            samples: [
+                "02-26 19:34:47.283  1000  4739  4739 E AndroidRuntime: 	at android.app.ActivityThread.main(ActivityThread.java:9570) ",
+                "02-26 19:34:47.283  1000  4739  4739 E AndroidRuntime: 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:604) "
+            ],
         },
     },
     level_field: "level",
@@ -44,6 +57,10 @@ const formatConfig: FormatConfig = {
     value: {
         time: {
             kind: "string",
+            identifier: false,
+        },
+        uid: {
+            kind: "number",
             identifier: false,
         },
         pid: {
