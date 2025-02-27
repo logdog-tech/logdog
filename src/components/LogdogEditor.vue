@@ -51,6 +51,7 @@
                     </template>
                 </HugeList>
                 <div class="bottom-status-bar">
+                    <a class="feedback-button text-red-500 cursor-pointer text-center" @click="showFeedbackModal = true">{{ $t('userdropdown.feedback') }}</a>
                     <span>{{ $t('logdogEditor.totalCount', { totalCount, searchCount, searchProgress }) }}</span>
                     <a class="encoding-selector" @click="showEncodingSelector = true">{{ currentEncoding.toUpperCase()
                         || "UTF-8" }}</a>
@@ -64,6 +65,8 @@
         :y="selectionRect?.top" />
     <EncodingSelector @update:show="showEncodingSelector = $event" @update:encoding="handleEncodingChange"
         :show="showEncodingSelector" :encoding="currentEncoding" />
+    <FeedbackModal :showFeedbackModal="showFeedbackModal" @update:showFeedbackModal="showFeedbackModal = $event" />
+
 </template>
 
 <script lang="ts">
@@ -85,6 +88,7 @@ import { hashColor } from "../utils/colors";
 import { highlightIt } from "../utils/highlighter";
 import { escapeRegExp } from "../utils/regex";
 import { settingsTableHelper } from "../utils/db";
+import FeedbackModal from './sidebar/subviews/FeedbackModal.vue';
 
 import { useToast } from 'primevue/usetoast';
 
@@ -107,6 +111,7 @@ export default defineComponent({
         SearchBar,
         HugeList,
         EncodingSelector,
+        FeedbackModal
     },
     props: {
         filters: {
@@ -167,6 +172,7 @@ export default defineComponent({
             showEncodingSelector: false,
             showCaseSensitive: true, // 是否大小写敏感
             showBookmark: true, // 是否书签
+            showFeedbackModal: false,
         };
     },
     async mounted() {
@@ -445,7 +451,7 @@ export default defineComponent({
     background-color: #f0f0f0;
     padding: 0 8px;
     display: grid;
-        grid-template-columns: 1fr 80px 1fr;
+        grid-template-columns: 120px 1fr 80px 1fr;
         align-items: center;
     }
     

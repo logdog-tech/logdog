@@ -45,22 +45,7 @@
             </template>
         </div>
         <LoginModal v-model="showLoginModal" />
-        <div v-if="showFeedbackModal"
-            class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-                <div class="flex justify-between items-center mb-4">
-                    <h3 class="text-lg font-semibold">{{ $t('feedback.title') }}</h3>
-                    <button @click="showFeedbackModal = false" class="text-gray-500 hover:text-gray-700">
-                        <i class="pi pi-times" />
-                    </button>
-                </div>
-                <div class="text-center">
-                    <p class="mb-4">{{ $t('feedback.scanQRCode') }}</p>
-                    <img src="/wechat-qr.jpg" alt="WeChat QR Code" class="mx-auto w-120 h-160 mb-4" />
-                    <p class="text-sm text-gray-600">{{ $t('feedback.description') }}</p>
-                </div>
-            </div>
-        </div>
+        <FeedbackModal :showFeedbackModal="showFeedbackModal" @update:showFeedbackModal="showFeedbackModal = $event" />
     </div>
 </template>
 
@@ -70,8 +55,8 @@ import { userApi } from '@/api';
 import { ref, computed } from 'vue';
 import type { User } from "@/modules/base"
 import LoginModal from '@/components/LoginModal.vue';
+import FeedbackModal from '@/components/sidebar/subviews/FeedbackModal.vue';
 
-const theme = ref('light');
 const tolgee = useTolgee(['language']);
 const showLoginModal = ref(false);
 const showFeedbackModal = ref(false);
