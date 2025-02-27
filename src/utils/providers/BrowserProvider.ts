@@ -264,7 +264,7 @@ export class BrowserProvider implements Provider {
         }
     }
 
-    async useFilter(search: string): Promise<void> {
+    async useFilter(search: string, options: { caseSensitive: boolean, bookmark: boolean }): Promise<void> {
         const currentFilterVersion = ++this.filterVersion;
         this.currentFilter = search
 
@@ -278,7 +278,9 @@ export class BrowserProvider implements Provider {
         });
         const finalSearch = tmpPatterns.join('|');
 
-        const regex = new RegExp(finalSearch, 'g'); // TODO 
+        console.log("finalSearch", finalSearch);
+
+        const regex = new RegExp(finalSearch, options.caseSensitive ? '' : 'i'); // TODO 
         this.filteredLines = [];
         let lastDelayTime = Date.now();
         for (let i = 0; i < this.allLines.length; i++) {
@@ -290,8 +292,14 @@ export class BrowserProvider implements Provider {
                 return;
             }
             regex.lastIndex = 0;
-            const match = regex.test(this.allLines[i].content);
-            if (match || currentLine.isMarked) { // TODO 支持选项选择是否包含标记
+
+            let match = false;
+            if (finalSearch.length === 0) {
+                match = false;
+            } else {
+                match = regex.test(this.allLines[i].content);
+            }
+            if (match || (currentLine.isMarked && options.bookmark)) { // TODO 支持选项选择是否包含标记
                 this.filteredLines.push(this.allLines[i])
             }
             this.allLines[i].isSearched = match;

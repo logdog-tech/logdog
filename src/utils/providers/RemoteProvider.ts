@@ -127,8 +127,8 @@ export class RemoteProvider implements Provider {
             await this.connectWebSocket(resource.path);
         }
     }
-    async useFilter(search: string): Promise<void> {
-        await this.rpcCall('useFilter', { search });
+    async useFilter(search: string, options: { caseSensitive: boolean, bookmark: boolean }): Promise<void> {
+        await this.rpcCall('useFilter', { search, options });
     }
     async getTotalLineCount(): Promise<number> {
         if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {

@@ -1,8 +1,17 @@
 <template>
     <div class="search-container">
         <InputGroup class="search-input">
-            <InputGroupAddon @click="toggleHistory" class="cursor-pointer hover:bg-gray-100">
+            <InputGroupAddon :title="$t('searchBar.showHistory')" @click="toggleHistory" class="cursor-pointer hover:bg-gray-100"
+                :class="{ 'icon-selected': showHistory }">
                 <i class="pi pi-clock"></i>
+            </InputGroupAddon>
+            <InputGroupAddon :title="$t('searchBar.showBookmark')" @click="toggleBookmark" class="cursor-pointer hover:bg-gray-100"
+                :class="{ 'icon-selected': showBookmark }">
+                <i class="pi pi-bookmark"></i>
+            </InputGroupAddon>
+            <InputGroupAddon :title="$t('searchBar.caseSensitive')" @click="toggleCaseSensitive" class="cursor-pointer hover:bg-gray-100"
+                :class="{ 'icon-selected': showCaseSensitive }">
+                <span>Aa</span>
             </InputGroupAddon>
             <InputText ref="searchInput" :value="localSearchTerm" @input="handleSearchInput"
                 @focus="showHistory = true && loadHistory()" @blur="handleBlur" @keyup.enter="doSearch"
@@ -71,7 +80,7 @@ export default {
         }
     },
 
-    emits: ['search', 'update:searchTerm'],
+    emits: ['search', 'update:searchTerm', 'toggleHistory', 'toggleBookmark', 'toggleCaseSensitive'],
 
     data() {
         return {
@@ -79,7 +88,9 @@ export default {
             filterText: '',
             history: [] as HistoryItem[],
             showHistory: false,
-            selectedIndex: -1
+            selectedIndex: -1,
+            showBookmark: true,
+            showCaseSensitive: true
         }
     },
 
@@ -119,6 +130,15 @@ export default {
             }
         },
 
+        toggleBookmark() {
+            this.showBookmark = !this.showBookmark;
+            this.$emit('toggleBookmark', this.showBookmark);
+        },
+
+        toggleCaseSensitive() {
+            this.showCaseSensitive = !this.showCaseSensitive;
+            this.$emit('toggleCaseSensitive', this.showCaseSensitive);
+        },
         hideHistory() {
             this.showHistory = false;
             this.selectedIndex = -1;
@@ -587,5 +607,14 @@ export default {
 
 .clear-history i {
     font-size: 0.9em;
+}
+.icon-selected {
+    background-color: var(--surface-hover, #f0f0f0);
+    color: var(--primary-color, rgb(59 130 246));
+}
+
+.icon-selected i, 
+.icon-selected span {
+    color: var(--primary-color, rgb(59 130 246));
 }
 </style>

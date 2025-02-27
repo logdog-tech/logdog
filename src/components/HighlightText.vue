@@ -31,7 +31,7 @@ export default {
             }
 
             try {
-                const regex = new RegExp(this.highlight, 'gi')
+                const regex = new RegExp(this.highlight, 'g')
                 const matches = Array.from(this.text.matchAll(regex)) as RegExpMatchArray[]
                 const result: { text: string; highlight: boolean }[] = []
                 let lastIndex = 0

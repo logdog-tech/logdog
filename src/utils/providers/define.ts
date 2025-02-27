@@ -10,7 +10,7 @@ export interface Provider {
     getResources(): LogFile[];
 
     useResource(resource: LogFile): Promise<void>;
-    useFilter(search: string): Promise<void>;
+    useFilter(search: string, options: { caseSensitive: boolean, bookmark: boolean }): Promise<void>;
 
     getTotalLineCount(): Promise<number>;
     getFilteredLineCount(): Promise<number>;

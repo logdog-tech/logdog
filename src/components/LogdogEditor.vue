@@ -27,7 +27,7 @@
         </SplitterPanel>
         <SplitterPanel style="width: 100%; height: 100%; min-height: 100px; ">
             <div class="h-full flex flex-col">
-                <SearchBar :searchTerm="searchTerm" @search="searchLogs" @update:searchTerm="handleSearchInput" />
+                <SearchBar :searchTerm="searchTerm" @search="searchLogs" @update:searchTerm="handleSearchInput" @toggleHistory="toggleHistory" @toggleBookmark="toggleBookmark" @toggleCaseSensitive="toggleCaseSensitive" />
 
                 <HugeList class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px]"
                     style="flex-grow: 1; overflow: hidden;" ref="logSearchView" :dataSource="searchDataSource">
@@ -165,6 +165,8 @@ export default defineComponent({
             animationKey: 0,  // 添加动画key
             currentEncoding: "utf8",
             showEncodingSelector: false,
+            showCaseSensitive: true, // 是否大小写敏感
+            showBookmark: true, // 是否书签
         };
     },
     async mounted() {
@@ -309,6 +311,21 @@ export default defineComponent({
                 ff._checked = ff.pattern ? terms.includes(ff.pattern) : false;
             }
         },
+        async toggleHistory(showHistory: boolean) {
+            // this.showHistory = showHistory;
+            console.log("toggleHistory", showHistory);
+            // await this.searchLogs(this.searchTerm);
+        },
+        async toggleBookmark(showBookmark: boolean) {
+            this.showBookmark = showBookmark;
+            console.log("toggleBookmark", showBookmark);
+            await this.searchLogs(this.searchTerm);
+        },
+        async toggleCaseSensitive(showCaseSensitive: boolean) {
+            this.showCaseSensitive = showCaseSensitive;
+            console.log("toggleCaseSensitive", showCaseSensitive);
+            await this.searchLogs(this.searchTerm);
+        },
         async searchLogs(currentTerm: string) {
             try { // 判断finalSearch是否是合法的正则表达式
                 new RegExp(currentTerm);
@@ -322,7 +339,7 @@ export default defineComponent({
             this.searchTerm = currentTerm;
             console.log("Searching for:", this.searchTerm);
 
-            await proxyProvider.useFilter(this.searchTerm);
+            await proxyProvider.useFilter(this.searchTerm, { caseSensitive: this.showCaseSensitive, bookmark: this.showBookmark });
             const logSearchView = this.$refs.logSearchView as LogViewRef;
 
             // 重新搜索后，使用二分法找到最近的匹配项

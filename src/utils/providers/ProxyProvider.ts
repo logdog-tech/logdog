@@ -69,8 +69,8 @@ class ProxyProvider implements Provider {
         }
     }
 
-    useFilter(search: string): Promise<void> {
-        return this.currentProvider.provider.useFilter(search);
+    useFilter(search: string, options: { caseSensitive: boolean, bookmark: boolean }): Promise<void> {
+        return this.currentProvider.provider.useFilter(search, options);
     }
 
     getTotalLineCount(): Promise<number> {

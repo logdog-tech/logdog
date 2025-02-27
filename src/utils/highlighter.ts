@@ -88,7 +88,7 @@ export function highlightIt(content: string, useColors: { pattern: string | RegE
             console.warn('无效的正则表达式：', c.pattern);
             return;
         }
-        const regex = new RegExp(c.pattern, 'gi');
+        const regex = new RegExp(c.pattern, 'g');
         let match;
         while ((match = regex.exec(formatted)) !== null) {
             const start = match.index;
