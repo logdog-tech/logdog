@@ -39,6 +39,7 @@ import { userApi, handleApiError } from "../../../api"
 import Notifications from './Notifications.vue'
 import UserDropdown from './footer/UserDropdown.vue'
 import LoginModal from '@/components/LoginModal.vue'
+import { settingsTableHelper } from '@/utils/db'
 
 const emit = defineEmits<{
     (e: 'login-status-changed', status: boolean, user: User | null): void
@@ -63,6 +64,7 @@ const avatarText = computed(() => {
 const checkLoginStatus = async () => {
     try {
         const data = await userApi.getUserInfo() as User
+        await settingsTableHelper.set('user_info', JSON.stringify(data))
         isLoggedIn.value = true
         userInfo.value = data
         emit('login-status-changed', true, data)

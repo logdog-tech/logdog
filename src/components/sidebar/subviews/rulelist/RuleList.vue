@@ -537,6 +537,7 @@ import { generateColorSchemes, type ColorScheme } from '../../../../utils/colors
 import { ruleTableHelper } from '@/utils/db';
 import { ruleApi } from '@/api';
 import { useToast } from 'primevue/usetoast';
+import { settingsTableHelper } from '@/utils/db';
 
 const defaultFunctionCode = `// 对日志进行预处理
 return function(
@@ -667,13 +668,18 @@ export default {
                 this.expandedContent = {} as Rule;
             }
         },
-        handleAddRule() {
-            this.toast.add({
-                severity: 'warn',
-                summary: this.$t('ruleList.anonymousWarningTitle'),
-                detail: this.$t('ruleList.anonymousWarningDetail'),
-                life: 8000
-            });
+        async handleAddRule() {
+            const userInfoStr = await settingsTableHelper.get('user_info', null)
+            const userInfo = userInfoStr ? JSON.parse(userInfoStr as string) as User : null
+            const isLoggedIn = userInfo !== null
+            if (!isLoggedIn) {
+                this.toast.add({
+                    severity: 'warn',
+                    summary: this.$t('ruleList.anonymousWarningTitle'),
+                    detail: this.$t('ruleList.anonymousWarningDetail'),
+                    life: 8000
+                });
+            }
             this.editingItem = {
                 uuid: crypto.randomUUID(),
                 workspace_id: this.workspace.id,
