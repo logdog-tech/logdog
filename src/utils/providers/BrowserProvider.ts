@@ -227,14 +227,12 @@ export class BrowserProvider implements Provider {
         // 排序
         this.allLines.sort((a, b) => {
             // 如果a或b没有time字段,将其放到最后
-            if (!a.time) return 1;
-            if (!b.time) return -1;
+            if (a.time && b.time) {
+                if (a.time < b.time) return -1;
+                if (a.time > b.time) return 1;
+            }
 
-            // 按time字符串的字典顺序排序
-            if (a.time < b.time) return -1;
-            if (a.time > b.time) return 1;
-
-            // 如果time相同，按原始索引排序（保持稳定性）
+            // 如果time相同或者没有time字段，按原始索引排序（保持稳定性）
             return a.originalIndex - b.originalIndex;
         });
 
