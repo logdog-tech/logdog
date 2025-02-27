@@ -150,7 +150,7 @@
                             v-if="type === 'function'"
                             v-model="editingItem!.custom_function"
                             :placeholder="$t('ruleList.placeholderFunctionCode')"
-                            rows="6"
+                            rows="14"
                             class="w-full px-2 py-1 text-sm rounded border dark:border-gray-600
                                    bg-white dark:bg-gray-700 
                                    text-gray-900 dark:text-gray-100
@@ -538,6 +538,20 @@ import { ruleTableHelper } from '@/utils/db';
 import { ruleApi } from '@/api';
 import { useToast } from 'primevue/usetoast';
 
+const defaultFunctionCode = `// 对日志进行预处理
+return function(
+  file, // 文件名
+  line, // 行号
+  log   // 日志内容
+) {
+  // 在这里对日志做各种处理
+  // 例如：增加文件名
+  log = file + " " + log;
+
+  // 返回处理后的日志
+  return log;
+}`
+
 export default {
     name: 'RuleList',
     components: {
@@ -572,6 +586,7 @@ export default {
             showExpandedEditor: false,
             expandedContent: {} as Rule,
             titleInputRef: null as HTMLInputElement | null,
+            defaultFunctionCode: defaultFunctionCode
         }
     },
     computed: {
@@ -671,6 +686,11 @@ export default {
                 _is_editing: true,
                 _is_adding: true,
             } as Rule;
+
+            // 为函数规则添加默认内容
+            if (this.type === 'function') {
+                this.editingItem.custom_function = this.defaultFunctionCode;
+            }
 
             this.localItems.unshift(this.editingItem);
         },
