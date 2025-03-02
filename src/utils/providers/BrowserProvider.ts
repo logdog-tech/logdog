@@ -263,6 +263,11 @@ export class BrowserProvider implements Provider {
         }
     }
 
+    async markLine(index: number, isMarked: boolean): Promise<void> {
+        this.allLines[index].isMarked = isMarked;
+        this.publishOnChange();
+    }
+
     async useFilter(search: string, options: { caseSensitive: boolean, displayMode: DisplayMode }): Promise<void> {
         const currentFilterVersion = ++this.filterVersion;
         this.currentFilter = search

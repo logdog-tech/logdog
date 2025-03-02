@@ -4,13 +4,15 @@
 import sys
 import threading
 import asyncio
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Callable, Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
 import json
 from queue import Queue
 import re
+import functools
+import json
 
 app = FastAPI()
 app.add_middleware(
@@ -22,88 +24,166 @@ app.add_middleware(
 )
 
 PORT = 8005
-lines: List[str] = []
-filtered_lines: List[int] = []  # Stores indices of filtered lines
-current_filter: str = ""
 connections: List[WebSocket] = []
 broadcast_queue = Queue()
 
-last_broadcast_line_count = 0
+
+def rpc_method(name: str):
+    """用于注册 RPC 方法的装饰器"""
+    def decorator(func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            return await func(*args, **kwargs)
+        wrapper.rpc_method = name
+        return wrapper
+    return decorator
+
+class DisplayMode:
+    MARK_AND_SEARCH = 'markAndSearch'
+    ONLY_MARK = 'onlyMark'
+    ONLY_SEARCH = 'onlySearch'
+
+class DataLine:
+    def __init__(self, content: str, line: int, filename: str):
+        self.content = content
+        self.line = line
+        self.filename = filename
+        self.isMarked = False
+        
+    def to_dict(self):
+        return {
+            "content": self.content,
+            "line": self.line,
+            "filename": self.filename,
+            "isMarked": self.isMarked
+        }
+
+    
+class RPCService:
+    def __init__(self):
+        self.lines: List[DataLine] = []
+        self.filtered_lines: List[int] = []  # Stores indices of filtered lines
+        self.last_broadcast_line_count = 0
+        self.data_version = 0
+        self.last_data_version = 0
+        self.encoding = "utf-8"
+        self.filters = {
+            "search": "",
+            "caseSensitive": False,
+            "displayMode": DisplayMode.MARK_AND_SEARCH
+        }
+        
+    async def broadcast_line_count(self):
+        if self.last_broadcast_line_count != len(self.lines) or self.data_version != self.last_data_version:
+            self.last_broadcast_line_count = len(self.lines)
+            self.last_data_version = self.data_version
+            new_line_count = len(self.lines)
+            
+            for websocket in connections:
+                await websocket.send_json({
+                    "type": "newLineCount",
+                    "payload": f"{self.last_broadcast_line_count},{new_line_count}"
+                })
+
+    def append_line(self, line: str):
+        data_line = DataLine(line, len(self.lines), "")
+        self.lines.append(data_line)
+        accept = self.filterDataLine(data_line)
+        if accept:
+            self.filtered_lines.append(data_line.line)
 
 
-async def broadcast_line_count():
-    global last_broadcast_line_count
-    new_line_count = len(lines)
-    if new_line_count == last_broadcast_line_count:
-        return
-    msg = {
-        "type": "newLineCount",
-        "payload": f"{last_broadcast_line_count},{new_line_count}",
-    }
-    last_broadcast_line_count = new_line_count
-    for ws in connections[:]:
-        try:
-            await ws.send_json(msg)
-        except:
-            connections.remove(ws)
+    @rpc_method("markLine")
+    async def markLine(self, index: int, isMarked: bool):
+        self.lines[index].isMarked = isMarked
+        # 不阻塞当前方法，在100ms后发送 await self.broadcast_line_count()
+        self.data_version += 1
+        asyncio.create_task(self.broadcast_line_count())
 
 
-def apply_filter(search: str):
-    global filtered_lines, current_filter
-    current_filter = search
-    if not search:
-        filtered_lines = list(range(len(lines)))
-    else:
-        try:
-            pattern = re.compile(search, re.IGNORECASE)
-            filtered_lines = [i for i, line in enumerate(lines) if pattern.search(line)]
-        except re.error:
-            # If invalid regex, treat as plain text
-            search = re.escape(search)
-            filtered_lines = [
-                i for i, line in enumerate(lines) if search.lower() in line.lower()
-            ]
+    def filterDataLine(self, line: DataLine):
+        isMarked = False
+        isMatch = False
+
+        if self.filters["displayMode"] == DisplayMode.ONLY_MARK or self.filters["displayMode"] == DisplayMode.MARK_AND_SEARCH:
+            isMarked = line.isMarked
+            
+        if self.filters["displayMode"] == DisplayMode.ONLY_SEARCH or self.filters["displayMode"] == DisplayMode.MARK_AND_SEARCH:
+            if not self.filters["search"]:
+                isMatch = False
+            else:
+                isMatch = re.search(self.filters["search"], line.content, re.IGNORECASE if not self.filters["caseSensitive"] else 0)
+        
+        return isMarked or isMatch
+
+    @rpc_method("useFilter")
+    async def useFilter(self, search: str, options: Dict):        
+        self.filtered_lines = []
+        
+        self.filters["search"] = search
+        self.filters["caseSensitive"] = options.get("caseSensitive", False)
+        self.filters["displayMode"] = options.get("displayMode", DisplayMode.MARK_AND_SEARCH)
+        
+        self.filtered_lines = [i for i, line in enumerate(self.lines) if self.filterDataLine(line)]
+        
+        self.data_version += 1
+        await self.broadcast_line_count()
+
+    @rpc_method("getTotalLineCount")
+    async def getTotalLineCount(self):
+        return len(self.lines)
+    
+    @rpc_method("getFilteredLineCount")
+    async def getFilteredLineCount(self):
+        return len(self.filtered_lines)
+    
+    @rpc_method("getLine")
+    async def getLine(self, index: int):
+        return self.lines[index]
+    
+    @rpc_method("getFilteredLine")
+    async def getFilteredLine(self, index: int):
+        data_line = self.lines[self.filtered_lines[index]]        
+        return data_line
+    
+    @rpc_method("getSearchProcess")
+    async def getSearchProcess(self):
+        return 100
+    
+    @rpc_method("useEncoding")
+    async def useEncoding(self, encoding: str):
+        self.encoding = encoding
+
+rpc_service = RPCService()
 
 
+import inspect
+
+# 修改find_rpc_methods函数，返回方法名到方法对象的映射
+def find_rpc_methods(obj):
+    route_methods = {}
+    
+    for name, method in inspect.getmembers(obj, inspect.ismethod):
+        if hasattr(method, 'rpc_method'):
+            route_methods[method.rpc_method] = method
+    
+    return route_methods
+
+# 初始化methods时，传递实例而非类
+methods = find_rpc_methods(rpc_service)
+
+# 修改handle_rpc_request函数
 async def handle_rpc_request(
     method: str, params: Dict, requestId: str, websocket: WebSocket
 ):
     response = {"type": "response", "requestId": requestId}
 
     try:
-        if method == "useFilter":
-            await apply_filter(params.get("search", ""))
-            response["payload"] = True
-
-        elif method == "getTotalLineCount":
-            response["payload"] = len(lines)
-
-        elif method == "getFilteredLineCount":
-            response["payload"] = len(filtered_lines)
-
-        elif method == "getLine":
-            index = params.get("index", 0)
-            if 0 <= index < len(lines):
-                response["payload"] = {
-                    "content": lines[index],
-                    "line": index,
-                    "filename": "",
-                }
-            else:
-                response["payload"] = None
-
-        elif method == "getFilteredLine":
-            index = params.get("index", 0)
-            if 0 <= index < len(filtered_lines):
-                line_index = filtered_lines[index]
-                response["payload"] = {
-                    "content": lines[line_index],
-                    "line": line_index,  # 修改这里：使用实际行号而不是过滤后的索引
-                    "index": line_index,
-                }
-            else:
-                response["payload"] = None
-
+        if method in methods:
+            # 直接调用映射中的方法
+            method_func = methods[method]
+            out = await method_func(**params)
+            response["payload"] = out.to_dict() if hasattr(out, 'to_dict') else out
         else:
             response["payload"] = {"error": f"Unknown method: {method}"}
 
@@ -118,6 +198,8 @@ async def handle_rpc_request(
         await websocket.send_json(error_response)
 
 
+
+
 @app.on_event("startup")
 async def startup_event():
     asyncio.create_task(process_broadcast_queue())
@@ -128,7 +210,7 @@ async def process_broadcast_queue():
         if not broadcast_queue.empty():
             should_broadcast = broadcast_queue.get()
             if should_broadcast:
-                await broadcast_line_count()
+                await rpc_service.broadcast_line_count()
         await asyncio.sleep(0.01)
 
 
@@ -140,7 +222,7 @@ def read_stdin():
                 break
 
             # Try different encodings
-            encodings = ["utf-8", "latin1", "cp1252"]
+            encodings = [rpc_service.encoding, "utf-8", "latin1", "cp1252"]
             decoded_line = None
 
             for encoding in encodings:
@@ -151,11 +233,7 @@ def read_stdin():
                     continue
 
             if decoded_line:  # Only add successfully decoded lines
-                lines.append(decoded_line)
-                if not current_filter or re.search(
-                    current_filter, decoded_line, re.IGNORECASE
-                ):
-                    filtered_lines.append(len(lines) - 1)
+                rpc_service.append_line(decoded_line)
                 broadcast_queue.put(True)
         except KeyboardInterrupt:
             break

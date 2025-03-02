@@ -423,7 +423,8 @@ export default defineComponent({
             await proxyProvider.useEncoding(encoding);
         },
         async toggleLineMarked(item: BaseLine) {
-            item.isMarked = !item.isMarked;
+            // item.isMarked = !item.isMarked;
+            await proxyProvider.markLine(item.line, !item.isMarked);
             // 强制渲染
             this.animationKey++;
         }

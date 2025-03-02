@@ -128,6 +128,9 @@ export class RemoteProvider implements Provider {
             await this.connectWebSocket(resource.path);
         }
     }
+    async markLine(index: number, isMarked: boolean): Promise<void> {
+        await this.rpcCall('markLine', { index, isMarked });
+    }
     async useFilter(search: string, options: { caseSensitive: boolean,  displayMode: DisplayMode }): Promise<void> {
         await this.rpcCall('useFilter', { search, options });
     }

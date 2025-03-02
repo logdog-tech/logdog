@@ -70,6 +70,10 @@ class ProxyProvider implements Provider {
         }
     }
 
+    async markLine(index: number, isMarked: boolean): Promise<void> {
+        await this.currentProvider.provider.markLine(index, isMarked);
+    }
+
     useFilter(search: string, options: { caseSensitive: boolean, displayMode: DisplayMode }): Promise<void> {
         return this.currentProvider.provider.useFilter(search, options);
     }
