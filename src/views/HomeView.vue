@@ -102,7 +102,7 @@ export default defineComponent({
 
         },
         handleUserToggleItems(type: number, item: Rule) {
-            (this.$refs.logdogEditorRef as LogdogEditor)?.handleUserToggleItems(item.rule_type, item);
+            (this.$refs.logdogEditorRef as typeof LogdogEditor)?.handleUserToggleItems(item.rule_type, item);
         },
         handleDogfileSelected(dogfile: string) {
             this.selectedDogfile = dogfile;

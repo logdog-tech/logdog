@@ -2,6 +2,7 @@ import { type Provider, type Observer } from "./define";
 import { browserProvider } from "./BrowserProvider";
 import { remoteProvider } from "./RemoteProvider";
 import type { BaseLine, LogFile } from "@/modules/base";
+import { DisplayMode } from "@/modules/base";
 
 export interface NamedPrivider {
     name: string,
@@ -69,7 +70,7 @@ class ProxyProvider implements Provider {
         }
     }
 
-    useFilter(search: string, options: { caseSensitive: boolean, bookmark: boolean }): Promise<void> {
+    useFilter(search: string, options: { caseSensitive: boolean, displayMode: DisplayMode }): Promise<void> {
         return this.currentProvider.provider.useFilter(search, options);
     }
 

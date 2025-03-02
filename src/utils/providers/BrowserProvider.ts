@@ -3,6 +3,7 @@ import { SimpleLogFile } from "@/modules/base";
 import type { Observer, Provider } from "./define";
 import { decompress } from "../extractors";
 import { AutoParser } from "../parsers/AutoParser";
+import { DisplayMode } from "@/modules/base";
 
 // archiveHandler.js
 import { createArchiveHandler, type ArchiveCallback } from './archiveHandler';
@@ -262,7 +263,7 @@ export class BrowserProvider implements Provider {
         }
     }
 
-    async useFilter(search: string, options: { caseSensitive: boolean, bookmark: boolean }): Promise<void> {
+    async useFilter(search: string, options: { caseSensitive: boolean, displayMode: DisplayMode }): Promise<void> {
         const currentFilterVersion = ++this.filterVersion;
         this.currentFilter = search
 
@@ -292,13 +293,24 @@ export class BrowserProvider implements Provider {
             regex.lastIndex = 0;
 
             let match = false;
-            if (finalSearch.length === 0) {
+            if (finalSearch.length === 0 || options.displayMode === DisplayMode.ONLY_MARK) {
                 match = false;
             } else {
                 match = regex.test(this.allLines[i].content);
             }
-            if (match || (currentLine.isMarked && options.bookmark)) { // TODO 支持选项选择是否包含标记
-                this.filteredLines.push(this.allLines[i])
+            
+            if (options.displayMode === DisplayMode.ONLY_MARK) {
+                if (currentLine.isMarked) { // 只包含标记
+                    this.filteredLines.push(this.allLines[i])
+                }
+            } else if (options.displayMode === DisplayMode.ONLY_SEARCH) {
+                if (match) { // 只包含搜索
+                    this.filteredLines.push(this.allLines[i])
+                }
+            } else {
+                if (match || currentLine.isMarked) { // 包含标记
+                    this.filteredLines.push(this.allLines[i])
+                }
             }
             this.allLines[i].isSearched = match;
 

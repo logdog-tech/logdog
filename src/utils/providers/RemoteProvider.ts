@@ -1,6 +1,7 @@
 import type { BaseLine, LogFile } from "@/modules/base";
 import { SimpleLogFile } from "@/modules/base";
 import { type Provider, type Observer } from "./define";
+import { DisplayMode } from "@/modules/base";
 
 export class RemoteProvider implements Provider {
     observers: Set<Observer> = new Set();
@@ -127,7 +128,7 @@ export class RemoteProvider implements Provider {
             await this.connectWebSocket(resource.path);
         }
     }
-    async useFilter(search: string, options: { caseSensitive: boolean, bookmark: boolean }): Promise<void> {
+    async useFilter(search: string, options: { caseSensitive: boolean,  displayMode: DisplayMode }): Promise<void> {
         await this.rpcCall('useFilter', { search, options });
     }
     async getTotalLineCount(): Promise<number> {

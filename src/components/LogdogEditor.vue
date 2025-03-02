@@ -27,7 +27,7 @@
         </SplitterPanel>
         <SplitterPanel style="width: 100%; height: 100%; min-height: 100px; ">
             <div class="h-full flex flex-col">
-                <SearchBar :searchTerm="searchTerm" @search="searchLogs" @update:searchTerm="handleSearchInput" @toggleHistory="toggleHistory" @toggleBookmark="toggleBookmark" @toggleCaseSensitive="toggleCaseSensitive" />
+                <SearchBar :searchTerm="searchTerm" @search="searchLogs" @update:searchTerm="handleSearchInput" @toggleHistory="toggleHistory" @changeDisplayMode="changeDisplayMode" @toggleCaseSensitive="toggleCaseSensitive" />
 
                 <HugeList class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px]"
                     style="flex-grow: 1; overflow: hidden;" ref="logSearchView" :dataSource="searchDataSource">
@@ -78,6 +78,7 @@ import ColorSelecter from "./ColorSelecter.vue";
 import SearchBar from "./SearchBar.vue";
 import EncodingSelector from "./EncodingSelector.vue";
 import type { BaseLine, Rule } from "../modules/base";
+import { DisplayMode } from "../modules/base";
 import type { PropType } from "vue";
 import { defineComponent } from 'vue';
 import type { ComponentRefs } from './HugeList.vue';
@@ -171,7 +172,7 @@ export default defineComponent({
             currentEncoding: "utf8",
             showEncodingSelector: false,
             showCaseSensitive: true, // 是否大小写敏感
-            showBookmark: true, // 是否书签
+            showBookmark: DisplayMode.MARK_AND_SEARCH, // 是否书签
             showFeedbackModal: false,
         };
     },
@@ -322,9 +323,9 @@ export default defineComponent({
             console.log("toggleHistory", showHistory);
             // await this.searchLogs(this.searchTerm);
         },
-        async toggleBookmark(showBookmark: boolean) {
-            this.showBookmark = showBookmark;
-            console.log("toggleBookmark", showBookmark);
+        async changeDisplayMode(mode: DisplayMode) {
+            this.showBookmark = mode;
+            console.log("toggleBookmark", mode);
             await this.searchLogs(this.searchTerm);
         },
         async toggleCaseSensitive(showCaseSensitive: boolean) {
@@ -345,7 +346,7 @@ export default defineComponent({
             this.searchTerm = currentTerm;
             console.log("Searching for:", this.searchTerm);
 
-            await proxyProvider.useFilter(this.searchTerm, { caseSensitive: this.showCaseSensitive, bookmark: this.showBookmark });
+            await proxyProvider.useFilter(this.searchTerm, { caseSensitive: this.showCaseSensitive, displayMode: this.showBookmark });
             const logSearchView = this.$refs.logSearchView as LogViewRef;
 
             // 重新搜索后，使用二分法找到最近的匹配项

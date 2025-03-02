@@ -1,20 +1,33 @@
 <template>
     <div class="search-container">
+                
         <InputGroup class="search-input">
-            <InputGroupAddon :title="$t('searchBar.showHistory')" @click="toggleHistory" class="cursor-pointer hover:bg-gray-100"
-                :class="{ 'icon-selected': showHistory }">
-                <i class="pi pi-clock"></i>
-            </InputGroupAddon>
-            <InputGroupAddon :title="$t('searchBar.showBookmark')" @click="toggleBookmark" class="cursor-pointer hover:bg-gray-100"
-                :class="{ 'icon-selected': showBookmark }">
-                <i class="pi pi-bookmark"></i>
-            </InputGroupAddon>
+            <CascadeSelect ref="bookmarkModeSelect" v-model="showBookmarkMode" :options="selectedBookmarkModes" optionLabel="cname" optionGroupLabel="cname"
+            :optionGroupChildren="['states', 'cities']" class="w-[200px]" @change="emitChangeDisplayMode" >
+                <template #value="slotProps">
+                    <div class="flex items-center">
+                        <i class="pi pi-filter mr-2"></i>
+                        <span>{{ slotProps.value.cname || slotProps.placeholder }}</span>
+                    </div>
+                </template>
+                <template #option="slotProps">
+                    <div class="flex items-center">
+                        <i class="pi pi-bookmark mr-2"></i>
+                        <span>{{ slotProps.option.cname || slotProps.option.name }}</span>
+                    </div>
+                </template>
+            </CascadeSelect>
+            
             <InputGroupAddon :title="$t('searchBar.caseSensitive')" @click="toggleCaseSensitive" class="cursor-pointer hover:bg-gray-100"
                 :class="{ 'icon-selected': showCaseSensitive }">
                 <span>Aa</span>
             </InputGroupAddon>
+            <InputGroupAddon :title="$t('searchBar.showHistory')" @click="toggleHistory" class="cursor-pointer hover:bg-gray-100"
+                :class="{ 'icon-selected': showHistory }">
+                <i class="pi pi-clock"></i>
+            </InputGroupAddon>
             <InputText ref="searchInput" :value="localSearchTerm" @input="handleSearchInput"
-                @focus="showHistory = true && loadHistory()" @blur="handleBlur" @keyup.enter="doSearch"
+                @focus="handleFocus" @blur="handleBlur" @keyup.enter="doSearch"
                 @keyup.esc="hideHistory" @keydown.up.prevent="navigateHistory('up')"
                 @keydown.down.prevent="navigateHistory('down')" :placeholder="$t('search.placeholder')" />
             <PrimeButton :label="$t('search.button')" @click="doSearch" />
@@ -55,6 +68,10 @@ import Button from "primevue/button";
 import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
 import { searchTableHelper } from "../utils/db";
+import CascadeSelect from 'primevue/cascadeselect';
+import type { CascadeSelectChangeEvent } from 'primevue/cascadeselect';
+
+import { DisplayMode } from "../modules/base";
 
 export interface HistoryItem {
     uuid: string;
@@ -71,6 +88,7 @@ export default {
         "PrimeButton": Button,
         InputGroup,
         InputGroupAddon,
+        CascadeSelect
     },
     props: {
         searchTerm: {
@@ -80,7 +98,7 @@ export default {
         }
     },
 
-    emits: ['search', 'update:searchTerm', 'toggleHistory', 'toggleBookmark', 'toggleCaseSensitive'],
+    emits: ['search', 'update:searchTerm', 'toggleHistory', 'toggleCaseSensitive', 'changeDisplayMode'],
 
     data() {
         return {
@@ -90,7 +108,14 @@ export default {
             showHistory: false,
             selectedIndex: -1,
             showBookmark: true,
-            showCaseSensitive: true
+            showCaseSensitive: true,
+            showBookmarkMode: 
+            { cname: this.$t('searchBar.markAndSearch'), code: DisplayMode.MARK_AND_SEARCH },
+            selectedBookmarkModes: [
+                { cname: this.$t('searchBar.markAndSearch'), code: DisplayMode.MARK_AND_SEARCH },
+                { cname: this.$t('searchBar.onlyMark'), code: DisplayMode.ONLY_MARK },
+                { cname: this.$t('searchBar.onlySearch'), code: DisplayMode.ONLY_SEARCH }
+            ]
         }
     },
 
@@ -118,7 +143,7 @@ export default {
         },
     },
     mounted() {
-        // 重要!!! initCopyHandler 函数用于修复”双击复制文本时自动添加多余空格的问题，详见：https://github.com/jasper9w/logdog/issues/21
+        // 重要!!! initCopyHandler 函数用于修复"双击复制文本时自动添加多余空格的问题，详见：https://github.com/jasper9w/logdog/issues/21
         this.initCopyHandler();
     },
 
@@ -130,9 +155,9 @@ export default {
             }
         },
 
-        toggleBookmark() {
-            this.showBookmark = !this.showBookmark;
-            this.$emit('toggleBookmark', this.showBookmark);
+        emitChangeDisplayMode(event: CascadeSelectChangeEvent) {
+            console.log(event.value);
+            this.$emit('changeDisplayMode', event.value.code); // code 是 DisplayMode 枚举的值
         },
 
         toggleCaseSensitive() {
@@ -269,6 +294,11 @@ export default {
             setTimeout(() => {
                 this.hideHistory();
             }, 200);
+        },
+
+        handleFocus() {
+            this.showHistory = true;
+            this.loadHistory();
         },
 
         navigateHistory(direction: 'up' | 'down') {
@@ -426,6 +456,14 @@ export default {
 .search-input {
     margin: 4px 4px;
     width: calc(100% - 8px);
+}
+
+/* 添加 CascadeSelect 宽度控制 */
+:deep(.p-cascadeselect) {
+    min-width: 160px !important;
+    max-width: 200px !important;
+    width: auto !important;
+    flex: 0 0 auto !important;
 }
 
 .action-icon {

@@ -1,4 +1,5 @@
 import type { BaseLine, LogFile } from "@/modules/base";
+import { DisplayMode } from "@/modules/base";
 
 export interface Observer {
     onChange(): void;
@@ -10,7 +11,7 @@ export interface Provider {
     getResources(): LogFile[];
 
     useResource(resource: LogFile): Promise<void>;
-    useFilter(search: string, options: { caseSensitive: boolean, bookmark: boolean }): Promise<void>;
+    useFilter(search: string, options: { caseSensitive: boolean, displayMode: DisplayMode }): Promise<void>;
 
     getTotalLineCount(): Promise<number>;
     getFilteredLineCount(): Promise<number>;

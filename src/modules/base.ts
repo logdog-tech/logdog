@@ -156,3 +156,11 @@ export interface Favorite {
     rule_id: number;
     created_at: string;
 }
+
+// 显示模式
+export enum DisplayMode {
+    MARK_AND_SEARCH = 'markAndSearch',
+    ONLY_MARK = 'onlyMark',
+    ONLY_SEARCH = 'onlySearch',
+}
+
