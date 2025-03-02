@@ -1,17 +1,25 @@
 <template>
     <Splitter style="width: 100vw; height: 100vh">
         <SplitterPanel v-show="showSidebar" :size="20" style="max-width: 800px; min-width: 227px;">
-            <div class="sidebar min-w-[227px] h-full" style="display: grid; grid-template-rows: 50px 240px 1fr 48px;">
+            <div class="sidebar min-w-[227px] h-full" style="display: grid; grid-template-rows: 50px 1fr 48px;">
                 <DogHeader :currentUser="currentUser" v-model:isSelectedFileMode="isSelectedFileMode"
                     @workspace-selected="handleWorkspaceSelected" @toggle-sidebar="onToggleSidebar" />
-                <div class="overflow-y-auto h-[240px]">
-                    <DataProvider :isSelectedFileMode="isSelectedFileMode" @fileLoaded="handleFileLoaded"
-                        @switchToListMode="isSelectedFileMode = false" />
-                </div>
-                <div class="overflow-y-auto">
-                    <DogRulers :currentUser="currentUser" :workspace="workspace" @configChanged="handleConfigChanged"
-                        @userToggleItems="handleUserToggleItems" />
-                </div>
+                
+                <!-- 使用嵌套的 Splitter 来实现文件区域和规则区域的可调节高度 -->
+                <Splitter layout="vertical" class="overflow-hidden">
+                    <!-- 文件区域 -->
+                    <SplitterPanel :size="40" class="overflow-y-auto">
+                        <DataProvider :isSelectedFileMode="isSelectedFileMode" @fileLoaded="handleFileLoaded"
+                            @switchToListMode="isSelectedFileMode = false" />
+                    </SplitterPanel>
+
+                    <!-- 规则区域 -->
+                    <SplitterPanel :size="60" class="overflow-y-auto">
+                        <DogRulers :currentUser="currentUser" :workspace="workspace" @configChanged="handleConfigChanged"
+                            @userToggleItems="handleUserToggleItems" />
+                    </SplitterPanel>
+                </Splitter>
+                
                 <LoginInfo @login-status-changed="handleLoginStatusChanged" />
             </div>
         </SplitterPanel>
@@ -81,7 +89,7 @@ export default defineComponent({
             console.log('handleWorkspaceSelected', workspace);
             this.workspace = workspace;
         },
-        handleFileLoaded(content: string, name: string) {
+        handleFileLoaded() {
             this.isSelectedFileMode = false;
         },
 
@@ -94,7 +102,7 @@ export default defineComponent({
 
         },
         handleUserToggleItems(type: number, item: Rule) {
-            (this.$refs.logdogEditorRef as any)?.handleUserToggleItems(item.rule_type, item);
+            (this.$refs.logdogEditorRef as LogdogEditor)?.handleUserToggleItems(item.rule_type, item);
         },
         handleDogfileSelected(dogfile: string) {
             this.selectedDogfile = dogfile;
