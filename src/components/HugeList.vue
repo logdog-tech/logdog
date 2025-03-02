@@ -629,7 +629,7 @@ export default defineComponent({
     position: absolute;
     top: 0;
     left: 0;
-    right: 16px;
+    right: 22px;
     bottom: 0;
     overflow-x: scroll;
     overflow-y: hidden;
@@ -645,7 +645,7 @@ export default defineComponent({
     position: absolute;
     right: 0;
     top: 0;
-    width: 16px;
+    width: 22px;
     height: 100%;
     background-color: transparent;
     border-left: none;
@@ -660,12 +660,12 @@ export default defineComponent({
 .fake-thumb {
     position: absolute;
     top: 0;
-    left: 3px;
-    width: 10px;
+    left: 0px;
+    width: 22px;
     height: 80px;
     min-height: 40px;
     background-color: rgba(0, 0, 0, 0.15);
-    border-radius: 20px;
+    border-radius: 0px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
@@ -673,13 +673,11 @@ export default defineComponent({
 .fake-thumb:hover,
 .fake-thumb:active {
     background-color: rgba(0, 0, 0, 0.25);
-    width: 12px;
-    left: 2px;
 }
 
 /* 横向滚动条样式 */
 .content-viewport::-webkit-scrollbar {
-    height: 16px;
+    height: 22px;
 }
 
 .content-viewport::-webkit-scrollbar-track {
