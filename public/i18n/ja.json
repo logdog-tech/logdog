@@ -39,6 +39,7 @@
   "dataProvider.selectLogFile": "ログファイルの処理方法を選択",
   "dataProvider.selectOperation": "操作を選択してください",
   "dataProvider.supportedFormats": ".log、.txt、.zip、.gz、.zst などの形式をサポート",
+  "dataProvider.downloadSampleData": "ログサンプルをダウンロード",
   "dogHeader.admin": "管理者",
   "dogHeader.deleteWorkspace": "ワークスペースを削除",
   "dogHeader.deleteWorkspaceConfirm": "ワークスペース \"{workspaceName}\" を削除しますか？",

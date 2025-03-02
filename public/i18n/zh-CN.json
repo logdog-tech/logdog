@@ -39,6 +39,7 @@
   "dataProvider.selectLogFile": "选择日志文件的处理方式",
   "dataProvider.selectOperation": "请选择您希望的操作方式",
   "dataProvider.supportedFormats": "支持 .log、.txt、.zip、.gz、.zst 等格式",
+  "dataProvider.downloadSampleData": "下载日志示例",
   "dogHeader.admin": "管理员",
   "dogHeader.deleteWorkspace": "删除工作区",
   "dogHeader.deleteWorkspaceConfirm": "确定要删除工作区 \"{workspaceName}\" 吗？",

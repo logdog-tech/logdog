@@ -39,6 +39,7 @@
     "dataProvider.selectLogFile": "Select Log File Processing Method",
     "dataProvider.selectOperation": "Please Select Your Desired Operation",
     "dataProvider.supportedFormats": "Supports .log, .txt, .zip, .gz, .zst formats",
+    "dataProvider.downloadSampleData": "Download Log Sample",
     "dogHeader.admin": "Admin",
     "dogHeader.deleteWorkspace": "Delete Workspace",
     "dogHeader.deleteWorkspaceConfirm": "Are you sure you want to delete workspace \"{workspaceName}\"?",
