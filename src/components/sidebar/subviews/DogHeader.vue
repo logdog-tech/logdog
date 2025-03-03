@@ -1,7 +1,7 @@
 <template>
     <div>
         <div style="display: grid; grid-template-columns: 44px 1fr 30px 40px; align-items: center;">
-            <div @click="toggleFileMode"><img src="@/assets/logo.svg" alt="LogDog" class="w-10 mx-4  rounded-full p-1 ">
+            <div @click="toggleFileMode"><img src="@/assets/logo-fill.svg" alt="LogDog" class="w-10 mx-4  rounded-full p-1 ">
             </div>
             <div class="text-lg font-bold text-gray-800">
                 <span @click="isOpen = !isOpen" :class="{ 'bg-gray-200': isOpen }"

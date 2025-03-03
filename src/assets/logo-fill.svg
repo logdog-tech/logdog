@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景圆形 -->
+  <circle cx="256" cy="256" r="256" fill="#2563EB"/>
+  
+  <!-- 日志/文档图标元素 - 放大版本 -->
+  <path d="M366 116H146C134.954 116 126 124.954 126 136V376C126 387.046 134.954 396 146 396H366C377.046 396 386 387.046 386 376V136C386 124.954 377.046 116 366 116Z" fill="white"/>
+  
+  <!-- 日志行 - 调整位置和大小 -->
+  <rect x="156" y="166" width="200" height="20" rx="5" fill="#2563EB" opacity="0.8"/>
+  <rect x="156" y="206" width="200" height="20" rx="5" fill="#2563EB" opacity="0.7"/>
+  <rect x="156" y="246" width="200" height="20" rx="5" fill="#2563EB" opacity="0.6"/>
+  <rect x="156" y="286" width="150" height="20" rx="5" fill="#2563EB" opacity="0.5"/>
+  
+  <!-- 放大镜元素 - 增大并调整位置 -->
+  <circle cx="330" cy="330" r="70" fill="#2563EB" opacity="0.2"/>
+  <circle cx="330" cy="330" r="45" stroke="#2563EB" stroke-width="20"/>
+  <line x1="298" y1="362" x2="260" y2="400" stroke="#2563EB" stroke-width="20" stroke-linecap="round"/>
+</svg>

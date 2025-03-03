@@ -4,7 +4,7 @@
       <!-- Logo 和标题 -->
       <div class="text-center mb-8">
         <div class="w-24 h-24 mx-auto mb-4">
-          <img src="@/assets/logo.svg" alt="LogDog" class="w-full h-full">
+          <img src="@/assets/logo-fill.svg" alt="LogDog" class="w-full h-full">
         </div>
         <h1 class="text-2xl font-bold text-gray-900">{{ $t('joinWorkspace.title') }}</h1>
       </div>
