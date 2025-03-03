@@ -159,7 +159,6 @@ rpc_service = RPCService()
 
 import inspect
 
-# 修改find_rpc_methods函数，返回方法名到方法对象的映射
 def find_rpc_methods(obj):
     route_methods = {}
     
@@ -169,10 +168,8 @@ def find_rpc_methods(obj):
     
     return route_methods
 
-# 初始化methods时，传递实例而非类
 methods = find_rpc_methods(rpc_service)
 
-# 修改handle_rpc_request函数
 async def handle_rpc_request(
     method: str, params: Dict, requestId: str, websocket: WebSocket
 ):
@@ -180,7 +177,6 @@ async def handle_rpc_request(
 
     try:
         if method in methods:
-            # 直接调用映射中的方法
             method_func = methods[method]
             out = await method_func(**params)
             response["payload"] = out.to_dict() if hasattr(out, 'to_dict') else out

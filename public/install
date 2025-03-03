@@ -1,0 +1,115 @@
+#!/bin/bash
+
+echo "Installing LogDog..."
+
+mkdir -p ~/.logdog/bin
+
+python_cmd=""
+venv_path=~/.logdog/venv
+
+if command -v python3 &>/dev/null; then
+    python_cmd="python3"
+elif command -v python &>/dev/null; then
+    py_version=$(python -c "import sys; print(sys.version_info[0])")
+    if [ "$py_version" -eq 3 ]; then
+        python_cmd="python"
+    fi
+fi
+
+if [ -z "$python_cmd" ]; then
+    echo "Error: Python 3 is required but not found on your system."
+    echo "Please install Python 3 and try again."
+    exit 1
+fi
+
+echo "Using $python_cmd to create virtual environment..."
+
+if ! $python_cmd -c "import venv" &>/dev/null; then
+    echo "Python venv module not found. Trying to install..."
+    if command -v apt-get &>/dev/null; then
+        sudo apt-get update && sudo apt-get install -y python3-venv
+    elif command -v yum &>/dev/null; then
+        sudo yum install -y python3-venv
+    elif command -v brew &>/dev/null; then
+        brew install python3
+    else
+        echo "Could not automatically install venv module."
+        echo "Please install the venv module for Python 3 and try again."
+        exit 1
+    fi
+fi
+
+echo "Creating Python virtual environment in $venv_path..."
+$python_cmd -m venv "$venv_path"
+
+if [ ! -d "$venv_path" ]; then
+    echo "Failed to create virtual environment. Please check your Python installation."
+    exit 1
+fi
+
+echo "Installing dependencies..."
+source "$venv_path/bin/activate"
+
+echo "Upgrading pip and configuring Chinese mirror..."
+pip install --upgrade pip
+
+mkdir -p ~/.pip
+cat > ~/.pip/pip.conf << 'EOL'
+[global]
+index-url = https://pypi.tuna.tsinghua.edu.cn/simple
+trusted-host = pypi.tuna.tsinghua.edu.cn
+EOL
+
+echo "Installing required packages: fastapi, uvicorn, websockets..."
+pip install fastapi uvicorn websockets
+
+echo "Verifying installation..."
+pip list | grep -E 'fastapi|uvicorn|websockets' || {
+    echo "Failed to install required packages. Please check your network connection."
+    exit 1
+}
+
+echo "Downloading LogDog..."
+curl -sSL logdog.tech -o ~/.logdog/bin/logdog
+chmod +x ~/.logdog/bin/logdog
+ln -s ~/.logdog/bin/logdog ~/.logdog/bin/dog
+
+# 检查~/.logdog/bin/logdog是否是一个有效的文件，方法是判断内种中否包含fastapi字符串
+if ! grep -q "curl" ~/.logdog/bin/logdog; then
+    echo "Failed to download LogDog. Please check your network connection."
+    exit 1
+fi
+
+cat > ~/.logdog/bin/logdog_wrapper << 'EOL'
+#!/bin/bash
+source ~/.logdog/venv/bin/activate
+~/.logdog/bin/logdog "$@"
+EOL
+
+chmod +x ~/.logdog/bin/logdog_wrapper
+
+alias logdog=~/.logdog/bin/logdog_wrapper
+alias dog=~/.logdog/bin/logdog_wrapper
+
+for rc in ~/.bashrc ~/.zshrc ~/.bash_profile; do
+    if [ -f "$rc" ]; then
+        if ! grep -q "alias logdog=" "$rc"; then
+            echo "" >> "$rc"
+            echo "# LogDog alias" >> "$rc"
+            echo "alias logdog=~/.logdog/bin/logdog_wrapper" >> "$rc"
+            echo "alias dog=~/.logdog/bin/logdog_wrapper" >> "$rc"
+            echo "Added LogDog alias to $rc"
+        fi
+    fi
+done
+
+echo "LogDog installed successfully!"
+echo "You can now use the 'logdog' command in your terminal."
+echo "For example: adb logcat | logdog"
+echo ""
+echo "NOTE: To use the alias in this terminal session, run:"
+echo "      source ~/.bashrc   # or your shell's config file"
+echo "      or restart your terminal"
+
+
+PATH=$PATH:~/.logdog/bin bash

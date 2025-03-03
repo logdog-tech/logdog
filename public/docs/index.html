@@ -36,19 +36,21 @@
 
 ### 1.1. 环境准备
 
-**1.1.1 安装Python环境**
+> bash <(curl -sSL logdog.tech/install)
 
-> 本功能依赖python3环境
-
-**1.1.2 安装fastapi和uvicorn库**
-
-> pip install fastapi uvicorn
+该指令会安装终端安装dog(以及logdog)指令，你可以通过管道符来访问Android Logcat日志
 
 ### 1.2. 使用方法
 
-> 终端执行以下命令一键访问Android Logcat日志
+终端执行以下命令一键访问Android Logcat日志
 
-> adb logcat | bash <(curl -sSL logdog.tech)
+> adb logcat | dog
+
+或
+
+> adb logcat | logdog
+
+
 
 </pre>
 </body>
