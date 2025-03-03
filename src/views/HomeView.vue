@@ -10,7 +10,7 @@
                     <!-- 文件区域 -->
                     <SplitterPanel :size="40" class="overflow-y-auto">
                         <DataProvider :isSelectedFileMode="isSelectedFileMode" @fileLoaded="handleFileLoaded"
-                            @switchToListMode="isSelectedFileMode = false" />
+                            @switchToListMode="isSelectedFileMode = false" @resourceClick="handleResourceClick" />
                     </SplitterPanel>
 
                     <!-- 规则区域 -->
@@ -40,7 +40,7 @@ import LogdogEditor from "../components/LogdogEditor.vue";
 import LoginInfo from "../components/sidebar/subviews/LoginInfo.vue";
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
-import type { User } from "../modules/base";
+import type { User, LogFile } from "../modules/base";
 
 import DogHeader from "../components/sidebar/subviews/DogHeader.vue";
 import DogRulers from "../components/sidebar/subviews/DogRulers.vue";
@@ -109,6 +109,9 @@ export default defineComponent({
         },
         onToggleSidebar() {
             this.showSidebar = !this.showSidebar;
+        },
+        handleResourceClick(resource: LogFile) {
+            (this.$refs.logdogEditorRef as typeof LogdogEditor)?.scrollToResource(resource);
         }
     }
 })

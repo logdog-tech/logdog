@@ -61,6 +61,9 @@ export class BrowserProvider implements Provider {
     setuped: boolean = false
     filterVersion: number = 0; // 用于记录当前活跃的过滤器的版本号号
 
+    // 添加文件索引映射
+    fileLineIndices: Map<string, { startLine: number, endLine: number }> = new Map();
+
     // 计算进度
     getSetupProgress(): string {
         if (this.setuped) {
@@ -104,11 +107,18 @@ export class BrowserProvider implements Provider {
             return compressLine;
         });
 
+        // 记录文件的起始行和结束行
+        const startLine = this.allLines.length;
+
         const BATCH_SIZE = 10000;
         for (let i = 0; i < finalLines.length; i += BATCH_SIZE) {
             const batch = finalLines.slice(i, i + BATCH_SIZE);
             this.allLines.push(...batch);
         }
+        
+        // 记录文件的结束行
+        const endLine = this.allLines.length - 1;
+        this.fileLineIndices.set(path, { startLine, endLine });
 
         this.status = `解压进度: ${this.getSetupProgress()}，当前文件:${path}`;
 
@@ -251,10 +261,23 @@ export class BrowserProvider implements Provider {
         return this.files;
     }
 
-    async useResource(uri: LogFile): Promise<void> {
+    async useResource(uri: LogFile): Promise<number> {
+        this.currentFile = uri;
+        
+        // 直接查找文件的第一行
+        const filename = uri.path;
+        for (let i = 0; i < this.allLines.length; i++) {
+            if (this.allLines[i].filename === filename) {
+                return Promise.resolve(i);
+            }
+        }
+        
         for (const observer of this.observers) {
             observer.onChange();
         }
+        
+        // 如果没有找到文件的行，返回-1表示未找到
+        return Promise.resolve(-1);
     }
 
     publishOnChange(): void {

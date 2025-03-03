@@ -17,6 +17,7 @@ export interface BaseLine {
 export type FileStatus = "pending" | "extracting" | "extracted" | "isConnected" | "notConnected" | "connecting";
 
 export interface LogFile {
+    id?: number;
     // 原始文件，即用户从浏览器选择的文件句柄
     rawFile: File;
 

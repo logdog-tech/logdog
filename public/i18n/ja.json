@@ -94,6 +94,7 @@
   "joinWorkspace.title": "ワークスペース招待",
   "logdogEditor.totalCount": "合計 {totalCount} 行、{searchCount} 行が見つかりました，検索進捗 {searchProgress}%",
   "logdogEditor.invalidRegex": "無効な正規表現",
+  "logdogEditor.clickToMark": "この行をマークするにはクリックしてください",
   "loginInfo.moreFeatures": "ログインで全機能が利用可能に",
   "loginInfo.notLoggedIn": "未ログイン",
     "login.title": "サインインして続行",

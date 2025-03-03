@@ -122,11 +122,12 @@ export class RemoteProvider implements Provider {
             androidLogFile
         ];
     }
-    async useResource(resource: LogFile): Promise<void> {
+    async useResource(resource: LogFile): Promise<number> {
         console.log("useResource", resource);
         if (resource.isRemoteMode && resource.path) {
             await this.connectWebSocket(resource.path);
         }
+        return -1;
     }
     async markLine(index: number, isMarked: boolean): Promise<void> {
         await this.rpcCall('markLine', { index, isMarked });

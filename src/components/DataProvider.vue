@@ -124,7 +124,7 @@
                 leave-from-class="opacity-100 translate-y-0" leave-to-class="opacity-0 translate-y-1">
 
                 <!-- 资源列表内容 -->
-                <div class="h-full flex flex-col">
+                <div v-show="true" class="h-full flex flex-col">
                     <!-- 标题行 -->
                     <div v-if="currentProviderName !== 'fileLog' || resources.length > 0"
                         class="px-3 py-1 text-sm font-medium bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
@@ -179,8 +179,10 @@
                     <template v-if="currentProviderName !== 'fileLog' || resources.length > 0">
                         <ul v-if="filteredResources.length > 0"
                             class="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-800">
-                            <li v-for="resource in filteredResources" :key="resource.path"
+                            <li v-for="resource in filteredResources" :key="resource.path" :title="resource.path"
                                 @click="handleResourceClick(resource)"
+                                @dblclick="handleResourceDoubleClick(resource)"
+                                @mouseenter="handleResourceMouseEnter(resource)"
                                 class="group px-3 py-2 hover:bg-gray-50 dark:hover:bg-gray-800/50 cursor-pointer"
                                 :class="{
                                     'bg-blue-50/50 dark:bg-blue-900/20': currentResource === resource,
@@ -203,20 +205,20 @@
                                             }
                                         ]"></i>
                                     </div>
-                                    <div class="flex-1 min-w-0">
+                                    <div class="flex-1 min-w-0 group hover:cursor-pointer">
                                         <div class="flex items-center justify-between">
                                             <div class="flex-1 min-w-0">
                                                 <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate"
                                                     :class="{ 'font-normal': !resource.isLogFile }">
                                                     <HighlightText :text="resource.name" :highlight="filterText" />
                                                 </p>
-                                                <p class="text-xs text-gray-500 dark:text-gray-400 truncate"
-                                                    v-html="resource.desc">
+                                                <p class="mt-1 text-xs text-gray-500 truncate overflow-hidden flex-1 min-w-0 group-hover:whitespace-normal group-hover:break-words group-hover:overflow-visible">
+                                                    <span class="font-bold pr-1" :style="{ color: hashColorLineIndex(resource.path) }">{{ '#' + resource.id}}</span>
+                                                    <span v-html="resource.desc"></span>
                                                 </p>
                                             </div>
                                             <div class="ml-2 flex-shrink-0 flex items-center space-x-2">
-                                                <span class="text-xs text-gray-500">{{ resource.getDisplayStatus()
-                                                    }}</span>
+                                                <span class="text-xs text-gray-500">{{ resource.getDisplayStatus() }}</span>
                                                 <i v-if="resource.status === 'pending'"
                                                     class="pi pi-clock text-gray-500 text-sm"
                                                     :title="$t('data.waiting')"></i>
@@ -280,6 +282,7 @@ import { defineComponent } from 'vue';
 import HighlightText from './HighlightText.vue';
 import { proxyProvider } from '../utils/providers/ProxyProvider';
 import type { LogFile } from '@/modules/base';
+import { hashColor } from '@/utils/colors';
 
 export default defineComponent({
     components: {
@@ -306,19 +309,26 @@ export default defineComponent({
             }
 
             const searchText = this.filterText.toLowerCase();
-            return this.resources.filter(resource =>
-                resource.path.toLowerCase().includes(searchText)
-            );
+            let fileIndex = 0;
+            return this.resources.filter(resource => {
+                resource.id = fileIndex++
+                return resource.path.toLowerCase().includes(searchText)
+            });
         }
     },
     methods: {
+        hashColorLineIndex(filename: string) {
+            return hashColor(filename, 80, 35);
+        },
         async handleResourceClick(resource: LogFile) {
+            console.log('handleResourceClick', resource);
             if (this.currentResource === resource) {
                 return;
             }
             this.currentResource = resource;
             await proxyProvider.useResource(resource);
             this.$emit('fileLoaded', resource);
+            this.$emit('resourceClick', resource);
         },
         setActiveProvider(name: string) {
             if (this.currentProviderName === name) return;
@@ -407,7 +417,7 @@ export default defineComponent({
             const processedFiles: File[] = [];
             const promises = Array.from(items).map((item) => {
                 if (item.kind === 'file') {
-                    const entry = (item as any).webkitGetAsEntry();
+                    const entry = (item as unknown as { webkitGetAsEntry: () => FileSystemEntry }).webkitGetAsEntry();
                     if (entry) {
                         // 从根路径开始处理
                         return this.processEntry(entry, processedFiles, '');
@@ -469,7 +479,7 @@ export default defineComponent({
             const processedFiles: File[] = [];
             const promises = Array.from(items).map((item) => {
                 if (item.kind === 'file') {
-                    const entry = (item as any).webkitGetAsEntry();
+                    const entry = (item as unknown as { webkitGetAsEntry: () => FileSystemEntry }).webkitGetAsEntry();
                     if (entry) {
                         return this.processEntry(entry, processedFiles);
                     }
@@ -527,6 +537,14 @@ export default defineComponent({
                 this.hoverMode = null;
             }
         },
+
+        handleResourceDoubleClick(resource: LogFile) {
+            // 双击资源的处理逻辑（留空）
+        },
+        
+        handleResourceMouseEnter(resource: LogFile) {
+            // 鼠标进入资源项时立即显示title（留空）
+        },
     },
     mounted() {
         window.addEventListener('dragenter', this.handleDragEnter);
@@ -539,6 +557,10 @@ export default defineComponent({
                 const newResources = proxyProvider.getResources();
                 this.resources.length = 0;
                 this.resources.push(...newResources);
+
+                for (let i = 0; i < this.resources.length; i++) {
+                    this.resources[i].id = i + 1;
+                }
             }
         });
     },

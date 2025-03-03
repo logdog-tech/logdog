@@ -63,11 +63,12 @@ class ProxyProvider implements Provider {
         return tmp;
     }
 
-    async useResource(resource: LogFile): Promise<void> {
-        await this.currentProvider.provider.useResource(resource);
+    async useResource(resource: LogFile): Promise<number> {
+        const startLine = await this.currentProvider.provider.useResource(resource);
         for (const observer of this.observers) {
             observer.onChange();
         }
+        return startLine;
     }
 
     async markLine(index: number, isMarked: boolean): Promise<void> {

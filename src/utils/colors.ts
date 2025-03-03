@@ -67,18 +67,20 @@ export interface ColorScheme {
  * @param str 
  * @returns 
  */
-export function hashColor(str: string): string {
-    // 使用一个简单的hash算法
+export function hashColor(str: string, saturation: number = 70, lightness: number = 80): string {
+    // 使用更复杂的哈希算法
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
-        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+      // 乘以一个大质数并异或操作，增加雪崩效应
+      hash = ((hash << 5) - hash) ^ str.charCodeAt(i);
+      hash = hash & hash; // 转为32位整数
     }
-
-    // 生成HSL颜色，使用hash来确定色相
-    // 使用固定的饱和度和亮度以确保颜色鲜艳且易于辨识
-    const hue = Math.abs(hash % 360);  // 0-360的色相角度
-    const saturation = 70;  // 固定70%的饱和度
-    const lightness = 80;   // 固定80%的亮度
-
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-}
+    
+    // 使用哈希值分别计算HSL的三个分量
+    const hue = Math.abs(hash % 360);
+    // 可以根据哈希值的不同部分调整饱和度和亮度，增加差异性
+    const s = saturation + ((hash >> 8) % 20);
+    const l = lightness - ((hash >> 16) % 20);
+    
+    return `hsl(${hue}, ${s}%, ${l}%)`;
+  }

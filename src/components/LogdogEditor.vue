@@ -11,10 +11,16 @@
     { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
 ]">
                             <div v-if="item.line === selectedline" :key="animationKey" class="border-animation" />
-                            <div class="line-number" :class="{
+                            <div class="line-number" :style="{ color: hashColorLineIndex(item.filename) }" :class="{
                                 'filtered-line': item.isSearched,
                                 'marked-line': item.isMarked
-                            }" contenteditable="false" @click.stop="toggleLineMarked(item)" v-html="item.line" />
+                            }" contenteditable="false" @click.stop="toggleLineMarked(item)">
+                                <span v-html="item.line"></span>
+                                <div class="filename-tooltip">
+                                    <p>{{ item.filename }}</p>
+                                    <p>{{ $t('logdogEditor.clickToMark') }}</p>
+                                </div>
+                            </div>
                             <div class="content-wrapper relative">
                                 <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
                                 <div class="content-overlay absolute inset-0"
@@ -32,16 +38,21 @@
                 <HugeList class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px]"
                     style="flex-grow: 1; overflow: hidden;" ref="logSearchView" :dataSource="searchDataSource">
                     <template #default="{ isSelected, item, index }">
-                        <div class="log-item" @click="onClickSearchItem(item, index)" :class="[
+                        <div class="log-item" @click="onClickSearchItem(item)" :class="[
                             'flex items-center',
     { 'glow-border': item.line === selectedline },
     { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
 ]">
                             <div v-if="item.line === selectedline" :key="animationKey" class="border-animation" />
-                            <div class="line-number" :class="{
-                                'filtered-line': item.isSearched,
+                            <div class="line-number" :style="{ color: hashColorLineIndex(item.filename) }" :class="{
                                 'marked-line': item.isMarked
-                            }" contenteditable="false" @click.stop="toggleLineMarked(item)" v-html="item.line" />
+                            }" contenteditable="false" @click.stop="toggleLineMarked(item)">
+                                <span v-html="item.line"></span>
+                                <div class="filename-tooltip">
+                                    <p>{{ item.filename }}</p>
+                                    <p>点击标记该行</p>
+                                </div>
+                            </div>
                             <div class="content-wrapper relative">
                                 <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
                                 <div class="content-overlay absolute inset-0"
@@ -77,11 +88,10 @@ import SplitterPanel from "primevue/splitterpanel";
 import ColorSelecter from "./ColorSelecter.vue";
 import SearchBar from "./SearchBar.vue";
 import EncodingSelector from "./EncodingSelector.vue";
-import type { BaseLine, Rule } from "../modules/base";
+import type { BaseLine, Rule, LogFile } from "../modules/base";
 import { DisplayMode } from "../modules/base";
 import type { PropType } from "vue";
 import { defineComponent } from 'vue';
-import type { ComponentRefs } from './HugeList.vue';
 import type { DataSource } from './HugeList.vue';
 import { proxyProvider } from "../utils/providers/ProxyProvider";
 import { type Observer } from "../utils/providers/define";
@@ -167,7 +177,7 @@ export default defineComponent({
             totalCount: 0,
             searchCount: 0,
             searchProgress: 100,
-            updateCountTimer: null as any,
+            updateCountTimer: null as NodeJS.Timeout | null,
             animationKey: 0,  // 添加动画key
             currentEncoding: "utf8",
             showEncodingSelector: false,
@@ -194,7 +204,10 @@ export default defineComponent({
         proxyProvider.useEncoding(this.currentEncoding);
     },
     methods: {
-        onClickSearchItem(item: BaseLine, index: number) {
+        hashColorLineIndex(filename: string) {
+            return hashColor(filename, 80, 35);
+        },
+        onClickSearchItem(item: BaseLine) {
             this.selectedline = item.line;
             this.animationKey++;  // 增加key触发新动画
             const logFullView = this.$refs.logFullView as LogViewRef;
@@ -337,7 +350,7 @@ export default defineComponent({
             try { // 判断finalSearch是否是合法的正则表达式
                 new RegExp(currentTerm);
             } catch (e) {
-                console.warn('无效的正则表达式，中断:', currentTerm);
+                console.warn('无效的正则表达式，中断:', currentTerm, e);
                 this.toast.add({ severity: 'error', summary: this.$t('logdogEditor.invalidRegex'), detail: currentTerm, life: 3000 });
                 return;
             }
@@ -410,7 +423,7 @@ export default defineComponent({
                     new RegExp(tmpSearchTerm);
                 } catch (error) {
                     this.toast.add({ severity: 'error', summary: this.$t('logdogEditor.invalidRegex'), detail: tmpSearchTerm, life: 3000 });
-                    console.warn('无效的正则表达式，中断:', tmpSearchTerm);
+                    console.warn('无效的正则表达式，中断:', tmpSearchTerm, error);
                     return;
                 }
 
@@ -427,6 +440,19 @@ export default defineComponent({
             await proxyProvider.markLine(item.line, !item.isMarked);
             // 强制渲染
             this.animationKey++;
+        },
+        async scrollToResource(resource: LogFile) {
+            // 使用优化后的 useResource 方法获取文件的起始行
+            const startLine = await proxyProvider.useResource(resource);
+            console.log('scrollToResource', resource, startLine);
+            if (startLine >= 0) {
+                // 如果找到了文件的起始行，直接滚动到该行
+                this.selectedline = startLine;
+                this.animationKey++; // 触发动画
+                const logFullView = this.$refs.logFullView as LogViewRef;
+                logFullView.scrollToIndex(startLine);
+                return;
+            }
         }
     },
 });
@@ -546,15 +572,17 @@ export default defineComponent({
         user-select: none;
         z-index: 1;
         cursor: pointer;
+        position: relative; /* 确保相对定位 */
     }
     
-    .line-number:hover::after {
-        content: "点击添加标记";
+    .line-number .filename-tooltip {
+        display: none;
         position: absolute;
-        left: 100%;
-        top: 50%;
+        left: 30%;
+        top: -120%;
         transform: translateY(-50%);
         background: rgba(0, 0, 0, 0.8);
+        text-align: left;
         color: white;
         padding: 4px 8px;
         border-radius: 4px;
@@ -563,6 +591,10 @@ export default defineComponent({
         margin-left: 8px;
         z-index: 1000;
         pointer-events: none;
+    }
+    
+    .line-number:hover .filename-tooltip {
+        display: block;
     }
     
     .content-wrapper {
