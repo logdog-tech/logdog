@@ -74,6 +74,63 @@ export class BrowserProvider implements Provider {
         return `${setupedFiles}/${totalFiles}`
     }
 
+    /**
+     * 将二进制数据转换为行数组，
+     * 
+     * 关键逻辑：
+     * 直接new Decoder().decode(...) 在处理超大二进制数据时（大约500M就会出现），会爆栈，返回空字符串
+     * 
+     * 因此本方法使用分块解码，并立即处理行，避免爆栈
+     * 
+     * @param binaryData 
+     * @param encoding 
+     * @returns 
+     */
+    splitLinesFromBinarySupportLargeFile(binaryData: Uint8Array, encoding = 'utf-8'): string[] {
+        const lines: string[] = [];
+        
+        if (!binaryData || binaryData.length === 0) {
+            return lines;
+        }
+        
+        const decoder = new TextDecoder(encoding);
+        const chunkSize = 50 * 1024 * 1024;
+        let pendingLine = "";
+        
+        for (let offset = 0; offset < binaryData.length; offset += chunkSize) {
+            const end = Math.min(offset + chunkSize, binaryData.length);
+            const chunk = binaryData.slice(offset, end);
+            const isLastChunk = end >= binaryData.length;
+            
+            const text = decoder.decode(chunk, { stream: !isLastChunk });
+            const chunkLines = text.split(/\r?\n/);
+            
+            if (pendingLine !== "") {
+                chunkLines[0] = pendingLine + chunkLines[0];
+                pendingLine = "";
+            }
+            
+            if (!isLastChunk) {
+                pendingLine = chunkLines.pop() || "";
+            }
+            
+            // 使用for循环逐个添加元素，而不是展开运算符
+            for (let i = 0; i < chunkLines.length; i++) {
+                lines.push(chunkLines[i]);
+            }
+        }
+        
+        if (pendingLine !== "") {
+            const finalText = decoder.decode();
+            if (finalText !== "") {
+                pendingLine += finalText;
+            }
+            lines.push(pendingLine);
+        }
+        
+        return lines;
+    }
+
     async appendToLines(logFile: LogFile, rawFile: ExtendedFile, path: string, binaryData: Uint8Array) {
 
         const finalFinalExt = path.split('.').pop();
@@ -83,9 +140,7 @@ export class BrowserProvider implements Provider {
             binaryData = await decompress(binaryData, 'zstd');
         }
 
-
-        const text = new TextDecoder(this.encoding).decode(binaryData); // TODO 注意编码
-        const rawLines = text.split(/\r?\n/);
+        const rawLines = this.splitLinesFromBinarySupportLargeFile(binaryData);
 
         let lastTimeFieldValue = "";
         const finalLines = rawLines.map((line, index) => {
