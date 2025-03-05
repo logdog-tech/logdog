@@ -54,7 +54,7 @@ import { useTolgee } from '@tolgee/vue';
 import { userApi } from '@/api';
 import { ref, computed } from 'vue';
 import type { User } from "@/modules/base"
-import LoginModal from '@/components/LoginModal.vue';
+import LoginModal from '@/components/LoginModal';
 import FeedbackModal from '@/components/sidebar/subviews/FeedbackModal.vue';
 
 const tolgee = useTolgee(['language']);

@@ -38,7 +38,7 @@ import type { User } from "@/modules/base"
 import { userApi, handleApiError } from "../../../api"
 import Notifications from './Notifications.vue'
 import UserDropdown from './footer/UserDropdown.vue'
-import LoginModal from '@/components/LoginModal.vue'
+import LoginModal from '@/components/LoginModal'
 import { settingsTableHelper } from '@/utils/db'
 
 const emit = defineEmits<{
