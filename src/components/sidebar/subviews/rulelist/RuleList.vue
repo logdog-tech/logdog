@@ -537,7 +537,7 @@ import { generateColorSchemes, type ColorScheme } from '../../../../utils/colors
 import { ruleTableHelper } from '@/utils/db';
 import { ruleApi } from '@/api';
 import { useToast } from 'primevue/usetoast';
-import { settingsTableHelper } from '@/utils/db';
+import { settingsTableHelper, ruleStatusTableHelper } from '@/utils/db';
 
 const defaultFunctionCode = `// 对日志进行预处理
 return function(
@@ -778,11 +778,15 @@ export default {
             this.editingItem!.fg_color = scheme.fg;
             this.editingItem!.bg_color = scheme.bg;
         },
-        toggleCheck(item: Rule) {
+        async toggleCheck(item: Rule) {
             if (item._is_editing) {
                 return;
             }
             item._checked = !item._checked;
+
+            console.log("toggleCheck, item=", item) 
+            await ruleStatusTableHelper.storeChecked(item.id, item._checked);
+            await ruleTableHelper.insertOrUpdate(item);
             this.emitUserToggleItems(item);
         },
         openExpandedEdit() {

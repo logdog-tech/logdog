@@ -75,7 +75,7 @@
 import type { PropType } from 'vue';
 import RuleList from './rulelist/RuleList.vue';
 import type { User, Workspace } from '../../../modules/base';
-import { ruleTableHelper } from '../../../utils/db';
+import { ruleTableHelper, ruleStatusTableHelper } from '../../../utils/db';
 import type { Rule } from '@/modules/base';
 import { ruleApi } from '@/api';
 
@@ -159,6 +159,8 @@ export default {
                 if (rule.rule_type === 'color') {
                     rule._checked = true;
                 }
+
+                rule._checked = await ruleStatusTableHelper.getChecked(rule.id, rule._checked);
             }
 
             // 按照创建时间排序
