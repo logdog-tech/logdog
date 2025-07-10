@@ -180,8 +180,9 @@ export default {
             this.$emit('userToggleItems', type, item);
             this.$emit('configChanged', this.rules);
         },
-        handleUpdateItems(type: 'filter' | 'color' | 'function', items: Rule[]) {
-            // TODO
+        async handleUpdateItems(type: 'filter' | 'color' | 'function', items: Rule[]) {
+            console.log('handleUpdateItems', type, items);
+            this.rules = await this.getWorkspaceRulesFromDatabase();
         }
     }
 }

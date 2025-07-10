@@ -712,6 +712,7 @@ export default {
                 }
             } else {
                 await ruleTableHelper.add(this.editingItem!);
+                await this.handleFunctionSubmit(this.editingItem!);
                 if (this.workspace.id !== 0) { // 0 是本地工作区，不需要同步到远程
                     await ruleApi.createRule(this.editingItem!);
                 }
@@ -736,7 +737,7 @@ export default {
             this.showEditor = false;
             this.editingItem = undefined;
         },
-        handleFunctionSubmit(rule: Rule) {
+        async handleFunctionSubmit(rule: Rule) {
             const index = this.localItems.findIndex(item => item.rule_name === this.editingItem?.rule_name);
             if (index !== -1) {
                 this.localItems[index] = rule;
