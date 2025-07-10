@@ -28,3 +28,4 @@ venv
 .venv
 
 target
+logdog.db

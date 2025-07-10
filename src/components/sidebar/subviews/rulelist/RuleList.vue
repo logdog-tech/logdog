@@ -785,7 +785,7 @@ export default {
             item._checked = !item._checked;
 
             console.log("toggleCheck, item=", item) 
-            await ruleStatusTableHelper.storeChecked(item.id, item._checked);
+            await ruleStatusTableHelper.storeChecked(item.uuid, item._checked);
             await ruleTableHelper.insertOrUpdate(item);
             this.emitUserToggleItems(item);
         },

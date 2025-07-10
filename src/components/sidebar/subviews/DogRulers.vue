@@ -160,7 +160,7 @@ export default {
                     rule._checked = true;
                 }
 
-                rule._checked = await ruleStatusTableHelper.getChecked(rule.id, rule._checked);
+                rule._checked = await ruleStatusTableHelper.getChecked(rule.uuid, rule._checked);
             }
 
             // 按照创建时间排序

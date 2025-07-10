@@ -27,6 +27,8 @@ class DB {
       };
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
+        const oldVersion = event.oldVersion;
+        console.log("onupgradeneeded, oldVersion=", oldVersion, ", newVersion=", this.version);
 
         // 搜索历史表
         if (!db.objectStoreNames.contains('searchHistory')) {
@@ -52,13 +54,16 @@ class DB {
         }
 
         // 规则的勾选状态记录表
-        if (!db.objectStoreNames.contains('ruleStatus')) {
-          const ruleStatusStore = db.createObjectStore('ruleStatus', { keyPath: 'id' });
-          ruleStatusStore.createIndex('id', 'id', { unique: true });
+        if (oldVersion <= 2) { // 版本2之前ruleStatus表结构存在异常，直接删除重建
+            if (db.objectStoreNames.contains('ruleStatus')) {
+                db.deleteObjectStore('ruleStatus');
+            }
         }
+        const ruleStatusStore = db.createObjectStore('ruleStatus', { keyPath: 'uuid' });
+        ruleStatusStore.createIndex('id', 'id', { unique: true });
+        ruleStatusStore.createIndex('uuid', 'uuid', { unique: true });
 
-          // 设置表
-          
+        // 设置表
         if (!db.objectStoreNames.contains('settings')) {
             const settingsStore = db.createObjectStore('settings', { keyPath: 'key' });
             settingsStore.createIndex('key', 'key', { unique: true });
@@ -187,7 +192,7 @@ class DB {
 }
 
 // 创建一个默认的数据库实例
-export const db = new DB('logdog_db9', 2); 
+export const db = new DB('logdog_db10', 3); 
 
 export const searchTableHelper = {
     add: (data: object) => db.add('searchHistory', data),
@@ -233,21 +238,25 @@ export const ruleTableHelper = {
 }
 
 export const ruleStatusTableHelper = {
-    add: (data: { id: number, isChecked: boolean }) => db.add('ruleStatus', data),
-    put: (data: { id: number, isChecked: boolean }) => db.put('ruleStatus', data),
+    add: (data: { uuid: string, isChecked: boolean }) => db.add('ruleStatus', data),
+    put: (data: { uuid: string, isChecked: boolean }) => db.put('ruleStatus', data),
     isExistById: async (id: number): Promise<boolean> => {
         const result = await db.getByIndex('ruleStatus', 'id', id) as { id: number, isChecked: boolean }[];
         return result.length > 0;
     },
-    getChecked: async (id: number, defaultValue: boolean = false): Promise<boolean> => {
-        const result = await db.getByIndex('ruleStatus', 'id', id) as { id: number, isChecked: boolean }[];
+    isExistByUuid: async (uuid: string): Promise<boolean> => {
+        const result = await db.getByIndex('ruleStatus', 'uuid', uuid) as { uuid: string, isChecked: boolean }[];
+        return result.length > 0;
+    },
+    getChecked: async (uuid: string, defaultValue: boolean = false): Promise<boolean> => {
+        const result = await db.getByIndex('ruleStatus', 'uuid', uuid) as { uuid: string, isChecked: boolean }[];
         return result.length > 0 ? result[0].isChecked : defaultValue;
     },
-    storeChecked: async (id: number, isChecked: boolean) => {
-        if (await ruleStatusTableHelper.isExistById(id)) {
-            return ruleStatusTableHelper.put({ id, isChecked });
+    storeChecked: async (uuid: string, isChecked: boolean) => {
+        if (await ruleStatusTableHelper.isExistByUuid(uuid)) {
+            return ruleStatusTableHelper.put({ uuid, isChecked });
         } else {
-            return ruleStatusTableHelper.add({ id, isChecked });
+            return ruleStatusTableHelper.add({ uuid, isChecked });
         }
     },
 }
