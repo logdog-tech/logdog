@@ -67,6 +67,7 @@
                     <a class="encoding-selector" @click="showEncodingSelector = true">{{ currentEncoding.toUpperCase()
                         || "UTF-8" }}</a>
                     <span></span>
+                    <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2024043575号-3</a>
                 </div>
 
             </div>
@@ -479,7 +480,7 @@ export default defineComponent({
     background-color: #f0f0f0;
     padding: 0 8px;
     display: grid;
-        grid-template-columns: 120px 1fr 80px 1fr;
+        grid-template-columns: 120px 1fr 80px 1fr 200px;
         align-items: center;
     }
     
