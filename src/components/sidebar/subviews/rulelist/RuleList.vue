@@ -581,7 +581,7 @@ export default {
     data() {
         return {
             localItems: [] as Rule[],
-            editingItem: undefined as Rule | undefined,
+            editingItem: this.createEmptyItem(),
             newTag: '',
             colorSchemes: generateColorSchemes(),
             showExpandedEditor: false,
@@ -668,6 +668,20 @@ export default {
                 this.expandedContent = {} as Rule;
             }
         },
+        createEmptyItem(): Rule {
+            return  {
+                uuid: crypto.randomUUID(),
+                workspace_id: this.workspace.id,
+                user_id: this.currentUser?.id,
+                rule_type: this.type,
+                rule_name: '',
+                is_public: false,
+                created_at: '',
+                updated_at: '',
+                _is_editing: true,
+                _is_adding: true,
+            } as Rule;
+        },
         async handleAddRule() {
             const userInfoStr = await settingsTableHelper.get('user_info', null)
             const userInfo = userInfoStr ? JSON.parse(userInfoStr as string) as User : null
@@ -680,18 +694,7 @@ export default {
                     life: 8000
                 });
             }
-            this.editingItem = {
-                uuid: crypto.randomUUID(),
-                workspace_id: this.workspace.id,
-                user_id: this.currentUser?.id,
-                rule_type: this.type,
-                rule_name: '',
-                is_public: false,
-                created_at: '',
-                updated_at: '',
-                _is_editing: true,
-                _is_adding: true,
-            } as Rule;
+            this.editingItem = this.createEmptyItem();
 
             // 为函数规则添加默认内容
             if (this.type === 'function') {
@@ -727,18 +730,12 @@ export default {
                 await ruleApi.deleteRule(item.uuid);
             }
         },
-        handleEdit(item: Rule) {
-            if (this.type === 'function') {
-                this.editingItem = item;
-                this.showEditor = true;
-            }
-        },
         closeEditor() {
-            this.showEditor = false;
-            this.editingItem = undefined;
+            this.editingItem._is_editing = false;
+            this.editingItem._is_adding = false;
         },
         async handleFunctionSubmit(rule: Rule) {
-            const index = this.localItems.findIndex(item => item.rule_name === this.editingItem?.rule_name);
+            const index = this.localItems.findIndex(item => item.rule_name === this.editingItem.rule_name);
             if (index !== -1) {
                 this.localItems[index] = rule;
             } else {
