@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div style="display: grid; grid-template-columns: 44px 1fr 30px 40px; align-items: center;">
+        <div style="display: grid; grid-template-columns: 44px 1fr 30px 30px 40px; align-items: center;">
             <div @click="toggleFileMode"><img src="@/assets/logo-fill.svg" alt="LogDog" class="w-10 mx-4  rounded-full p-1 ">
             </div>
             <div class="text-lg font-bold text-gray-800">
@@ -16,6 +16,11 @@
                     style="font-size: 16px;"></i>
             </div>
             <div v-else></div>
+            <div @click="toggleFullscreen" :title="isFullscreen ? $t('dogHeader.exitFullscreen') : $t('dogHeader.enterFullscreen')">
+                <i :class="isFullscreen ? 'pi pi-window-minimize' : 'pi pi-window-maximize'" 
+                   class="m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md"
+                   style="font-size: 16px;"></i>
+            </div>
             <div @click="clickMenuButton">
                 <i class="pi pi-bars m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md"
                     style="font-size: 16px;"></i>
@@ -183,6 +188,7 @@ export default {
     data() {
         return {
             isOpen: false,
+            isFullscreen: false,
             myWorkspaces: [] as Workspace[],
             currentWorkspace: {
                 id: 0,
@@ -223,10 +229,14 @@ export default {
         
         // 添加点击事件监听器
         document.addEventListener('click', this.handleClickOutside);
+        
+        // 添加全屏状态变化监听器
+        document.addEventListener('fullscreenchange', this.handleFullscreenChange);
     },
     beforeUnmount() {
         // 组件销毁前移除事件监听器
         document.removeEventListener('click', this.handleClickOutside);
+        document.removeEventListener('fullscreenchange', this.handleFullscreenChange);
     },
     methods: {
         canDeleteWorkspace(workspace: Workspace): boolean {
@@ -473,6 +483,23 @@ export default {
                 'member': this.$t('dogHeader.member')
             };
             return roleMap[role as keyof typeof roleMap] || role;
+        },
+        async toggleFullscreen() {
+            try {
+                if (!document.fullscreenElement) {
+                    // 进入全屏
+                    await document.documentElement.requestFullscreen();
+                } else {
+                    // 退出全屏
+                    await document.exitFullscreen();
+                }
+            } catch (error) {
+                console.error('全屏切换失败:', error);
+            }
+        },
+        handleFullscreenChange() {
+            // 更新全屏状态
+            this.isFullscreen = !!document.fullscreenElement;
         },
     }
 }
