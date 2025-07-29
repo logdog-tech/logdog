@@ -2,7 +2,7 @@
     <Splitter class="logdog-editor" layout="vertical">
         <SplitterPanel style="width: 100%; height: 100%; min-height: 100px">
             <div class="h-full flex flex-col">
-                <HugeList ref="logFullView" class="border border-surface-200 dark:border-surface-700 rounded m-[4px]"
+                <HugeList ref="logFullView" class="border border-surface-200 dark:border-surface-700 rounded m-[4px] pb-10"
                     :dataSource="dataSource">
                     <template #default="{ isSelected, item, index }">
                         <div class="log-item" :class="[
@@ -35,7 +35,7 @@
             <div class="h-full flex flex-col">
                 <SearchBar :searchTerm="searchTerm" @search="searchLogs" @update:searchTerm="handleSearchInput" @toggleHistory="toggleHistory" @changeDisplayMode="changeDisplayMode" @toggleCaseSensitive="toggleCaseSensitive" />
 
-                <HugeList class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px]"
+                <HugeList class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px] pb-10"
                     style="flex-grow: 1; overflow: hidden;" ref="logSearchView" :dataSource="searchDataSource">
                     <template #default="{ isSelected, item, index }">
                         <div class="log-item" @click="onClickSearchItem(item)" :class="[
