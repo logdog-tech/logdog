@@ -142,12 +142,55 @@ export default {
             return this.history.some(item => !item.isFavorite);
         },
     },
-    mounted() {
+    async mounted() {
         // 重要!!! initCopyHandler 函数用于修复"双击复制文本时自动添加多余空格的问题，详见：https://github.com/jasper9w/logdog/issues/21
         this.initCopyHandler();
+
+        // 添加Ctrl+F键盘事件监听器
+        document.addEventListener('keydown', this.handleCtrlF);
+    },
+    beforeUnmount() {
+        // 清理事件监听器
+        document.removeEventListener('keydown', this.handleCtrlF);
     },
 
     methods: {
+        /**
+         * 处理Ctrl+F事件
+         */
+        handleCtrlF(event: KeyboardEvent) {
+            // 检查是否按下了Ctrl+F (在Mac上是Cmd+F)
+            if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+                // 阻止浏览器默认的查找行为
+                event.preventDefault();
+                
+                // 使搜索框获得焦点
+                if (this.$refs.searchInput && this.$refs.searchInput.$el) {
+                    const searchInput = this.$refs.searchInput.$el;
+                    searchInput.focus();
+                    
+                    // 添加高亮闪烁效果
+                    searchInput.classList.add('search-highlight');
+                    setTimeout(() => {
+                        searchInput.classList.remove('search-highlight');
+                    }, 2000); // 2秒后移除高亮效果
+                }
+            }
+        },
+        
+        /**
+         * 高亮搜索框
+         */
+        highlightSearchBox() {
+            if (this.$refs.searchInput && this.$refs.searchInput.$el) {
+                const searchInput = this.$refs.searchInput.$el;
+                searchInput.classList.add('search-highlight');
+                setTimeout(() => {
+                    searchInput.classList.remove('search-highlight');
+                }, 2000); // 2秒后移除高亮效果
+            }
+        },
+        
         toggleHistory() {
             this.showHistory = !this.showHistory;
             if (this.showHistory) {
@@ -654,5 +697,16 @@ export default {
 .icon-selected i, 
 .icon-selected span {
     color: var(--primary-color, rgb(59 130 246));
+}
+
+/* 搜索框高亮闪烁效果 */
+.search-highlight {
+    animation: highlight 0.5s ease-in-out 3;
+}
+
+@keyframes highlight {
+    0% { box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(0, 123, 255, 0.9); }
+    100% { box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); }
 }
 </style>
