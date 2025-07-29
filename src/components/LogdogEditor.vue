@@ -624,7 +624,8 @@ export default defineComponent({
     }
     
     .marked-line {
-        background-color: #e3f2fd;
-        border-left: 2px solid #2196f3;
+        background-color: #ffebee; /* 浅红色背景 */
+        border-left: 3px solid #f44336; /* 红色左边框 */
+        box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2); /* 增强的内阴影 */
     }
 </style>
