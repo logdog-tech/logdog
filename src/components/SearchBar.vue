@@ -165,15 +165,20 @@ export default {
                 event.preventDefault();
                 
                 // 使搜索框获得焦点
-                if (this.$refs.searchInput && this.$refs.searchInput.$el) {
-                    const searchInput = this.$refs.searchInput.$el;
-                    searchInput.focus();
-                    
-                    // 添加高亮闪烁效果
-                    searchInput.classList.add('search-highlight');
-                    setTimeout(() => {
-                        searchInput.classList.remove('search-highlight');
-                    }, 2000); // 2秒后移除高亮效果
+                if (this.$refs.searchInput) {
+                    // Vue 3 中直接使用 ref 引用的元素
+                    const searchInput = this.$refs.searchInput as any;
+                    // 如果是组件实例，获取其 $el
+                    const element = searchInput.$el ? searchInput.$el : searchInput;
+                    if (element && typeof element.focus === 'function') {
+                        element.focus();
+                        
+                        // 添加高亮闪烁效果
+                        element.classList.add('search-highlight');
+                        setTimeout(() => {
+                            element.classList.remove('search-highlight');
+                        }, 2000); // 2秒后移除高亮效果
+                    }
                 }
             }
         },
@@ -182,12 +187,17 @@ export default {
          * 高亮搜索框
          */
         highlightSearchBox() {
-            if (this.$refs.searchInput && this.$refs.searchInput.$el) {
-                const searchInput = this.$refs.searchInput.$el;
-                searchInput.classList.add('search-highlight');
-                setTimeout(() => {
-                    searchInput.classList.remove('search-highlight');
-                }, 2000); // 2秒后移除高亮效果
+            if (this.$refs.searchInput) {
+                // Vue 3 中直接使用 ref 引用的元素
+                const searchInput = this.$refs.searchInput as any;
+                // 如果是组件实例，获取其 $el
+                const element = searchInput.$el ? searchInput.$el : searchInput;
+                if (element) {
+                    element.classList.add('search-highlight');
+                    setTimeout(() => {
+                        element.classList.remove('search-highlight');
+                    }, 2000); // 2秒后移除高亮效果
+                }
             }
         },
         
