@@ -8,7 +8,7 @@
     "dev": "npm run build:wasm && vite",
     "build": "npm run build:wasm && run-p type-check \"build-only {@}\" --",
     "preview": "npm run build:wasm && vite preview",
-    "test:unit": "vitest",
+    "test:unit": "vitest --watch=false",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --fix",

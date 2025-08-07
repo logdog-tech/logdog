@@ -1,0 +1,105 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        profile: minimal
+        override: true
+
+    - name: Install wasm-pack
+      run: |
+        curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Build WASM
+      run: npm run build:wasm
+
+    - name: Run unit tests
+      run: npm run test:unit
+
+    - name: Build frontend
+      run: npm run build
+
+    - name: Create release archives
+      run: |
+        # 创建 tar.gz 压缩包
+        tar -czf logdog-${{ github.ref_name }}.tar.gz -C dist .
+        
+        # 创建 zip 压缩包
+        cd dist && zip -r ../logdog-${{ github.ref_name }}.zip . && cd ..
+        
+        # 显示文件信息
+        ls -la logdog-*
+        echo "Archive contents:"
+        tar -tzf logdog-${{ github.ref_name }}.tar.gz | head -20
+
+    - name: Generate changelog
+      id: changelog
+      run: |
+        echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+        echo "## LogDog Release ${{ github.ref_name }}" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 📦 下载方式" >> $GITHUB_OUTPUT
+        echo "- **tar.gz**: 适用于 Linux/macOS 系统" >> $GITHUB_OUTPUT
+        echo "- **zip**: 适用于 Windows 系统" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 🚀 部署说明" >> $GITHUB_OUTPUT
+        echo "1. 下载对应平台的压缩包" >> $GITHUB_OUTPUT
+        echo "2. 解压到 Web 服务器目录" >> $GITHUB_OUTPUT
+        echo "3. 确保服务器支持以下特性：" >> $GITHUB_OUTPUT
+        echo "   - WASM (WebAssembly) 支持" >> $GITHUB_OUTPUT
+        echo "   - Web Workers 支持" >> $GITHUB_OUTPUT
+        echo "   - 正确的 MIME 类型配置" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### ✨ 功能特性" >> $GITHUB_OUTPUT
+        echo "- 🎯 Vue 3 + TypeScript 前端" >> $GITHUB_OUTPUT
+        echo "- ⚡ WebAssembly 高性能日期解析" >> $GITHUB_OUTPUT
+        echo "- 📊 完整的日志分析工具" >> $GITHUB_OUTPUT
+        echo "- 🌐 PWA 支持 (离线使用)" >> $GITHUB_OUTPUT
+        echo "- 🎨 PrimeVue UI 组件库" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "### 📋 技术栈" >> $GITHUB_OUTPUT
+        echo "- Frontend: Vue 3, TypeScript, Tailwind CSS" >> $GITHUB_OUTPUT
+        echo "- Backend: FastAPI (需单独部署)" >> $GITHUB_OUTPUT
+        echo "- WebAssembly: Rust 实现的日期解析器" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "---" >> $GITHUB_OUTPUT
+        echo "*构建 ID: \`${{ github.run_id }}\` | 提交: \`${{ github.sha }}\`*" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        name: LogDog ${{ github.ref_name }}
+        body: ${{ steps.changelog.outputs.CHANGELOG }}
+        files: |
+          logdog-${{ github.ref_name }}.tar.gz
+          logdog-${{ github.ref_name }}.zip
+        draft: false
+        prerelease: false
+        generate_release_notes: true

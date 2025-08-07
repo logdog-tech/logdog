@@ -37,8 +37,18 @@ jobs:
     - name: Build WASM
       run: npm run build:wasm
 
+    - name: Run unit tests
+      run: npm run test:unit
+
     - name: Build frontend
       run: npm run build
 
-    - name: Run unit tests
-      run: npm run test:unit
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      if: github.ref == 'refs/heads/main'
+      with:
+        name: logdog-build-${{ github.sha }}
+        path: |
+          dist/
+          !dist/**/*.map
+        retention-days: 30
