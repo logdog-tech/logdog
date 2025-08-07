@@ -15,10 +15,29 @@
             {{ $t('ruleList.addRuleButton', { typeLabel }) }}
         </button>
 
+        <!-- 搜索框 -->
+        <div class="relative">
+            <input
+                v-model="searchQuery"
+                :placeholder="$t('ruleList.searchPlaceholder')"
+                class="w-full px-4 py-2 pl-10 rounded-lg border dark:border-gray-600
+                       bg-white dark:bg-gray-800 
+                       text-gray-900 dark:text-gray-100
+                       focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400
+                       focus:border-transparent outline-none"
+                @input="handleSearch"
+            >
+            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+            </div>
+        </div>
+
         <!-- 规则列表 -->
         <div class="space-y-2">
             <div 
-                v-for="(item, index) in localItems" 
+                v-for="(item, index) in filteredItems" 
                 :key="index"
                 class="relative p-4 rounded-lg
                        shadow-sm
@@ -587,7 +606,9 @@ export default {
             showExpandedEditor: false,
             expandedContent: {} as Rule,
             titleInputRef: null as HTMLInputElement | null,
-            defaultFunctionCode: defaultFunctionCode
+            defaultFunctionCode: defaultFunctionCode,
+            searchQuery: '', // 添加搜索查询字段
+            searchDebounce: null as number | null // 添加防抖定时器
         }
     },
     computed: {
@@ -608,6 +629,37 @@ export default {
                 }
             }
             return yes;
+        },
+        // 添加过滤后的规则列表
+        filteredItems(): Rule[] {
+            if (!this.searchQuery) {
+                return this.localItems;
+            }
+            
+            const query = this.searchQuery.toLowerCase();
+            return this.localItems.filter(item => {
+                // 搜索规则名称
+                if (item.rule_name && item.rule_name.toLowerCase().includes(query)) {
+                    return true;
+                }
+                
+                // 搜索规则描述
+                if (item.rule_desc && item.rule_desc.toLowerCase().includes(query)) {
+                    return true;
+                }
+                
+                // 搜索匹配模式（对于过滤器和颜色规则）
+                if (this.type !== 'function' && item.pattern && item.pattern.toLowerCase().includes(query)) {
+                    return true;
+                }
+                
+                // 搜索标签
+                if (item.tags && item.tags.toLowerCase().includes(query)) {
+                    return true;
+                }
+                
+                return false;
+            });
         }
     },
     watch: {
@@ -616,6 +668,12 @@ export default {
             handler(newItems) {
                 this.localItems = newItems;
             }
+        }
+    },
+    beforeUnmount() {
+        // 清理防抖定时器
+        if (this.searchDebounce) {
+            clearTimeout(this.searchDebounce);
         }
     },
     setup() {
@@ -641,6 +699,18 @@ export default {
                 return item.rule_desc || `${this.$t('ruleList.matchPattern')}: ${item.pattern}` || this.$t('ruleList.editMatchPattern');
             }
             return item.rule_desc || this.$t('ruleList.noDescription');
+        },
+        // 添加搜索处理方法
+        handleSearch() {
+            // 搜索通过计算属性自动处理，这里可以添加防抖逻辑以提高性能
+            if (this.searchDebounce) {
+                clearTimeout(this.searchDebounce);
+            }
+            this.searchDebounce = window.setTimeout(() => {
+                // 实际的搜索逻辑（如果需要额外处理的话）
+                // 当前通过计算属性 filteredItems 自动处理
+                this.searchDebounce = null;
+            }, 300);
         },
         startEdit(item: Rule) {
             this.editingItem = item;

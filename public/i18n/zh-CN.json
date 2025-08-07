@@ -133,6 +133,7 @@
   "ruleList.placeholderMatchPattern": "输入匹配模式",
   "ruleList.placeholderName": "输入名称",
   "ruleList.placeholderTag": "输入标签按回车添加",
+  "ruleList.searchPlaceholder": "搜索规则名称、描述或标签",
   "ruleList.preview": "预览",
   "ruleList.public": "公开",
   "ruleList.readOnly": "只读",

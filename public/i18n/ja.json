@@ -133,6 +133,7 @@
   "ruleList.placeholderMatchPattern": "マッチパターンを入力",
   "ruleList.placeholderName": "名前を入力",
   "ruleList.placeholderTag": "タグを入力してEnterキーを押してください",
+  "ruleList.searchPlaceholder": "ルール名、説明、またはタグで検索",
   "ruleList.preview": "プレビュー",
   "ruleList.public": "公開",
   "ruleList.readOnly": "読み取り専用",

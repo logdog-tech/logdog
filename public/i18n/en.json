@@ -133,6 +133,7 @@
     "ruleList.placeholderMatchPattern": "Enter match pattern",
     "ruleList.placeholderName": "Enter name",
     "ruleList.placeholderTag": "Enter tag and press Enter to add",
+    "ruleList.searchPlaceholder": "Search by rule name, description or tags",
     "ruleList.preview": "Preview",
     "ruleList.public": "Public",
     "ruleList.readOnly": "Read Only",
