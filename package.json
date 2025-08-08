@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "build:wasm": "cd wasm/date-parser && wasm-pack build --target web --out-dir ../pkg",
+    "copy:libarchive": "mkdir -p public/libarchive.js && cp -r node_modules/libarchive.js/dist public/libarchive.js/",
     "dev": "npm run build:wasm && vite",
-    "build": "npm run build:wasm && run-p type-check \"build-only {@}\" --",
+    "build": "npm run copy:libarchive && npm run build:wasm && run-p type-check \"build-only {@}\" --",
     "preview": "npm run build:wasm && vite preview",
     "test:unit": "vitest --watch=false",
     "build-only": "vite build",
