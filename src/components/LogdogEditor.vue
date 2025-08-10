@@ -605,7 +605,7 @@ export default defineComponent({
     }
     
     .content {
-        padding: 2px 8px;
+        padding: 0px 8px;
     }
     
     .content-overlay {
@@ -614,7 +614,7 @@ export default defineComponent({
     }
     
     .content-overlay.content-selected {
-        background-color: rgba(0, 0, 0, 0.1);
+        background-color: rgba(45, 130, 255, 0.3);
     }
     
     .filtered-line {
