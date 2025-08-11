@@ -5,11 +5,13 @@
     <link rel="icon" href="/logo-fill.svg" type="image/svg+xml">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="google" content="notranslate">
+    <meta name="description" content="LogDog 是一款开源的日志分析工具，支持多种日志格式，提供强大的搜索和过滤功能，帮助开发者快速定位问题。">
+    <meta name="keywords" content="日志分析, LogDog, 日志搜索, 日志过滤, 开发者工具, 日志分析">
     <title>LogDog - 一款强大的日志分析工具</title>
   </head>
   <body translate="no">
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+        <div id="app"></div>
+        <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
 <style>
@@ -19,4 +21,44 @@
 </style>
 <script>
     !function(p){"use strict";!function(t){var s=window,e=document,i=p,c="".concat("https:"===e.location.protocol?"https://":"http://","sdk.51.la/js-sdk-pro.min.js"),n=e.createElement("script"),r=e.getElementsByTagName("script")[0];n.type="text/javascript",n.setAttribute("charset","UTF-8"),n.async=!0,n.src=c,n.id="LA_COLLECT",i.d=n;var o=function(){s.LA.ids.push(i)};s.LA?s.LA.ids&&o():(s.LA=p,s.LA.ids=[],o()),r.parentNode.insertBefore(n,r)}()}({id:"3KB5oInq79XYM5ip",ck:"3KB5oInq79XYM5ip",autoTrack:true,hashMode:true});
+</script>
+
+
+<script>
+    /* 
+    * 以下脚本将页面自己包裹在iframe，
+    * 用这种方式避开浏览器各种插件注入代码导致的性能变差问题
+    * 但如果是爬虫，则不包裹（搜索引擎会用模拟浏览器来渲染）
+    */
+
+    function isCrawler() {
+        const crawlerUserAgents = [
+            'googlebot',
+            'bingbot',
+            'slurp',
+            'duckduckbot',
+            'baiduspider',
+            'yandexbot',
+            'facebookexternalhit',
+            'twitterbot',
+            'rogerbot',
+            'linkedinbot',
+            'embedly',
+            'quora link preview',
+            'showyoubot',
+            'outbrain',
+            'pinterest',
+            'slackbot',
+            'vkshare',
+            'w3c_validator'
+        ];
+        
+        const userAgent = navigator.userAgent.toLowerCase();
+        return crawlerUserAgents.some(crawler => userAgent.includes(crawler));
+    }
+    
+    // 如果不在iframe中且不是爬虫，就把自己包裹起来
+    if (window.self === window.top && !isCrawler()) {
+        document.body.innerHTML = '<iframe src="' + window.location.href + '" style="width:100%; height:100vh;"></iframe>';
+    }
 </script>
