@@ -171,6 +171,7 @@
   "searchBar.markAndSearch": "显示标记和搜索",
   "searchBar.onlyMark": "仅显示标记",
   "searchBar.onlySearch": "仅显示搜索",
+  "searchBar.autoWrap": "自动换行",
   "user.unauthenticated": "未登录用户",
   "warnings.large_selection": "选中内容超过10000行，请使用导出功能复制",
   "widget.content": "内容",

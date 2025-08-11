@@ -1,107 +1,83 @@
 <template>
     <Splitter class="logdog-editor" layout="vertical">
-        <SplitterPanel style="width: 100%; height: 100%; min-height: 100px">
+        <!-- Left: Full log list -->
+        <SplitterPanel style="width:100%;height:100%;min-height:100px">
             <div class="h-full flex flex-col">
-                <HugeList ref="logFullView" class="border border-surface-200 dark:border-surface-700 rounded m-[4px] pb-10"
-                    :dataSource="dataSource">
-                    <template #default="{ isSelected, item, index }">
-                        <div class="log-item" :class="[
-    'flex items-center',
-    { 'glow-border': item.line === selectedline },
-    { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
-]">
-                            <div v-if="item.line === selectedline" :key="animationKey" class="border-animation" />
-                            <div class="line-number" :style="{ color: hashColorLineIndex(item.filename) }" :class="{
-                                'filtered-line': item.isSearched,
-                                'marked-line': item.isMarked
-                            }" contenteditable="false" @click.stop="toggleLineMarked(item)">
-                                <span v-html="item.line"></span>
-                                <div class="filename-tooltip">
-                                    <p>{{ item.filename }}</p>
-                                    <p>{{ $t('logdogEditor.clickToMark') }}</p>
-                                </div>
-                            </div>
-                            <div class="content-wrapper relative">
-                                <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
-                                <div class="content-overlay absolute inset-0"
-                                    :class="{ 'content-selected': isSelected }"></div>
-                            </div>
-                        </div>
+                <HugeList :wrap="isAutoWrap" :overscanRowCount="10" :version="dataVersion" :rowCount="totalCount"
+                    ref="logFullView" class="border border-surface-200 dark:border-surface-700 rounded m-[4px] pb-10">
+                    <template #default="{ index }">
+                        <AsyncLogLineItem :index="index" :selected-line="selectedline" :animation-key="animationKey"
+                            :is-auto-wrap="isAutoWrap" :hash-color-line-index="hashColorLineIndex"
+                            :get-item-async="getItemAsync" :render-line-html="renderLogItem" :data-version="dataVersion"
+                            :default-tooltip-text="$t('logdogEditor.clickToMark')" @toggle-mark="toggleLineMarked"
+                            @text-mouseup="handleTextSelection" />
                     </template>
                 </HugeList>
             </div>
         </SplitterPanel>
-        <SplitterPanel style="width: 100%; height: 100%; min-height: 100px; ">
-            <div class="h-full flex flex-col">
-                <SearchBar :searchTerm="searchTerm" @search="searchLogs" @update:searchTerm="handleSearchInput" @toggleHistory="toggleHistory" @changeDisplayMode="changeDisplayMode" @toggleCaseSensitive="toggleCaseSensitive" />
 
-                <HugeList class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px] pb-10"
-                    style="flex-grow: 1; overflow: hidden;" ref="logSearchView" :dataSource="searchDataSource">
-                    <template #default="{ isSelected, item, index }">
-                        <div class="log-item" @click="onClickSearchItem(item)" :class="[
-                            'flex items-center',
-    { 'glow-border': item.line === selectedline },
-    { 'bg-surface-100 dark:bg-surface-700': index % 2 === 0 },
-]">
-                            <div v-if="item.line === selectedline" :key="animationKey" class="border-animation" />
-                            <div class="line-number" :style="{ color: hashColorLineIndex(item.filename) }" :class="{
-                                'marked-line': item.isMarked
-                            }" contenteditable="false" @click.stop="toggleLineMarked(item)">
-                                <span v-html="item.line"></span>
-                                <div class="filename-tooltip">
-                                    <p>{{ item.filename }}</p>
-                                    <p>点击标记该行</p>
-                                </div>
-                            </div>
-                            <div class="content-wrapper relative">
-                                <div class="content" v-html="renderLogItem(item)" @mouseup="handleTextSelection" />
-                                <div class="content-overlay absolute inset-0"
-                                    :class="{ 'content-selected': isSelected }"></div>
-                            </div>
-                        </div>
+        <!-- Right: Search results -->
+        <SplitterPanel style="width:100%;height:100%;min-height:100px">
+            <div class="h-full flex flex-col">
+                <SearchBar :searchTerm="searchTerm" @search="searchLogs" @toggleAutoWrap="toggleAutoWrap"
+                    @update:searchTerm="handleSearchInput" @toggleHistory="toggleHistory"
+                    @changeDisplayMode="changeDisplayMode" @toggleCaseSensitive="toggleCaseSensitive" />
+
+                <HugeList :version="dataVersion" :rowCount="searchCount"
+                    class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px] pb-10"
+                    style="flex-grow:1" ref="logSearchView">
+                    <template #default="{ index }">
+                        <AsyncLogLineItem :index="index" :selected-line="selectedline" :animation-key="animationKey"
+                            :is-auto-wrap="isAutoWrap" :hash-color-line-index="hashColorLineIndex"
+                            :get-item-async="getSearchItemAsync" :render-line-html="renderLogItem"
+                            :data-version="dataVersion" clickable @item-click="onClickSearchItem"
+                            @toggle-mark="toggleLineMarked" @text-mouseup="handleTextSelection" />
                     </template>
                 </HugeList>
+
                 <div class="bottom-status-bar">
-                    <a class="feedback-button text-red-500 cursor-pointer text-center" href="https://github.com/logdog-tech/logdog-issues" target="_blank">{{ $t('userdropdown.feedback') }}</a>
+                    <a class="feedback-button text-red-500 cursor-pointer text-center"
+                        href="https://github.com/logdog-tech/logdog-issues" target="_blank">{{
+                            $t('userdropdown.feedback')
+                        }}</a>
                     <span>{{ $t('logdogEditor.totalCount', { totalCount, searchCount, searchProgress }) }}</span>
-                    <a class="encoding-selector" @click="showEncodingSelector = true">{{ currentEncoding.toUpperCase()
-                        || "UTF-8" }}</a>
+                    <a class="encoding-selector" @click="showEncodingSelector = true">
+                        {{ currentEncoding.toUpperCase() || 'UTF-8' }}
+                    </a>
                     <span></span>
                     <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2024043575号-3</a>
                 </div>
-
             </div>
         </SplitterPanel>
     </Splitter>
+
+    <!-- Floating helpers -->
     <ColorSelecter @picked="handleColorPicked" :show="showColorSelecter" :x="selectionRect?.right"
         :y="selectionRect?.top" />
     <EncodingSelector @update:show="showEncodingSelector = $event" @update:encoding="handleEncodingChange"
         :show="showEncodingSelector" :encoding="currentEncoding" />
     <FeedbackModal :showFeedbackModal="showFeedbackModal" @update:showFeedbackModal="showFeedbackModal = $event" />
-
 </template>
 
 <script lang="ts">
-import VirtualScroller from "primevue/virtualscroller";
-import HugeList from "./HugeList.vue";
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
+import HugeList from "./HugeList.vue";
 import ColorSelecter from "./ColorSelecter.vue";
 import SearchBar from "./SearchBar.vue";
 import EncodingSelector from "./EncodingSelector.vue";
+import FeedbackModal from "./sidebar/subviews/FeedbackModal.vue";
+import AsyncLogLineItem from "./AsyncLogLineItem.vue";
+
+import { defineComponent, type PropType } from "vue";
 import type { BaseLine, Rule, LogFile } from "../modules/base";
 import { DisplayMode } from "../modules/base";
-import type { PropType } from "vue";
-import { defineComponent } from 'vue';
-import type { DataSource } from './HugeList.vue';
 import { proxyProvider } from "../utils/providers/ProxyProvider";
 import { type Observer } from "../utils/providers/define";
 import { hashColor } from "../utils/colors";
 import { highlightIt } from "../utils/highlighter";
 import { escapeRegExp } from "../utils/regex";
 import { settingsTableHelper } from "../utils/db";
-import FeedbackModal from './sidebar/subviews/FeedbackModal.vue';
-
 import { useToast } from 'primevue/usetoast';
 
 type StyleObject = Record<string, string>;
@@ -116,14 +92,14 @@ export interface LogViewRef {
 export default defineComponent({
     name: "LogdogEditor",
     components: {
-        VirtualScroller,
         Splitter,
         SplitterPanel,
+        HugeList,
         ColorSelecter,
         SearchBar,
-        HugeList,
         EncodingSelector,
-        FeedbackModal
+        FeedbackModal,
+        AsyncLogLineItem
     },
     props: {
         filters: {
@@ -148,25 +124,6 @@ export default defineComponent({
     },
     data() {
         return {
-            dataSource: {
-                async getCount() {
-                    const count = await proxyProvider.getTotalLineCount();
-                    return count;
-                },
-                async getItem(index: number) {
-                    const tmp = await proxyProvider.getLine(index);
-                    return tmp;
-                }
-            } as DataSource<BaseLine>,
-            searchDataSource: {
-                async getCount() {
-                    return await proxyProvider.getFilteredLineCount();
-                },
-                async getItem(index: number) {
-                    const tmp = await proxyProvider.getFilteredLine(index);
-                    return tmp;
-                }
-            } as DataSource<BaseLine>,
             searchTerm: "",
             logFullView: HugeList,
             logSearchView: HugeList,
@@ -179,16 +136,24 @@ export default defineComponent({
             searchCount: 0,
             searchProgress: 100,
             updateCountTimer: null as NodeJS.Timeout | null,
-            animationKey: 0,  // 添加动画key
+            animationKey: 0,
             currentEncoding: "utf8",
             showEncodingSelector: false,
-            showCaseSensitive: true, // 是否大小写敏感
-            showBookmark: DisplayMode.MARK_AND_SEARCH, // 是否书签
+            showCaseSensitive: true,
+            showBookmark: DisplayMode.MARK_AND_SEARCH,
             showFeedbackModal: false,
+            isAutoWrap: false,
+            dataVersion: 0 as number
         };
     },
     async mounted() {
         const myObserver = {
+            onLoaded: async () => {
+                this.totalCount = await proxyProvider.getTotalLineCount();
+                this.searchCount = await proxyProvider.getFilteredLineCount();
+                this.searchProgress = 100;
+                this.dataVersion++;
+            },
             onChange: async () => {
                 const logFullView = this.$refs.logFullView as LogViewRef;
                 const logSearchView = this.$refs.logSearchView as LogViewRef;
@@ -201,10 +166,18 @@ export default defineComponent({
             }
         } as Observer;
         proxyProvider.subscribe(myObserver);
-        this.currentEncoding = await settingsTableHelper.getDefaultEncoding() as string || "utf-8";
+        this.currentEncoding = (await settingsTableHelper.getDefaultEncoding() as string) || "utf-8";
         proxyProvider.useEncoding(this.currentEncoding);
     },
     methods: {
+        // 直接返回 Promise，不做缓存
+        getItemAsync(index: number): Promise<BaseLine> {
+            return Promise.resolve(proxyProvider.getLine(index));
+        },
+        getSearchItemAsync(index: number): Promise<BaseLine> {
+            return Promise.resolve(proxyProvider.getFilteredLine(index));
+        },
+
         hashColorLineIndex(filename: string) {
             return hashColor(filename, 80, 35);
         },
@@ -222,10 +195,11 @@ export default defineComponent({
             // s1, 执行所有预处理任务, TODO 将该方法向provider前移
             for (const func of functions) {
                 try {
-                    const mem_func = new Function('' + func.custom_function)()
-                    result = mem_func(line.filename, line.line, result)
+                    // eslint-disable-next-line no-new-func
+                    const mem_func = new Function('' + func.custom_function)();
+                    result = mem_func(line.filename, line.line, result);
                 } catch (error) {
-                    console.error(`Error in function "${func.custom_function}":`, error)
+                    console.error(`Error in function "${func.custom_function}":`, error);
                 }
             }
 
@@ -253,17 +227,21 @@ export default defineComponent({
 
             // 获取选中文字的坐标
             const selection = window.getSelection();
-            const range = selection?.getRangeAt(0);
-            const rect = range?.getBoundingClientRect();
-            this.selectionRect = rect ?? null;
-            this.selectedText = selection?.toString() ?? "";
-            // 如果选中内容长度大于0，则显示颜色选择器
-            if (this.selectedText) {
-                this.showColorSelecter = true;
-            } else {
+            if (!selection || selection.rangeCount === 0) {
                 this.showColorSelecter = false;
+                return;
             }
+            const range = selection.getRangeAt(0);
+            const rect = range.getBoundingClientRect();
+            this.selectionRect = rect ?? null;
+            this.selectedText = selection.toString() ?? "";
+            this.showColorSelecter = !!this.selectedText;
         },
+
+        toggleAutoWrap() {
+            this.isAutoWrap = !this.isAutoWrap;
+        },
+
         /**
          * 高亮显示文本内容中的多个匹配模式，支持样式叠加且避免HTML标签错误处理。
          * 
@@ -402,11 +380,7 @@ export default defineComponent({
             logSearchView.scrollToTop();
             logSearchView.flush();
         },
-        handleSearchItemClick(item: { line: number; content: string }) {
-            const logFullView = this.$refs.logFullView as LogViewRef;
-            logFullView.scrollToIndex(item.line - 8);
-            this.selectedline = item.line;
-        },
+
         async handleUserToggleItems(type: string, item: Rule) {
             if (type === 'filter') { // 过滤器
                 let searchBoxPatterns = this.searchTerm.split("|");
@@ -435,12 +409,12 @@ export default defineComponent({
         async handleEncodingChange(encoding: string) {
             this.currentEncoding = encoding;
             await proxyProvider.useEncoding(encoding);
+            this.dataVersion++;
         },
         async toggleLineMarked(item: BaseLine) {
-            // item.isMarked = !item.isMarked;
             await proxyProvider.markLine(item.line, !item.isMarked);
-            // 强制渲染
             this.animationKey++;
+            this.dataVersion++;
         },
         async scrollToResource(resource: LogFile) {
             // 使用优化后的 useResource 方法获取文件的起始行
@@ -465,167 +439,28 @@ export default defineComponent({
     display: flex;
 }
 
-:deep(span) {
-    display: inline-block !important;
-}
-
-.search-input {
-    padding: 0 4px;
-    margin: 4px 0px;
-    height: 32px;
-}
-
 .bottom-status-bar {
     height: 20px;
     background-color: #f0f0f0;
     padding: 0 8px;
     display: grid;
-        grid-template-columns: 120px 1fr 80px 1fr 200px;
-        align-items: center;
-    }
-    
-    .bottom-status-bar .encoding-selector {
-        cursor: pointer;
-        text-align: center;
-    }
-    
-    .virtual-scroller {
-        height: calc(100% - 8px) !important;
-        min-height: 0px;
-        width: calc(100% - 8px) !important;
-        margin: 4px 4px;
-    }
-    
-    .log-search-view {
-        height: calc(100% - 64px) !important;
-    }
-    
-    .log-item {
-        height: 18px;
-        white-space: pre;
-        font-family: monospace;
-        position: relative;
-        min-width: 1200px;
-    }
-    
-    .log-item:hover::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border-top: 1px solid darkgray;
-        border-bottom: 1px solid darkgray;
-        pointer-events: none;
-        z-index: 9;
-    }
-    
-    .glow-border {
-        position: relative;
-    }
-    
-    .border-animation {
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        border-top: 1px solid darkgray;
-        border-bottom: 1px solid darkgray;
-        pointer-events: none;
-        z-index: 10;
-        animation: borderPulse 500ms ease-in-out;
-    }
-    
-    @keyframes borderPulse {
-        0% {
-            border-color: #10a37f;
-            box-shadow: 0 0 8px rgba(16, 163, 127, 0.6);
-        }
-    
-        33% {
-            border-color: #0ea5e9;
-            box-shadow: 0 0 8px rgba(14, 165, 233, 0.6);
-        }
-    
-        66% {
-            border-color: #8b5cf6;
-            box-shadow: 0 0 8px rgba(139, 92, 246, 0.6);
-        }
-    
-        100% {
-            border-color: darkgray;
-            box-shadow: none;
-        }
-    }
-    
-    .line-number {
-        position: sticky;
-        left: 0;
-        min-width: 50px;
-        text-align: right;
-        padding-right: 4px;
-        padding-left: 8px;
-        color: gray;
-        font-family: monospace;
-        background-color: #f3f3f3;
-        user-select: none;
-        z-index: 1;
-        cursor: pointer;
-        position: relative; /* 确保相对定位 */
-    }
-    
-    .line-number .filename-tooltip {
-        display: none;
-        position: absolute;
-        left: 30%;
-        top: -120%;
-        transform: translateY(-50%);
-        background: rgba(0, 0, 0, 0.8);
-        text-align: left;
-        color: white;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 12px;
-        white-space: nowrap;
-        margin-left: 8px;
-        z-index: 1000;
-        pointer-events: none;
-    }
-    
-    .line-number:hover .filename-tooltip {
-        display: block;
-    }
-    
-    .content-wrapper {
-        flex: 1;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .content {
-        padding: 0px 8px;
-    }
-    
-    .content-overlay {
-        pointer-events: none;
-        z-index: 1;
-    }
-    
-    .content-overlay.content-selected {
-        background-color: rgba(45, 130, 255, 0.3);
-    }
-    
-    .filtered-line {
-        font-weight: 700;
-        color: #333;
-        text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.1);
-    }
-    
-    .marked-line {
-        background-color: #ffebee; /* 浅红色背景 */
-        border-left: 3px solid #f44336; /* 红色左边框 */
-        box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2); /* 增强的内阴影 */
-    }
+    grid-template-columns: 120px 1fr 80px 1fr 200px;
+    align-items: center;
+}
+
+.bottom-status-bar .encoding-selector {
+    cursor: pointer;
+    text-align: center;
+}
+
+.virtual-scroller {
+    height: calc(100% - 8px) !important;
+    min-height: 0px;
+    width: calc(100% - 8px) !important;
+    margin: 4px 4px;
+}
+
+.log-search-view {
+    height: calc(100% - 64px) !important;
+}
 </style>

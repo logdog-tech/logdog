@@ -18,6 +18,11 @@
                 </template>
             </CascadeSelect>
             
+
+            <InputGroupAddon :title="$t('searchBar.autoWrap')" @click="toggleAutoWrap" class="cursor-pointer hover:bg-gray-100"
+                :class="{ 'icon-selected': isAutoWrap }">
+                <i class="pi pi-align-left"></i>
+            </InputGroupAddon>
             <InputGroupAddon :title="$t('searchBar.caseSensitive')" @click="toggleCaseSensitive" class="cursor-pointer hover:bg-gray-100"
                 :class="{ 'icon-selected': showCaseSensitive }">
                 <span>Aa</span>
@@ -98,7 +103,7 @@ export default {
         }
     },
 
-    emits: ['search', 'update:searchTerm', 'toggleHistory', 'toggleCaseSensitive', 'changeDisplayMode'],
+    emits: ['search', 'update:searchTerm', 'toggleHistory', 'toggleCaseSensitive', 'changeDisplayMode', 'toggleAutoWrap'],
 
     data() {
         return {
@@ -109,6 +114,7 @@ export default {
             selectedIndex: -1,
             showBookmark: true,
             showCaseSensitive: true,
+            isAutoWrap: false,
             showBookmarkMode: 
             { cname: this.$t('searchBar.markAndSearch'), code: DisplayMode.MARK_AND_SEARCH },
             selectedBookmarkModes: [
@@ -213,6 +219,10 @@ export default {
             this.$emit('changeDisplayMode', event.value.code); // code 是 DisplayMode 枚举的值
         },
 
+        toggleAutoWrap() {
+            this.isAutoWrap = !this.isAutoWrap;
+            this.$emit('toggleAutoWrap', this.isAutoWrap);
+        },
         toggleCaseSensitive() {
             this.showCaseSensitive = !this.showCaseSensitive;
             this.$emit('toggleCaseSensitive', this.showCaseSensitive);
@@ -706,6 +716,7 @@ export default {
 
 .icon-selected i, 
 .icon-selected span {
+    font-weight: 600;
     color: var(--primary-color, rgb(59 130 246));
 }
 

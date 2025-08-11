@@ -3,6 +3,7 @@ import { DisplayMode } from "@/modules/base";
 
 export interface Observer {
     onChange(): void;
+    onLoaded?(): void;
 }
 
 export interface Provider {

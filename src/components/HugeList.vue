@@ -19,7 +19,7 @@
             class="hl-row"
             :style="{ transform: `translateY(${Math.round(it.y)}px)` }"
             :data-index="it.index"
-            :ref="(el) => setRowEl(el, it.index)"
+            :ref="(el) => setRowEl(el as Element, it.index)"
           >
             <!-- 软刷新：用 versionKey 触发插槽重渲染，不重挂节点 -->
             <slot :index="it.index" :__v="versionKey" />
@@ -448,26 +448,31 @@ onBeforeUnmount(() => {
 
 /* 自定义纵向滚动条 */
 .hl-scrollbar {
-  position: absolute;
-  right: 2px;
-  top: 2px;
-  bottom: 2px;
-  width: 8px;
-  border-radius: 4px;
-  background: transparent;
-  user-select: none;
+    position: absolute;
+    right: 2px;
+    top: 2px;
+    bottom: 2px;
+    width: 18px;
+    background: transparent;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
+    background-color: rgba(0, 0, 0, 0.01);
+    border-left-color: rgba(0, 0, 0, 0.1);
+    border-left-width: 0.5px;
 }
 .hl-thumb {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  border-radius: 4px;
-  background: rgba(0, 0, 0, 0.35);
-  cursor: pointer;
-  transition: background 0.15s ease;
-  user-select: none;
+    position: absolute;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: background 0.15s ease;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    user-select: none;
 }
 .hl-thumb:hover {
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.3);
 }
 </style>

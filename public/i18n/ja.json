@@ -171,6 +171,7 @@
   "searchBar.markAndSearch": "マークと検索を表示",
   "searchBar.onlyMark": "マークを表示",
   "searchBar.onlySearch": "検索を表示",
+  "searchBar.autoWrap": "自動折り返し",
   "user.unauthenticated": "未認証ユーザー",
   "warnings.large_selection": "選択した内容が10000行を超えています。エクスポート機能を使用してください",
   "widget.content": "コンテンツ",

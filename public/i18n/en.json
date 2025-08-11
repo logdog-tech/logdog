@@ -171,6 +171,7 @@
     "searchBar.markAndSearch": "Show marks and search",
     "searchBar.onlyMark": "Show marks",
     "searchBar.onlySearch": "Show search",
+    "searchBar.autoWrap": "Auto Wrap",
     "user.unauthenticated": "Guest User",
     "warnings.large_selection": "Selected content exceeds 10000 lines, please use export function",
     "widget.content": "Content",

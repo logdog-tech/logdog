@@ -309,6 +309,10 @@ export class BrowserProvider implements Provider {
 
         this.status = "ready"
         this.setuped = true;
+        for (const observer of this.observers) {
+            observer.onLoaded?.();
+        }
+        console.log("BrowserProvider setup completed, total lines:", this.allLines);
     }
 
 
