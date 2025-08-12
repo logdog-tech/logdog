@@ -13,7 +13,15 @@ const router = createRouter({
             name: 'join-workspace',
             component: () => import('../views/JoinWorkspace.vue'),
             props: true
-        }
+        },
+
+
+        {
+            path: '/huge-list-demo',
+            name: 'huge-list-demo',
+            component: () => import('../views/HugeListDemo.vue'),
+            props: true
+        },
     ],
 })
 
