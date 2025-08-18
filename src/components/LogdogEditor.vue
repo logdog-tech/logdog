@@ -23,7 +23,7 @@
                     @update:searchTerm="handleSearchInput" @toggleHistory="toggleHistory"
                     @changeDisplayMode="changeDisplayMode" @toggleCaseSensitive="toggleCaseSensitive" />
 
-                <HugeList :version="dataVersion" :rowCount="searchCount"
+                <HugeList :wrap="isAutoWrap" :version="dataVersion" :rowCount="searchCount"
                     class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px] pb-10"
                     style="flex-grow:1" ref="logSearchView">
                     <template #default="{ index }">
