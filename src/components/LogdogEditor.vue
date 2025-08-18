@@ -82,12 +82,8 @@ import { useToast } from 'primevue/usetoast';
 
 type StyleObject = Record<string, string>;
 
-export interface LogViewRef {
-    scrollToTop: () => void;
-    flush: () => void;
-    scrollToIndex: (index: number) => void;
-    scroolToBottomIfNecessary: () => void;
-}
+// 使用 HugeList 组件的真实类型
+type HugeListRef = InstanceType<typeof HugeList>;
 
 export default defineComponent({
     name: "LogdogEditor",
@@ -125,8 +121,6 @@ export default defineComponent({
     data() {
         return {
             searchTerm: "",
-            logFullView: HugeList,
-            logSearchView: HugeList,
             selectedline: -1 as number,
             selectionRect: null as DOMRect | null,
             showColorSelecter: false,
@@ -155,14 +149,10 @@ export default defineComponent({
                 this.dataVersion++;
             },
             onChange: async () => {
-                const logFullView = this.$refs.logFullView as LogViewRef;
-                const logSearchView = this.$refs.logSearchView as LogViewRef;
-
                 this.totalCount = await proxyProvider.getTotalLineCount();
                 this.searchCount = await proxyProvider.getFilteredLineCount();
                 this.searchProgress = await proxyProvider.getSearchProcess();
-                logFullView.flush();
-                logSearchView.flush();
+                this.dataVersion++;
             }
         } as Observer;
         proxyProvider.subscribe(myObserver);
@@ -170,6 +160,14 @@ export default defineComponent({
         proxyProvider.useEncoding(this.currentEncoding);
     },
     methods: {
+        // 辅助方法：安全地获取组件引用
+        getLogSearchViewRef(): HugeListRef {
+            return this.$refs.logSearchView as HugeListRef;
+        },
+        getLogFullViewRef(): HugeListRef {
+            return this.$refs.logFullView as HugeListRef;
+        },
+
         // 直接返回 Promise，不做缓存
         getItemAsync(index: number): Promise<BaseLine> {
             return Promise.resolve(proxyProvider.getLine(index));
@@ -184,8 +182,7 @@ export default defineComponent({
         onClickSearchItem(item: BaseLine) {
             this.selectedline = item.line;
             this.animationKey++;  // 增加key触发新动画
-            const logFullView = this.$refs.logFullView as LogViewRef;
-            logFullView.scrollToIndex(item.line - 8);
+            this.getLogFullViewRef().scrollToIndex(item.line, "start");
         },
         renderLogItem(line: BaseLine) {
             const functions = this.functions.filter((f) => f._checked);
@@ -238,8 +235,27 @@ export default defineComponent({
             this.showColorSelecter = !!this.selectedText;
         },
 
-        toggleAutoWrap() {
+        async toggleAutoWrap() {
             this.isAutoWrap = !this.isAutoWrap;
+            console.log("Auto wrap toggled:", this.isAutoWrap);
+            // 如果有选中的行，需要在搜索视图中找到对应的索引并滚动
+            if (this.selectedline >= 0) {
+                const searchCount = await proxyProvider.getFilteredLineCount();
+
+                // 在搜索结果中查找与selectedline匹配的项的索引
+                for (let i = 0; i < searchCount; i++) {
+                    const item = await proxyProvider.getFilteredLine(i);
+                    if (item.line === this.selectedline) {
+                        // 使用安全的辅助方法
+                        const logSearchView = this.getLogSearchViewRef();
+                        if (logSearchView) {
+                            logSearchView.scrollToIndex(i, "start");
+                            console.log(`Scrolled to search result index: ${i} for line: ${this.selectedline}`);
+                        }
+                        break;
+                    }
+                }
+            }
         },
 
         /**
@@ -299,7 +315,7 @@ export default defineComponent({
             }
 
             // TODO 添加临时高亮规则
-            useColors.push(...Object.entries(this.sessionColors).map(([text, style]) => ({ pattern: escapeRegExp(text), style: style })));
+            useColors.push(...Object.entries(this.sessionColors).map(([text, style]) => ({ pattern: escapeRegExp(text), style: style as StyleObject })));
 
 
             return highlightIt(content + " ", useColors);
@@ -339,7 +355,6 @@ export default defineComponent({
             console.log("Searching for:", this.searchTerm);
 
             await proxyProvider.useFilter(this.searchTerm, { caseSensitive: this.showCaseSensitive, displayMode: this.showBookmark });
-            const logSearchView = this.$refs.logSearchView as LogViewRef;
 
             // 重新搜索后，使用二分法找到最近的匹配项
             if (previousLine >= 0) {
@@ -372,13 +387,12 @@ export default defineComponent({
                     const nearestItem = await proxyProvider.getFilteredLine(nearestIndex);
                     this.selectedline = nearestItem.line;
                     this.animationKey++;
-                    logSearchView.scrollToIndex(nearestIndex - 4);
+                    this.getLogSearchViewRef().scrollToIndex(nearestIndex, "start");
                     return;
                 }
             }
 
-            logSearchView.scrollToTop();
-            logSearchView.flush();
+            this.getLogSearchViewRef().scrollToIndex(0, "start");
         },
 
         async handleUserToggleItems(type: string, item: Rule) {
@@ -424,8 +438,7 @@ export default defineComponent({
                 // 如果找到了文件的起始行，直接滚动到该行
                 this.selectedline = startLine;
                 this.animationKey++; // 触发动画
-                const logFullView = this.$refs.logFullView as LogViewRef;
-                logFullView.scrollToIndex(startLine);
+                this.getLogFullViewRef().scrollToIndex(startLine, "start");
                 return;
             }
         }

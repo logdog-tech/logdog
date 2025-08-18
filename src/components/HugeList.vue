@@ -48,7 +48,6 @@ import {
   onMounted,
   reactive,
   ref,
-  watch,
 } from 'vue'
 
 type Align = 'start' | 'center' | 'end'
@@ -58,14 +57,12 @@ const props = withDefaults(
     rowCount: number
     rowHeight?: number
     overscanRowCount?: number
-    scrollToIndex?: number | null | undefined
     version?: number
     wrap?: boolean
   }>(),
   {
     rowHeight: 32,
     overscanRowCount: 6,
-    scrollToIndex: null,
     version: 0,
     wrap: false,
   }
@@ -295,16 +292,6 @@ function onContentPointerUp(e: PointerEvent) {
   panActive = false
   panPointerId = null
 }
-
-// 外部受控跳转
-watch(
-  () => props.scrollToIndex,
-  (val) => {
-    if (val == null) return
-    const idx = Math.max(0, Math.min(rowCount.value - 1, Math.floor(val)))
-    scrollToIndex(idx, 'start')
-  }
-)
 
 // 方法暴露
 function scrollToIndex(index: number, align: Align = 'start') {
