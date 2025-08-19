@@ -124,7 +124,8 @@ export default defineComponent({
 
     const rootClasses = computed(() => ({
       'glow-border': stateItem.value?.line === props.selectedLine,
-      'bg-surface-100 dark:bg-surface-700': props.index % 2 === 0,
+      'even-row': props.index % 2 === 0,
+      'odd-row': props.index % 2 === 1,
       'auto-wrap': props.isAutoWrap,
       'marked-line': stateItem.value?.isMarked,
       'semi-marked-line': !stateItem.value?.isMarked, // 只在未标记时添加半标记hover效果
@@ -170,6 +171,33 @@ export default defineComponent({
   word-wrap: break-word;
   word-break: break-all;
 }
+
+/* 奇偶行样式 - 增强对比度，行号部分不使用渐变 */
+.log-item.even-row {
+  background: linear-gradient(
+    45deg,
+    #e2e8f0 25%,
+    transparent 25%,
+    transparent 50%,
+    #e2e8f0 50%,
+    #e2e8f0 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 3px 3px;
+}
+
+.log-item.odd-row {
+  background-color: #ffffff;
+}
+
+.log-item.even-row .line-number-cell {
+  background-image: none !important;
+}
+
+.log-item.odd-row .line-number-cell {
+  background-image: none !important;
+}
 .log-item:hover:not(.glow-border)::before {
   content: '';
   position: absolute;
@@ -181,13 +209,13 @@ export default defineComponent({
 }
 
 /* 半标记状态的 hover 效果 - 增强可见性，使用更明显的灰蓝色 */
-.log-item.semi-marked-line:hover:not(.glow-border) {
-  background-color: rgba(226, 232, 240, 0.8);
+.log-item.semi-marked-line:hover:not(.glow-border):not(.marked-line) {
+  background-color: rgba(226, 232, 240, 0.8) !important;
   box-shadow: inset 0 0 4px rgba(100, 116, 139, 0.4);
 }
 
-.log-item.semi-marked-line:hover:not(.glow-border) .line-number-cell {
-  background-color: rgba(226, 232, 240, 0.8);
+.log-item.semi-marked-line:hover:not(.glow-border):not(.marked-line) .line-number-cell {
+  background-color: rgba(226, 232, 240, 0.8) !important;
   border-left: 3px solid rgba(100, 116, 139, 0.7);
 }
 
@@ -198,12 +226,12 @@ export default defineComponent({
 
 /* 选中行样式 - 使用黄色系表示当前选中 */
 .log-item.selected-line {
-  background-color: rgba(254, 249, 195, 0.9);
+  background-color: rgba(254, 249, 195, 0.9) !important;
   box-shadow: inset 0 0 4px rgba(245, 158, 11, 0.3);
 }
 
 .log-item.selected-line .line-number-cell {
-  background-color: rgba(254, 249, 195, 0.9);
+  background-color: rgba(254, 249, 195, 0.9) !important;
   border-left: 3px solid rgba(245, 158, 11, 0.8);
 }
 
@@ -291,11 +319,11 @@ export default defineComponent({
   text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.1);
 }
 .log-item.marked-line {
-  background-color: #dbeafe;
+  background-color: #dbeafe !important;
   box-shadow: inset 0 0 4px rgba(59, 130, 246, 0.4);
 }
 .log-item.marked-line .line-number-cell {
-  background-color: #dbeafe;
+  background-color: #dbeafe !important;
   border-left: 3px solid #3b82f6;
 }
 /* Skeleton */
