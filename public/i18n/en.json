@@ -114,6 +114,7 @@
     "loginInfo.moreFeatures": "Sign in to unlock more features",
     "loginInfo.notLoggedIn": "Not Logged In",
     "ruleList.addRuleButton": "Add {typeLabel}",
+    "ruleList.addButtonText": "Add",
     "ruleList.cancel": "Cancel",
     "ruleList.color": "Color Rule",
     "ruleList.colorScheme": "Color Scheme",

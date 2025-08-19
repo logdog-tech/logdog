@@ -114,6 +114,7 @@
   "loginInfo.moreFeatures": "一键登录解锁多重染色等功能",
   "loginInfo.notLoggedIn": "未登录",
   "ruleList.addRuleButton": "添加{ typeLabel }",
+  "ruleList.addButtonText": "添加",
   "ruleList.cancel": "取消",
   "ruleList.color": "颜色规则",
   "ruleList.colorScheme": "颜色方案",

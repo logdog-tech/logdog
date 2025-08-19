@@ -114,6 +114,7 @@
     "login.privacy": "プライバシーポリシー",
     "login.other_login": "その他のログイン方法",
   "ruleList.addRuleButton": "{ typeLabel }を追加",
+  "ruleList.addButtonText": "追加",
   "ruleList.cancel": "キャンセル",
   "ruleList.color": "色ルール",
   "ruleList.colorScheme": "カラースキーム",
