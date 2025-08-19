@@ -610,6 +610,63 @@ export default defineComponent({
                 await this.processPendingFiles('append');
             }
         },
+        async handlePaste(event: ClipboardEvent) {
+            // 只在没有焦点在输入框时处理粘贴
+            const activeElement = document.activeElement;
+            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                return;
+            }
+
+            event.preventDefault();
+            
+            const items = event.clipboardData?.items;
+            if (!items) return;
+
+            const files: File[] = [];
+            let hasText = false;
+            let possibleFolders = 0;
+            
+            // 检查剪贴板中的内容
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.kind === 'file') {
+                    const file = item.getAsFile();
+                    if (file) {
+                        // 实测没有类型可能是文件夹，而粘贴模式读不到文件夹的内容
+                        if (file.type === '') {
+                            possibleFolders++;
+                            console.warn(this.$t('dataProvider.pasteFolderWarning'));
+                            continue;
+                        }
+                        
+                        // 为文件添加path属性
+                        Object.defineProperty(file, 'path', {
+                            value: file.name,
+                            writable: false
+                        });
+                        files.push(file);
+                    }
+                } else if (item.kind === 'string' && item.type === 'text/plain') {
+                    hasText = true;
+                }
+            }
+
+            if (files.length > 0) {
+                this.pendingFiles = files;
+                // 粘贴的文件显示模态窗口，让用户选择处理方式（类似拖拽）
+                this.filesReceived = true;
+                console.info(this.$t('dataProvider.pasteFilesDetected') + `: ${files.length}`);
+            } else if (possibleFolders > 0) {
+                // 只检测到可能的文件夹
+                console.warn(this.$t('dataProvider.pasteFolderWarning'));
+            } else if (hasText) {
+                // 如果只有文本内容，可能是文件路径，给用户提示
+                console.info(this.$t('dataProvider.pasteOnlyText'));
+            } else {
+                // 没有检测到有效文件
+                console.info(this.$t('dataProvider.pasteNoFiles'));
+            }
+        },
         startAnalysis() {
             const mode = this.isAppendMode ? 'append' : 'reset';
             this.processPendingFiles(mode);
@@ -648,6 +705,7 @@ export default defineComponent({
         window.addEventListener('dragover', this.handleDragOver);
         window.addEventListener('dragleave', this.handleDragLeave);
         window.addEventListener('drop', this.handleDrop);
+        window.addEventListener('paste', this.handlePaste);
 
         proxyProvider.subscribe({
             onChange: () => {
@@ -666,6 +724,7 @@ export default defineComponent({
         window.removeEventListener('dragover', this.handleDragOver);
         window.removeEventListener('dragleave', this.handleDragLeave);
         window.removeEventListener('drop', this.handleDrop);
+        window.removeEventListener('paste', this.handlePaste);
     }
 });
 </script>
