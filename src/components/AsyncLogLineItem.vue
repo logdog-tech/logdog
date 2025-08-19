@@ -182,7 +182,6 @@ export default defineComponent({
   inset: 0;
   pointer-events: none;
   z-index: 10;
-  animation: borderPulse 500ms ease-in-out;
   mix-blend-mode: multiply;
   background-color: rgba(0, 0, 0, 0.1);
 }
