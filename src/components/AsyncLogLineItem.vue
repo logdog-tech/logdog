@@ -7,17 +7,16 @@
       :class="rootClasses"
       @click="handleRootClick"
     >
-      <div
-        v-if="stateItem.line === selectedLine"
-        :key="animationKey"
+    <div
+      v-if="stateItem.line === selectedLine"
+      :key="animationKey"
         class="border-animation"
       />
       <div
         class="line-number"
         :style="{ color: hashColorLineIndex(stateItem.filename) }"
         :class="{
-          'filtered-line': stateItem.isSearched,
-          'marked-line': stateItem.isMarked
+          'filtered-line': stateItem.isSearched
         }"
         contenteditable="false"
         @click.stop="toggleMark"
@@ -127,7 +126,7 @@ export default defineComponent({
       'glow-border': stateItem.value?.line === props.selectedLine,
       'bg-surface-100 dark:bg-surface-700': props.index % 2 === 0,
       'auto-wrap': props.isAutoWrap,
-      'cursor-pointer': props.clickable
+      'marked-line': stateItem.value?.isMarked,
     }))
 
     const toggleMark = () => {
@@ -163,29 +162,31 @@ export default defineComponent({
   min-width: 200px;
   flex-shrink: 0;
   display: flex;
+
+  border-left: 3px solid #f3f3f3;
 }
 .auto-wrap {
   white-space: break-spaces;
   word-wrap: break-word;
   word-break: break-all;
 }
-.log-item:hover::before {
+.log-item:hover:not(.glow-border)::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-top: 1px solid darkgray;
-  border-bottom: 1px solid darkgray;
   pointer-events: none;
   z-index: 9;
+  mix-blend-mode: multiply;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 .border-animation {
   position: absolute;
   inset: 0;
-  border-top: 1px solid darkgray;
-  border-bottom: 1px solid darkgray;
   pointer-events: none;
   z-index: 10;
   animation: borderPulse 500ms ease-in-out;
+  mix-blend-mode: multiply;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 @keyframes borderPulse {
   0% {
@@ -218,7 +219,6 @@ export default defineComponent({
   user-select: none;
   z-index: 1;
   cursor: pointer;
-  position: relative;
 }
 .line-number .filename-tooltip {
   display: none;
@@ -253,10 +253,13 @@ export default defineComponent({
   color: #333;
   text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.1);
 }
-.marked-line {
-  background-color: #ffebee;
-  border-left: 3px solid #f44336;
-  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2);
+.log-item.marked-line {
+  background-color: #f3e5f5;
+  border-left: 3px solid #9c27b0;
+  box-shadow: inset 0 0 3px rgba(156, 39, 176, 0.2);
+}
+.log-item.marked-line .line-number {
+  background-color: #f3e5f5;
 }
 /* Skeleton */
 .log-item-skeleton .line-number {
