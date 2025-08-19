@@ -162,7 +162,6 @@ export default defineComponent({
   width: 100%;
   display: table;
   table-layout: fixed;
-  border-left: 3px solid transparent;
 }
 .auto-wrap {
   white-space: break-spaces;
@@ -220,6 +219,7 @@ export default defineComponent({
   z-index: 10;
   cursor: pointer;
   vertical-align: top;
+  border-left: 3px solid transparent;
 }
 .line-number-cell .filename-tooltip {
   display: none;
@@ -258,11 +258,11 @@ export default defineComponent({
 }
 .log-item.marked-line {
   background-color: #f3e5f5;
-  border-left: 3px solid #9c27b0;
   box-shadow: inset 0 0 3px rgba(156, 39, 176, 0.2);
 }
 .log-item.marked-line .line-number-cell {
   background-color: #f3e5f5;
+  border-left: 3px solid #9c27b0;
 }
 /* Skeleton */
 .log-item-skeleton .line-number-cell {
@@ -273,6 +273,7 @@ export default defineComponent({
   left: 0;
   z-index: 10;
   vertical-align: top;
+  border-left: 3px solid transparent;
 }
 .log-item-skeleton .content-cell {
   display: table-cell;
