@@ -21,7 +21,7 @@
         contenteditable="false"
         @click.stop="toggleMark"
       >
-        <span v-html="stateItem.line + 1"></span>
+        <span v-html="(stateItem.line + 1)"></span>
         <div class="filename-tooltip">
           <p>{{ stateItem.filename }}</p>
           <p v-if="!tooltipTextCustom">{{ defaultTooltipText }}</p>
@@ -127,6 +127,8 @@ export default defineComponent({
       'bg-surface-100 dark:bg-surface-700': props.index % 2 === 0,
       'auto-wrap': props.isAutoWrap,
       'marked-line': stateItem.value?.isMarked,
+      'semi-marked-line': !stateItem.value?.isMarked, // 只在未标记时添加半标记hover效果
+      'selected-line': stateItem.value?.line === props.selectedLine, // 选中行样式
     }))
 
     const toggleMark = () => {
@@ -177,6 +179,38 @@ export default defineComponent({
   mix-blend-mode: multiply;
   background-color: rgba(0, 0, 0, 0.1);
 }
+
+/* 半标记状态的 hover 效果 - 增强可见性，使用更明显的灰蓝色 */
+.log-item.semi-marked-line:hover:not(.glow-border) {
+  background-color: rgba(226, 232, 240, 0.8);
+  box-shadow: inset 0 0 4px rgba(100, 116, 139, 0.4);
+}
+
+.log-item.semi-marked-line:hover:not(.glow-border) .line-number-cell {
+  background-color: rgba(226, 232, 240, 0.8);
+  border-left: 3px solid rgba(100, 116, 139, 0.7);
+}
+
+/* 覆盖默认的 hover 效果，避免冲突 */
+.log-item.semi-marked-line:hover:not(.glow-border)::before {
+  display: none;
+}
+
+/* 选中行样式 - 使用黄色系表示当前选中 */
+.log-item.selected-line {
+  background-color: rgba(254, 249, 195, 0.9);
+  box-shadow: inset 0 0 4px rgba(245, 158, 11, 0.3);
+}
+
+.log-item.selected-line .line-number-cell {
+  background-color: rgba(254, 249, 195, 0.9);
+  border-left: 3px solid rgba(245, 158, 11, 0.8);
+}
+
+/* 隐藏选中行的动画边框，使用新的背景样式替代 */
+.log-item.selected-line .border-animation {
+  display: none;
+}
 .border-animation {
   position: absolute;
   inset: 0;
@@ -207,7 +241,7 @@ export default defineComponent({
   display: table-cell;
   position: sticky;
   left: 0;
-  width: 60px;
+  width: 66px;
   text-align: right;
   padding-right: 4px;
   padding-left: 8px;
@@ -219,6 +253,7 @@ export default defineComponent({
   cursor: pointer;
   vertical-align: top;
   border-left: 3px solid transparent;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
 .line-number-cell .filename-tooltip {
   display: none;
@@ -256,23 +291,24 @@ export default defineComponent({
   text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.1);
 }
 .log-item.marked-line {
-  background-color: #f3e5f5;
-  box-shadow: inset 0 0 3px rgba(156, 39, 176, 0.2);
+  background-color: #dbeafe;
+  box-shadow: inset 0 0 4px rgba(59, 130, 246, 0.4);
 }
 .log-item.marked-line .line-number-cell {
-  background-color: #f3e5f5;
-  border-left: 3px solid #9c27b0;
+  background-color: #dbeafe;
+  border-left: 3px solid #3b82f6;
 }
 /* Skeleton */
 .log-item-skeleton .line-number-cell {
   display: table-cell;
-  width: 60px;
+  width: 66px;
   background: #ececec;
   position: sticky;
   left: 0;
   z-index: 10;
   vertical-align: top;
   border-left: 3px solid transparent;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
 .log-item-skeleton .content-cell {
   display: table-cell;
@@ -280,7 +316,7 @@ export default defineComponent({
   vertical-align: top;
 }
 .skeleton-block {
-  width: 60px;
+  width: 66px;
   height: 1em;
   background: linear-gradient(90deg, #eee, #ddd, #eee);
   background-size: 200% 100%;
