@@ -13,7 +13,7 @@
         class="border-animation"
       />
       <div
-        class="line-number"
+        class="line-number-cell"
         :style="{ color: hashColorLineIndex(stateItem.filename) }"
         :class="{
           'filtered-line': stateItem.isSearched
@@ -28,7 +28,7 @@
           <p v-else v-html="tooltipTextCustom" />
         </div>
       </div>
-      <div class="content-wrapper relative">
+      <div class="content-cell">
         <div
           class="content"
           v-html="contentHtml"
@@ -39,8 +39,8 @@
 
     <!-- Skeleton while loading -->
     <div v-else class="log-item-skeleton" :class="{ 'auto-wrap': isAutoWrap }">
-      <div class="line-number skeleton-block" />
-      <div class="content-wrapper">
+      <div class="line-number-cell skeleton-block" />
+      <div class="content-cell">
         <div class="content skeleton-line" />
       </div>
     </div>
@@ -159,11 +159,10 @@ export default defineComponent({
   white-space: pre;
   font-family: monospace;
   position: relative;
-  min-width: 200px;
-  flex-shrink: 0;
-  display: flex;
-
-  border-left: 3px solid #f3f3f3;
+  width: 100%;
+  display: table;
+  table-layout: fixed;
+  border-left: 3px solid transparent;
 }
 .auto-wrap {
   white-space: break-spaces;
@@ -206,10 +205,11 @@ export default defineComponent({
     box-shadow: none;
   }
 }
-.line-number {
+.line-number-cell {
+  display: table-cell;
   position: sticky;
   left: 0;
-  min-width: 50px;
+  width: 60px;
   text-align: right;
   padding-right: 4px;
   padding-left: 8px;
@@ -217,10 +217,11 @@ export default defineComponent({
   font-family: monospace;
   background-color: #f3f3f3;
   user-select: none;
-  z-index: 1;
+  z-index: 10;
   cursor: pointer;
+  vertical-align: top;
 }
-.line-number .filename-tooltip {
+.line-number-cell .filename-tooltip {
   display: none;
   position: absolute;
   left: 30%;
@@ -237,13 +238,15 @@ export default defineComponent({
   z-index: 1000;
   pointer-events: none;
 }
-.line-number:hover .filename-tooltip {
+.line-number-cell:hover .filename-tooltip {
   display: block;
 }
-.content-wrapper {
-  flex: 1;
+.content-cell {
+  display: table-cell;
+  width: 100%;
   position: relative;
   overflow: visible;
+  vertical-align: top;
 }
 .content {
   padding: 0 8px;
@@ -258,12 +261,23 @@ export default defineComponent({
   border-left: 3px solid #9c27b0;
   box-shadow: inset 0 0 3px rgba(156, 39, 176, 0.2);
 }
-.log-item.marked-line .line-number {
+.log-item.marked-line .line-number-cell {
   background-color: #f3e5f5;
 }
 /* Skeleton */
-.log-item-skeleton .line-number {
+.log-item-skeleton .line-number-cell {
+  display: table-cell;
+  width: 60px;
   background: #ececec;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  vertical-align: top;
+}
+.log-item-skeleton .content-cell {
+  display: table-cell;
+  width: 100%;
+  vertical-align: top;
 }
 .skeleton-block {
   width: 60px;
