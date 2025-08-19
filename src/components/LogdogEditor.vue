@@ -182,7 +182,9 @@ export default defineComponent({
         onClickSearchItem(item: BaseLine) {
             this.selectedline = item.line;
             this.animationKey++;  // 增加key触发新动画
-            this.getLogFullViewRef().scrollToIndex(item.line, "start");
+            // 单行模式下居中显示，换行模式下顶部显示
+            const alignment = this.isAutoWrap ? "start" : "center";
+            this.getLogFullViewRef().scrollToIndex(item.line, alignment);
         },
         renderLogItem(line: BaseLine) {
             const functions = this.functions.filter((f) => f._checked);
@@ -438,7 +440,9 @@ export default defineComponent({
                 // 如果找到了文件的起始行，直接滚动到该行
                 this.selectedline = startLine;
                 this.animationKey++; // 触发动画
-                this.getLogFullViewRef().scrollToIndex(startLine, "start");
+                // 单行模式下居中显示，换行模式下顶部显示
+                const alignment = this.isAutoWrap ? "start" : "center";
+                this.getLogFullViewRef().scrollToIndex(startLine, alignment);
                 return;
             }
         }
