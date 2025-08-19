@@ -52,8 +52,12 @@
     </Splitter>
 
     <!-- Floating helpers -->
-    <ColorSelecter @picked="handleColorPicked" :show="showColorSelecter" :x="selectionRect?.right"
-        :y="selectionRect?.top" />
+    <ColorSelecter @picked="handleColorPicked" :show="showColorSelecter" 
+        :x="selectionRect ? selectionRect.left + selectionRect.width / 2 : 0"
+        :y="selectionRect?.top || 0" 
+        :current-style="sessionColors[selectedText]"
+        :selected-text="selectedText"
+        :all-session-colors="sessionColors" />
     <EncodingSelector @update:show="showEncodingSelector = $event" @update:encoding="handleEncodingChange"
         :show="showEncodingSelector" :encoding="currentEncoding" />
     <FeedbackModal :showFeedbackModal="showFeedbackModal" @update:showFeedbackModal="showFeedbackModal = $event" />
@@ -158,6 +162,13 @@ export default defineComponent({
         proxyProvider.subscribe(myObserver);
         this.currentEncoding = (await settingsTableHelper.getDefaultEncoding() as string) || "utf-8";
         proxyProvider.useEncoding(this.currentEncoding);
+
+        // 监听选择变化，当没有选中内容时隐藏颜色选择器
+        document.addEventListener('selectionchange', this.handleSelectionChange);
+    },
+    beforeUnmount() {
+        // 移除事件监听器
+        document.removeEventListener('selectionchange', this.handleSelectionChange);
     },
     methods: {
         // 辅助方法：安全地获取组件引用
@@ -212,10 +223,16 @@ export default defineComponent({
 
             return result;
         },
-        handleColorPicked(style: StyleObject) {
-            this.sessionColors[this.selectedText] = style;
+        handleColorPicked(style: StyleObject, text?: string) {
+            // 使用传递的文字参数，如果没有则使用当前选中的文字
+            const targetText = text || this.selectedText;
+            
+            // 如果是删除操作（style为null）
             if (!style) {
-                delete this.sessionColors[this.selectedText];
+                delete this.sessionColors[targetText];
+            } else {
+                // 正常的颜色设置操作
+                this.sessionColors[targetText] = style;
             }
         },
         handleTextSelection(event: Event) {
@@ -232,9 +249,39 @@ export default defineComponent({
             }
             const range = selection.getRangeAt(0);
             const rect = range.getBoundingClientRect();
-            this.selectionRect = rect ?? null;
+            
+            // 如果是鼠标事件，使用鼠标位置；否则使用选中区域位置
+            if (event instanceof MouseEvent) {
+                this.selectionRect = {
+                    left: event.clientX,
+                    top: event.clientY,
+                    right: event.clientX,
+                    bottom: event.clientY,
+                    width: 0,
+                    height: 0,
+                    x: event.clientX,
+                    y: event.clientY,
+                    toJSON: () => ({})
+                } as DOMRect;
+            } else {
+                this.selectionRect = rect ?? null;
+            }
+            
             this.selectedText = selection.toString() ?? "";
             this.showColorSelecter = !!this.selectedText;
+        },
+        
+        handleSelectionChange() {
+            // 如果颜色选择器正在显示，不要因为选择变化而隐藏它
+            if (this.showColorSelecter) {
+                return;
+            }
+            
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0 || selection.toString().trim() === '') {
+                this.selectedText = '';
+                this.showColorSelecter = false;
+            }
         },
 
         async toggleAutoWrap() {
