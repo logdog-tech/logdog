@@ -9,6 +9,7 @@
                         <AsyncLogLineItem :index="index" :selected-line="selectedline" :animation-key="animationKey"
                             :is-auto-wrap="isAutoWrap" :hash-color-line-index="hashColorLineIndex"
                             :get-item-async="getItemAsync" :render-line-html="renderLogItem" :data-version="dataVersion"
+                            clickable @item-click="onClickLogItem"
                             :default-tooltip-text="$t('logdogEditor.clickToMark')" @toggle-mark="toggleLineMarked"
                             @text-mouseup="handleTextSelection" />
                     </template>
@@ -190,6 +191,11 @@ export default defineComponent({
         hashColorLineIndex(filename: string) {
             return hashColor(filename, 80, 35);
         },
+        onClickLogItem(item: BaseLine) {
+            this.selectedline = item.line;
+            this.animationKey++;  // 增加key触发新动画
+        },
+        
         onClickSearchItem(item: BaseLine) {
             this.selectedline = item.line;
             this.animationKey++;  // 增加key触发新动画
