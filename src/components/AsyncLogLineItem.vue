@@ -311,7 +311,7 @@ export default defineComponent({
   vertical-align: top;
 }
 .content {
-  padding: 0 8px;
+  padding: 0 2px;
 }
 .filtered-line {
   font-weight: 700;
