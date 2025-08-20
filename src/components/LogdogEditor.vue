@@ -138,7 +138,7 @@ export default defineComponent({
             animationKey: 0,
             currentEncoding: "utf8",
             showEncodingSelector: false,
-            showCaseSensitive: true,
+            showCaseSensitive: false,
             showBookmark: DisplayMode.MARK_AND_SEARCH,
             showFeedbackModal: false,
             isAutoWrap: false,
@@ -355,13 +355,15 @@ export default defineComponent({
             for (const keyword of autoHashHightlightByKeyworkds) {
                 useColors.push({ pattern: keyword, style: { color: hashColor(keyword) } } as { pattern: string | RegExp; style: StyleObject });
             }
-            // 直接使用完整的搜索词作为正则表达式
+            // 直接使用完整的搜索词作为正则表达式，考虑大小写敏感设置
             if (this.searchTerm) {
                 this.searchTerm.split("|").forEach((f) => {
                     if (f) {
                         try {
-                            new RegExp(f);
-                            useColors.push({ pattern: f, style: { "background-color": hashColor(f) } });
+                            // 根据大小写敏感设置创建正则表达式
+                            const flags = this.showCaseSensitive ? 'g' : 'gi';
+                            new RegExp(f, flags);
+                            useColors.push({ pattern: new RegExp(f, flags), style: { "background-color": hashColor(f) } });
                         } catch (error) {
                             console.error(`Error in regex "${f}":`, error)
                         }

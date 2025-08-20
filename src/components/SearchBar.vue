@@ -113,7 +113,7 @@ export default {
             showHistory: false,
             selectedIndex: -1,
             showBookmark: true,
-            showCaseSensitive: true,
+            showCaseSensitive: false,
             isAutoWrap: false,
             showBookmarkMode: 
             { cname: this.$t('searchBar.markAndSearch'), code: DisplayMode.MARK_AND_SEARCH },
