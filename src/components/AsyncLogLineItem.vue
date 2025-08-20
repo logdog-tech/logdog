@@ -215,7 +215,7 @@ export default defineComponent({
 }
 
 .log-item.semi-marked-line:hover:not(.glow-border):not(.marked-line) .line-number-cell {
-  background-color: rgba(226, 232, 240, 0.8) !important;
+  background-color: rgba(226, 232, 240, 1.0) !important;
   border-left: 3px solid rgba(100, 116, 139, 0.7);
 }
 
@@ -231,7 +231,7 @@ export default defineComponent({
 }
 
 .log-item.selected-line .line-number-cell {
-  background-color: rgba(254, 249, 195, 0.9) !important;
+  background-color: rgba(254, 249, 195, 1.0) !important;
   border-left: 3px solid rgba(245, 158, 11, 0.8);
 }
 
