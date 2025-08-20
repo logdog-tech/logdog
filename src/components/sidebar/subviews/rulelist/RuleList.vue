@@ -1,37 +1,31 @@
 <template>
     <div class="space-y-3">
-        <!-- 添加规则按钮 -->
-        <button v-if="!showEditor"
-            class="w-full flex items-center justify-center px-4 py-2.5 rounded-lg
-                   bg-blue-100 dark:bg-blue-900/30 
-                   text-blue-600 dark:text-blue-400
-                   hover:bg-blue-200 dark:hover:bg-blue-900/50
-                   transition duration-200 group"
-            @click="handleAddRule"
-        >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2 group-hover:scale-110 transition duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            {{ $t('ruleList.addRuleButton', { typeLabel }) }}
-        </button>
-
-        <!-- 搜索框 -->
-        <div class="relative">
-            <input
-                v-model="searchQuery"
-                :placeholder="$t('ruleList.searchPlaceholder')"
-                class="w-full px-4 py-2 pl-10 rounded-lg border dark:border-gray-600
-                       bg-white dark:bg-gray-800 
-                       text-gray-900 dark:text-gray-100
-                       focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400
-                       focus:border-transparent outline-none"
-                @input="handleSearch"
-            >
-            <div class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
+        <!-- 搜索框和添加按钮的水平布局 -->
+        <div class="flex items-center gap-2">
+            <!-- 搜索框 -->
+            <div class="relative flex-1">
+                <InputText 
+                    v-model="searchQuery"
+                    :placeholder="$t('ruleList.searchPlaceholder')"
+                    @input="handleSearch"
+                    class="w-full"
+                    size="small"
+                />
+                <div class="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
             </div>
+            <!-- 添加按钮 -->
+            <PrimeButton 
+                v-if="!showEditor"
+                :label="$t('ruleList.addButtonText')"
+                @click="handleAddRule"
+                icon="pi pi-plus"
+                size="small"
+                class="flex-shrink-0"
+            />
         </div>
 
         <!-- 规则列表 -->
@@ -557,6 +551,8 @@ import { ruleTableHelper } from '@/utils/db';
 import { ruleApi } from '@/api';
 import { useToast } from 'primevue/usetoast';
 import { settingsTableHelper, ruleStatusTableHelper } from '@/utils/db';
+import InputText from "primevue/inputtext";
+import Button from "primevue/button";
 
 const defaultFunctionCode = `// 对日志进行预处理
 return function(
@@ -575,8 +571,8 @@ return function(
 export default {
     name: 'RuleList',
     components: {
-        // 移除未使用的组件
-        // RuleEditor
+        InputText,
+        "PrimeButton": Button
     },
     props: {
         currentUser: {
@@ -892,3 +888,19 @@ export default {
     }
 }
 </script>
+
+<style scoped>
+/* 确保搜索框和按钮的高度协调 */
+:deep(.p-inputtext) {
+    height: 2.25rem; /* 36px */
+    padding: 0.375rem 0.75rem;
+    padding-left: 2.25rem !important; /* 为搜索图标留出空间 */
+    font-size: 0.875rem;
+}
+
+:deep(.p-button.p-button-sm) {
+    height: 2.25rem; /* 36px */
+    padding: 0.375rem 0.75rem;
+    font-size: 0.875rem;
+}
+</style>

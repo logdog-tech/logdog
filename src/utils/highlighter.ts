@@ -82,13 +82,23 @@ export function highlightIt(content: string, useColors: { pattern: string | RegE
         // 确保 pattern 不为 undefined
         if (!c.pattern) return;
 
+        let regex: RegExp;
+        
         try {
-            new RegExp(c.pattern);
+            if (c.pattern instanceof RegExp) {
+                // 如果已经是 RegExp 对象，确保它有 g 标志
+                const flags = c.pattern.flags.includes('g') ? c.pattern.flags : c.pattern.flags + 'g';
+                regex = new RegExp(c.pattern.source, flags);
+            } else {
+                // 如果是字符串，验证并创建正则表达式
+                new RegExp(c.pattern);
+                regex = new RegExp(c.pattern, 'g');
+            }
         } catch (error) {
-            console.warn('无效的正则表达式：', c.pattern);
+            console.warn('无效的正则表达式：', c.pattern, error);
             return;
         }
-        const regex = new RegExp(c.pattern, 'g');
+        
         let match;
         while ((match = regex.exec(formatted)) !== null) {
             const start = match.index;

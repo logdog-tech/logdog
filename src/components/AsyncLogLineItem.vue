@@ -7,29 +7,28 @@
       :class="rootClasses"
       @click="handleRootClick"
     >
-      <div
-        v-if="stateItem.line === selectedLine"
-        :key="animationKey"
+    <div
+      v-if="stateItem.line === selectedLine"
+      :key="animationKey"
         class="border-animation"
       />
       <div
-        class="line-number"
+        class="line-number-cell"
         :style="{ color: hashColorLineIndex(stateItem.filename) }"
         :class="{
-          'filtered-line': stateItem.isSearched,
-          'marked-line': stateItem.isMarked
+          'filtered-line': stateItem.isSearched
         }"
         contenteditable="false"
         @click.stop="toggleMark"
       >
-        <span v-html="stateItem.line + 1"></span>
+        <span v-html="(stateItem.line + 1)"></span>
         <div class="filename-tooltip">
           <p>{{ stateItem.filename }}</p>
           <p v-if="!tooltipTextCustom">{{ defaultTooltipText }}</p>
           <p v-else v-html="tooltipTextCustom" />
         </div>
       </div>
-      <div class="content-wrapper relative">
+      <div class="content-cell">
         <div
           class="content"
           v-html="contentHtml"
@@ -40,8 +39,8 @@
 
     <!-- Skeleton while loading -->
     <div v-else class="log-item-skeleton" :class="{ 'auto-wrap': isAutoWrap }">
-      <div class="line-number skeleton-block" />
-      <div class="content-wrapper">
+      <div class="line-number-cell skeleton-block" />
+      <div class="content-cell">
         <div class="content skeleton-line" />
       </div>
     </div>
@@ -125,9 +124,12 @@ export default defineComponent({
 
     const rootClasses = computed(() => ({
       'glow-border': stateItem.value?.line === props.selectedLine,
-      'bg-surface-100 dark:bg-surface-700': props.index % 2 === 0,
+      'even-row': props.index % 2 === 0,
+      'odd-row': props.index % 2 === 1,
       'auto-wrap': props.isAutoWrap,
-      'cursor-pointer': props.clickable
+      'marked-line': stateItem.value?.isMarked,
+      'semi-marked-line': !stateItem.value?.isMarked, // 只在未标记时添加半标记hover效果
+      'selected-line': stateItem.value?.line === props.selectedLine, // 选中行样式
     }))
 
     const toggleMark = () => {
@@ -160,32 +162,90 @@ export default defineComponent({
   white-space: pre;
   font-family: monospace;
   position: relative;
-  min-width: 200px;
-  flex-shrink: 0;
-  display: flex;
+  width: 100%;
+  display: table;
+  table-layout: fixed;
 }
 .auto-wrap {
   white-space: break-spaces;
   word-wrap: break-word;
   word-break: break-all;
 }
-.log-item:hover::before {
+
+/* 奇偶行样式 - 增强对比度，行号部分不使用渐变 */
+.log-item.even-row {
+  background: linear-gradient(
+    45deg,
+    #e2e8f0 25%,
+    transparent 25%,
+    transparent 50%,
+    #e2e8f0 50%,
+    #e2e8f0 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 3px 3px;
+}
+
+.log-item.odd-row {
+  background-color: #ffffff;
+}
+
+.log-item.even-row .line-number-cell {
+  background-image: none !important;
+}
+
+.log-item.odd-row .line-number-cell {
+  background-image: none !important;
+}
+.log-item:hover:not(.glow-border)::before {
   content: '';
   position: absolute;
   inset: 0;
-  border-top: 1px solid darkgray;
-  border-bottom: 1px solid darkgray;
   pointer-events: none;
   z-index: 9;
+  mix-blend-mode: multiply;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+/* 半标记状态的 hover 效果 - 增强可见性，使用更明显的灰蓝色 */
+.log-item.semi-marked-line:hover:not(.glow-border):not(.marked-line) {
+  background-color: rgba(226, 232, 240, 0.8) !important;
+  box-shadow: inset 0 0 4px rgba(100, 116, 139, 0.4);
+}
+
+.log-item.semi-marked-line:hover:not(.glow-border):not(.marked-line) .line-number-cell {
+  background-color: rgba(226, 232, 240, 1.0) !important;
+  border-left: 3px solid rgba(100, 116, 139, 0.7);
+}
+
+/* 覆盖默认的 hover 效果，避免冲突 */
+.log-item.semi-marked-line:hover:not(.glow-border)::before {
+  display: none;
+}
+
+/* 选中行样式 - 使用黄色系表示当前选中 */
+.log-item.selected-line {
+  background-color: rgba(254, 249, 195, 0.9) !important;
+  /* box-shadow: inset 0 0 4px rgba(245, 158, 11, 0.3); */
+}
+
+.log-item.selected-line .line-number-cell {
+  background-color: rgba(254, 249, 195, 1.0) !important;
+  border-left: 3px solid rgba(245, 158, 11, 0.8);
+}
+
+/* 隐藏选中行的动画边框，使用新的背景样式替代 */
+.log-item.selected-line .border-animation {
+  display: none;
 }
 .border-animation {
   position: absolute;
   inset: 0;
-  border-top: 1px solid darkgray;
-  border-bottom: 1px solid darkgray;
   pointer-events: none;
   z-index: 10;
-  animation: borderPulse 500ms ease-in-out;
+  mix-blend-mode: multiply;
+  background-color: rgba(0, 0, 0, 0.1);
 }
 @keyframes borderPulse {
   0% {
@@ -205,10 +265,11 @@ export default defineComponent({
     box-shadow: none;
   }
 }
-.line-number {
+.line-number-cell {
+  display: table-cell;
   position: sticky;
   left: 0;
-  min-width: 50px;
+  width: 66px;
   text-align: right;
   padding-right: 4px;
   padding-left: 8px;
@@ -216,11 +277,13 @@ export default defineComponent({
   font-family: monospace;
   background-color: #f3f3f3;
   user-select: none;
-  z-index: 1;
+  z-index: 10;
   cursor: pointer;
-  position: relative;
+  vertical-align: top;
+  border-left: 3px solid transparent;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
 }
-.line-number .filename-tooltip {
+.line-number-cell .filename-tooltip {
   display: none;
   position: absolute;
   left: 30%;
@@ -237,33 +300,51 @@ export default defineComponent({
   z-index: 1000;
   pointer-events: none;
 }
-.line-number:hover .filename-tooltip {
+.line-number-cell:hover .filename-tooltip {
   display: block;
 }
-.content-wrapper {
-  flex: 1;
+.content-cell {
+  display: table-cell;
+  width: 100%;
   position: relative;
   overflow: visible;
+  vertical-align: top;
 }
 .content {
-  padding: 0 8px;
+  padding: 0 2px;
 }
 .filtered-line {
   font-weight: 700;
   color: #333;
   text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.1);
 }
-.marked-line {
-  background-color: #ffebee;
-  border-left: 3px solid #f44336;
-  box-shadow: inset 0 0 3px rgba(0, 0, 0, 0.2);
+.log-item.marked-line {
+  background-color: #dbeafe !important;
+  /* box-shadow: inset 0 0 4px rgba(59, 130, 246, 0.4); */
+}
+.log-item.marked-line .line-number-cell {
+  background-color: #dbeafe !important;
+  border-left: 3px solid #3b82f6;
 }
 /* Skeleton */
-.log-item-skeleton .line-number {
+.log-item-skeleton .line-number-cell {
+  display: table-cell;
+  width: 66px;
   background: #ececec;
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  vertical-align: top;
+  border-left: 3px solid transparent;
+  border-right: 1px solid rgba(0, 0, 0, 0.1);
+}
+.log-item-skeleton .content-cell {
+  display: table-cell;
+  width: 100%;
+  vertical-align: top;
 }
 .skeleton-block {
-  width: 60px;
+  width: 66px;
   height: 1em;
   background: linear-gradient(90deg, #eee, #ddd, #eee);
   background-size: 200% 100%;

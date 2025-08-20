@@ -3,102 +3,206 @@
     <div class="file-input-container h-full w-full relative flex flex-col bg-gradient-to-br from-gray-50 to-white dark:from-gray-900 dark:to-gray-800"
         @dragenter="handleDragEnter" @dragover="handleDragOver" @dragleave="handleDragLeave" @drop.prevent="handleDrop">
         <!-- 拖拽覆盖层 -->
-        <div v-if="isDragging"
-            class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center z-50"
-            @dragover.prevent="handleMainDragOver" @dragleave.prevent="handleMainDragLeave" @drop.prevent.stop>
-            <div v-if="hoverMode === null"
-                class="absolute top-12 left-1/2 -translate-x-1/2 bg-gray-900/80 backdrop-blur px-8 py-6 rounded-2xl shadow-xl">
-                <p class="text-2xl font-medium text-white text-center">
-                    {{ $t('dataProvider.selectOperation') }}<br>
-                    <span class="text-base font-normal text-white/70 mt-2 block">{{
-                        $t('dataProvider.appendToCurrentList') }}</span>
-                </p>
-            </div>
-            <div class="w-[600px] bg-white dark:bg-gray-800 rounded-2xl shadow-2xl">
-                <div class="text-center p-8">
-                    <i class="pi pi-cloud-upload text-5xl text-gray-400 dark:text-gray-500 mb-5 block"></i>
-                    <p class="text-2xl font-medium text-gray-700 dark:text-gray-200 mb-2">
-                        {{ $t('dataProvider.selectLogFile') }}
-                    </p>
-                    <p class="text-base text-gray-500 dark:text-gray-400">
-                        {{ $t('dataProvider.addToCurrentList') }} {{ $t('dataProvider.keepExistingLogs') }}
-                    </p>
+        <div v-if="isDragging || filesReceived"
+            class="fixed inset-0 bg-gray-900/30 backdrop-blur-sm flex items-center justify-center z-50 transition-all duration-300"
+            @drop.prevent.stop="handleDrop">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl border-2 overflow-hidden h-full transition-all duration-300"
+                :style="overlayMainStyle"
+                :class="{
+                    'border-dashed border-blue-300 dark:border-blue-600': !filesReceived && !isDragHovering,
+                    'border-dashed border-blue-500 dark:border-blue-400 border-4 shadow-blue-500/25 scale-105': !filesReceived && isDragHovering,
+                    'border-solid border-gray-200 dark:border-gray-700': filesReceived
+                }">
+                
+                <!-- 拖拽分析状态 -->
+                <div v-if="!filesReceived" class="flex flex-col h-full">
+                    <!-- 头部 -->
+                    <div class="p-8 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-center">
+                            <div class="w-12 h-12 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center mr-4">
+                                <i class="pi pi-cloud-download text-2xl text-blue-500 dark:text-blue-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                    {{ $t('dataProvider.prepareForAnalysis') }}
+                                </h3>
+                                <p class="text-gray-600 dark:text-gray-400">
+                                    {{ $t('dataProvider.dragFilesHereToStart') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-1">
+                        <!-- 左侧：拖拽分析区域 -->
+                        <div class="flex-1 p-8 flex flex-col items-center justify-center transition-all duration-300"
+                            :class="{
+                                'transform scale-105': isDragHovering,
+                                'transform scale-100': !isDragHovering
+                            }">
+                            <div class="text-center">
+                                <div class="w-24 h-24 rounded-full flex items-center justify-center mx-auto mb-6 transition-all duration-300"
+                                    :class="{
+                                        'bg-blue-100 dark:bg-blue-900/30': !isDragHovering,
+                                        'bg-blue-500 dark:bg-blue-600 animate-bounce': isDragHovering
+                                    }">
+                                    <i class="text-4xl transition-all duration-300"
+                                        :class="{
+                                            'pi pi-upload text-blue-500 dark:text-blue-400': !isDragHovering,
+                                            'pi pi-check text-white animate-pulse': isDragHovering
+                                        }"></i>
+                                </div>
+                                <div class="w-20 h-1 rounded mx-auto mb-6 transition-all duration-300"
+                                    :class="{
+                                        'bg-blue-200 dark:bg-blue-700': !isDragHovering,
+                                        'bg-blue-500 dark:bg-blue-400': isDragHovering
+                                    }">
+                                    <div class="w-full h-full rounded transition-all duration-300"
+                                        :class="{
+                                            'bg-blue-500 animate-pulse': !isDragHovering,
+                                            'bg-blue-300 animate-none': isDragHovering
+                                        }"></div>
+                                </div>
+                                <h4 class="text-xl font-semibold mb-3 transition-all duration-300"
+                                    :class="{
+                                        'text-gray-800 dark:text-gray-200': !isDragHovering,
+                                        'text-blue-600 dark:text-blue-400': isDragHovering
+                                    }">
+                                    {{ isDragHovering ? $t('dataProvider.aboutToStartAnalysis') : $t('dataProvider.dragFilesHereAction') }}
+                                </h4>
+                                <p class="text-base mb-2 transition-all duration-300"
+                                    :class="{
+                                        'text-gray-600 dark:text-gray-400': !isDragHovering,
+                                        'text-blue-500 dark:text-blue-300': isDragHovering
+                                    }">
+                                    {{ isDragHovering ? $t('dataProvider.releaseToStartImmediately') : $t('dataProvider.releaseToStartAnalysis') }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- 右侧：支持格式说明 -->
+                        <div class="w-80 p-8 border-l border-gray-200 dark:border-gray-700">
+                            <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">
+                                {{ $t('dataProvider.supportedFileFormats') }}
+                            </h4>
+                            <div class="space-y-3">
+                                <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                    <i class="pi pi-file text-blue-500 dark:text-blue-400 mr-3"></i>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $t('dataProvider.logFiles') }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $t('dataProvider.standardLogFormat') }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                    <i class="pi pi-file-o text-green-500 dark:text-green-400 mr-3"></i>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $t('dataProvider.textFiles') }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $t('dataProvider.plainTextLogs') }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                    <i class="pi pi-file-archive text-purple-500 dark:text-purple-400 mr-3"></i>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $t('dataProvider.zipArchives') }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $t('dataProvider.zipCompression') }}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                    <i class="pi pi-file-archive text-orange-500 dark:text-orange-400 mr-3"></i>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100">{{ $t('dataProvider.gzipArchives') }}</p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">{{ $t('dataProvider.gzipCompression') }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                <p class="text-sm text-blue-700 dark:text-blue-300">
+                                    <i class="pi pi-info-circle mr-2"></i>
+                                    {{ $t('dataProvider.supportMultipleFiles') }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="flex h-[300px]">
-                    <button @mouseover="handleHover('append', $event)" @mouseleave="handleHover(null, $event)"
-                        @dragover.prevent.stop="handleHover('append', $event)"
-                        @dragleave.prevent="handleHover(null, $event)"
-                        @drop.stop.prevent="handleModeDrop('append', $event)"
-                        class="flex-1 p-8 transition-all duration-300 rounded-bl-2xl relative overflow-hidden group"
-                        :class="{
-                            'bg-blue-500 scale-[1.03] z-10': hoverMode === 'append',
-                            'hover:bg-blue-50 dark:hover:bg-blue-900/20': hoverMode !== 'append'
-                        }">
-                        <div class="absolute inset-0 bg-gradient-to-b from-blue-500/20 to-blue-500/5 opacity-0 transition-opacity duration-300"
-                            :class="{ '!opacity-100': hoverMode === 'append' }"></div>
-                        <div class="absolute inset-0 border-2 border-blue-200 dark:border-blue-700 rounded-bl-2xl opacity-0 transition-opacity duration-300"
-                            :class="{ '!opacity-100': hoverMode !== 'append' }"></div>
-                        <div class="h-full flex flex-col items-center justify-center gap-4 relative">
-                            <div class="w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 mb-2"
-                                :class="hoverMode === 'append' ? 'bg-white/20' : 'bg-blue-50 dark:bg-blue-900/30 group-hover:bg-blue-100 dark:group-hover:bg-blue-900/50'">
-                                <i class="pi pi-plus text-3xl transition-all duration-300"
-                                    :class="hoverMode === 'append' ? 'text-white scale-125' : 'text-blue-500 dark:text-blue-400 group-hover:scale-110'"></i>
+
+                <!-- 文件准备完成状态 -->
+                <div v-else class="flex flex-col h-full relative">
+                    <!-- 右上角关闭按钮 -->
+                    <button @click="cancelModeSelection"
+                        class="absolute top-4 right-4 z-10 w-8 h-8 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-full flex items-center justify-center transition-colors duration-200">
+                        <i class="pi pi-times text-gray-600 dark:text-gray-400"></i>
+                    </button>
+
+                    <!-- 头部 -->
+                    <div class="p-8 border-b border-gray-200 dark:border-gray-700">
+                        <div class="flex items-center justify-center">
+                            <div class="w-12 h-12 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center mr-4">
+                                <i class="pi pi-check text-2xl text-green-600 dark:text-green-400"></i>
                             </div>
                             <div>
-                                <p class="text-xl font-medium mb-3 transition-all duration-300"
-                                    :class="hoverMode === 'append' ? 'text-white' : 'text-blue-600 dark:text-blue-400'">
-                                    {{ $t('dataProvider.addToCurrentList') }}
+                                <h3 class="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                    {{ $t('dataProvider.filesReady') }}
+                                </h3>
+                                <p class="text-gray-600 dark:text-gray-400">
+                                    {{ $t('dataProvider.filesLoaded', { count: pendingFiles.length }) }}
                                 </p>
-                                <p class="text-sm transition-all duration-300"
-                                    :class="hoverMode === 'append' ? 'text-white/90' : 'text-blue-500/70 dark:text-blue-400/70'">
-                                    {{ $t('dataProvider.keepExistingLogs') }}
-                                </p>
-                            </div>
-                            <div class="absolute inset-x-0 bottom-4 text-center transition-all duration-300"
-                                :class="{ 'opacity-100 translate-y-0': hoverMode === 'append', 'opacity-0 translate-y-2': hoverMode !== 'append' }">
-                                <p class="text-white text-sm font-medium">{{ $t('dataProvider.releaseToAdd') }}</p>
                             </div>
                         </div>
-                    </button>
-                    <div class="w-px bg-gray-200 dark:bg-gray-700"></div>
-                    <button @mouseover="handleHover('reset', $event)" @mouseleave="handleHover(null, $event)"
-                        @dragover.prevent.stop="handleHover('reset', $event)"
-                        @dragleave.prevent="handleHover(null, $event)"
-                        @drop.stop.prevent="handleModeDrop('reset', $event)"
-                        class="flex-1 p-8 transition-all duration-300 rounded-br-2xl relative overflow-hidden group"
-                        :class="{
-                            'bg-rose-500 scale-[1.03] z-10': hoverMode === 'reset',
-                            'hover:bg-rose-50 dark:hover:bg-rose-900/20': hoverMode !== 'reset'
-                        }">
-                        <div class="absolute inset-0 bg-gradient-to-b from-rose-500/20 to-rose-500/5 opacity-0 transition-opacity duration-300"
-                            :class="{ '!opacity-100': hoverMode === 'reset' }"></div>
-                        <div class="absolute inset-0 border-2 border-rose-200 dark:border-rose-700 rounded-br-2xl opacity-0 transition-opacity duration-300"
-                            :class="{ '!opacity-100': hoverMode !== 'reset' }"></div>
-                        <div class="h-full flex flex-col items-center justify-center gap-4 relative">
-                            <div class="w-16 h-16 rounded-full flex items-center justify-center transition-all duration-300 mb-2"
-                                :class="hoverMode === 'reset' ? 'bg-white/20' : 'bg-rose-50 dark:bg-rose-900/30 group-hover:bg-rose-100 dark:group-hover:bg-rose-900/50'">
-                                <i class="pi pi-refresh text-3xl transition-all duration-300"
-                                    :class="hoverMode === 'reset' ? 'text-white scale-125' : 'text-rose-500 dark:text-rose-400 group-hover:scale-110'"></i>
-                            </div>
-                            <div>
-                                <p class="text-xl font-medium mb-3 transition-all duration-300"
-                                    :class="hoverMode === 'reset' ? 'text-white' : 'text-rose-600 dark:text-rose-400'">
-                                    {{ $t('dataProvider.resetAndAnalyze') }}
-                                </p>
-                                <p class="text-sm transition-all duration-300"
-                                    :class="hoverMode === 'reset' ? 'text-white/90' : 'text-rose-500/70 dark:text-rose-400/70'">
-                                    {{ $t('dataProvider.clearAndAnalyze') }}
-                                </p>
-                            </div>
-                            <div class="absolute inset-x-0 bottom-4 text-center transition-all duration-300"
-                                :class="{ 'opacity-100 translate-y-0': hoverMode === 'reset', 'opacity-0 translate-y-2': hoverMode !== 'reset' }">
-                                <p class="text-white text-sm font-medium">{{ $t('dataProvider.releaseToAdd') }}</p>
+                    </div>
+
+                    <!-- 文件列表区域 -->
+                    <div class="flex-1 p-6 overflow-hidden">
+                        <h4 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-4">{{ $t('dataProvider.pendingFiles') }}</h4>
+                        <div class="h-full max-h-64 overflow-y-auto">
+                            <div class="space-y-2">
+                                <div v-for="(file, index) in pendingFiles.slice(0, 12)" :key="index"
+                                    class="flex items-center p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+                                    <i class="pi pi-file text-blue-500 dark:text-blue-400 mr-3"></i>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium text-gray-900 dark:text-gray-100 truncate">
+                                            {{ file.name }}
+                                        </p>
+                                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                                            {{ formatFileSize(file.size) }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div v-if="pendingFiles.length > 12" 
+                                    class="text-center py-3 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-600">
+                                    {{ $t('dataProvider.moreFiles', { count: pendingFiles.length - 12 }) }}
+                                </div>
                             </div>
                         </div>
-                    </button>
+                    </div>
+
+                    <!-- 底部操作区域 -->
+                    <div class="p-6 border-t border-gray-200 dark:border-gray-700">
+                        <div class="flex flex-col space-y-4">
+                            <!-- 开始分析按钮 -->
+                            <button @click="startAnalysis"
+                                class="w-full py-4 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-semibold text-lg transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center">
+                                <i class="pi pi-play mr-2 text-lg"></i>
+                                {{ $t('dataProvider.startAnalysis') }}
+                            </button>
+                            
+                            <!-- 模式选择 -->
+                            <label class="flex items-center justify-center cursor-pointer">
+                                <input 
+                                    type="checkbox" 
+                                    v-model="isAppendMode"
+                                    class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 dark:focus:ring-blue-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                                >
+                                <span class="ml-2 text-sm text-gray-600 dark:text-gray-400">
+                                    {{ $t('dataProvider.appendToExistingLogs') }}
+                                </span>
+                            </label>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
+
         <!-- 标签栏 -->
         <div class="px-3">
             <div class="flex p-1 bg-gray-200/50 dark:bg-gray-700/50 rounded-xl backdrop-blur-sm">
@@ -292,6 +396,7 @@ export default defineComponent({
         const providers = proxyProvider.availableProviders();
         return {
             isDragging: false,
+            isDragHovering: false, // 新增：是否正在拖拽悬停
             currentResource: null as LogFile | null,
             filterText: '',
             providers,
@@ -299,7 +404,12 @@ export default defineComponent({
             dragCounter: 0,
             resources: [] as LogFile[],
             dropMode: 'append', 
-            hoverMode: null as 'append' | 'reset' | null, 
+            hoverMode: null as 'append' | 'reset' | null,
+            // 文件处理相关
+            pendingFiles: [] as File[],
+            showModeSelector: false,
+            filesReceived: false,
+            isAppendMode: true, // 默认为追加模式
         };
     },
     computed: {
@@ -314,11 +424,31 @@ export default defineComponent({
                 resource.id = fileIndex++
                 return resource.path.toLowerCase().includes(searchText)
             });
+        },
+        // 计算浮窗位置样式
+        overlayMainStyle() {
+            return {
+                position: 'fixed' as const,
+                left: '50%',
+                top: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: '800px',
+                height: '500px',
+                maxWidth: '90vw',
+                maxHeight: '80vh'
+            };
         }
     },
     methods: {
         hashColorLineIndex(filename: string) {
             return hashColor(filename, 80, 35);
+        },
+        formatFileSize(bytes: number): string {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
         },
         async handleResourceClick(resource: LogFile) {
             console.log('handleResourceClick', resource);
@@ -353,18 +483,35 @@ export default defineComponent({
             event.preventDefault();
             event.stopPropagation();
             this.dragCounter++;
-            this.isDragging = true;
+            
+            // 如果是第一次进入拖拽状态
+            if (!this.isDragging) {
+                this.isDragging = true;
+            }
+            
+            // 检查是否在拖拽区域内
+            if (event.target && !this.filesReceived) {
+                this.isDragHovering = true;
+            }
         },
         handleDragOver(event: DragEvent) {
             event.preventDefault();
             event.stopPropagation();
+            
+            // 保持悬停状态
+            if (!this.filesReceived) {
+                this.isDragHovering = true;
+            }
         },
         handleDragLeave(event: DragEvent) {
             event.preventDefault();
             event.stopPropagation();
             this.dragCounter--;
-            if (this.dragCounter === 0) {
+            
+            if (this.dragCounter === 0 && !this.filesReceived) {
                 this.isDragging = false;
+                this.isDragHovering = false;
+                this.hoverMode = null;
             }
         },
         async processEntry(entry: FileSystemEntry, processedFiles: File[], basePath: string = ''): Promise<void> {
@@ -409,7 +556,9 @@ export default defineComponent({
         async handleDrop(event: DragEvent) {
             event.preventDefault();
             this.isDragging = false;
+            this.isDragHovering = false; // 重置悬停状态
             this.dragCounter = 0;
+            this.hoverMode = null;
 
             const items = event.dataTransfer?.items;
             if (!items) return;
@@ -427,7 +576,8 @@ export default defineComponent({
             await Promise.all(promises);
 
             if (processedFiles.length > 0) {
-                await this.processFiles(processedFiles);
+                this.pendingFiles = processedFiles;
+                this.filesReceived = true;
             }
         },
         async handleFileSelection(event: Event) {
@@ -439,7 +589,9 @@ export default defineComponent({
                         writable: false
                     });
                 });
-                await this.processFiles(files);
+                this.pendingFiles = files;
+                // 按钮选择的文件直接以追加模式处理，不显示模态窗口
+                await this.processPendingFiles('append');
             }
         },
         async handleFolderSelection(event: Event) {
@@ -453,96 +605,98 @@ export default defineComponent({
                         writable: false
                     });
                 });
-                await this.processFiles(files);
+                this.pendingFiles = files;
+                // 按钮选择的文件夹直接以追加模式处理，不显示模态窗口
+                await this.processPendingFiles('append');
             }
         },
-        async processFiles(selectedFiles: File[]) {
-            await proxyProvider.setup(selectedFiles, false);
-            this.$emit('fileLoaded', null);
-
-            if (this.resources.length > 0) {
-                await this.handleResourceClick(this.resources[0]);
+        async handlePaste(event: ClipboardEvent) {
+            // 只在没有焦点在输入框时处理粘贴
+            const activeElement = document.activeElement;
+            if (activeElement && (activeElement.tagName === 'INPUT' || activeElement.tagName === 'TEXTAREA')) {
+                return;
             }
+
+            event.preventDefault();
+            
+            const items = event.clipboardData?.items;
+            if (!items) return;
+
+            const files: File[] = [];
+            let hasText = false;
+            let possibleFolders = 0;
+            
+            // 检查剪贴板中的内容
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i];
+                if (item.kind === 'file') {
+                    const file = item.getAsFile();
+                    if (file) {
+                        // 实测没有类型可能是文件夹，而粘贴模式读不到文件夹的内容
+                        if (file.type === '') {
+                            possibleFolders++;
+                            console.warn(this.$t('dataProvider.pasteFolderWarning'));
+                            continue;
+                        }
+                        
+                        // 为文件添加path属性
+                        Object.defineProperty(file, 'path', {
+                            value: file.name,
+                            writable: false
+                        });
+                        files.push(file);
+                    }
+                } else if (item.kind === 'string' && item.type === 'text/plain') {
+                    hasText = true;
+                }
+            }
+
+            if (files.length > 0) {
+                this.pendingFiles = files;
+                // 粘贴的文件显示模态窗口，让用户选择处理方式（类似拖拽）
+                this.filesReceived = true;
+                console.info(this.$t('dataProvider.pasteFilesDetected') + `: ${files.length}`);
+            } else if (possibleFolders > 0) {
+                // 只检测到可能的文件夹
+                console.warn(this.$t('dataProvider.pasteFolderWarning'));
+            } else if (hasText) {
+                // 如果只有文本内容，可能是文件路径，给用户提示
+                console.info(this.$t('dataProvider.pasteOnlyText'));
+            } else {
+                // 没有检测到有效文件
+                console.info(this.$t('dataProvider.pasteNoFiles'));
+            }
+        },
+        startAnalysis() {
+            const mode = this.isAppendMode ? 'append' : 'reset';
+            this.processPendingFiles(mode);
+        },
+        async processPendingFiles(mode: 'append' | 'reset') {
+            this.filesReceived = false;
+            if (this.pendingFiles.length > 0) {
+                await proxyProvider.setup(this.pendingFiles, mode === 'reset');
+                this.$emit('fileLoaded', null);
+
+                if (this.resources.length > 0) {
+                    await this.handleResourceClick(this.resources[0]);
+                }
+            }
+            this.pendingFiles = [];
+        },
+        cancelModeSelection() {
+            this.filesReceived = false;
+            this.isDragHovering = false; // 重置悬停状态
+            this.pendingFiles = [];
         },
         handleReset() {
             window.location.reload();
         },
-        async handleModeDrop(mode: 'append' | 'reset', event: DragEvent) {
-            event.preventDefault();
-            this.isDragging = false;
-            this.dragCounter = 0;
-            this.hoverMode = null;
 
-            const items = event.dataTransfer?.items;
-            if (!items) return;
-
-            const processedFiles: File[] = [];
-            const promises = Array.from(items).map((item) => {
-                if (item.kind === 'file') {
-                    const entry = (item as unknown as { webkitGetAsEntry: () => FileSystemEntry }).webkitGetAsEntry();
-                    if (entry) {
-                        return this.processEntry(entry, processedFiles);
-                    }
-                }
-                return Promise.resolve();
-            });
-
-            await Promise.all(promises);
-            await proxyProvider.setup(processedFiles, mode === 'reset');
-            this.$emit('fileLoaded', null);
-
-            if (this.resources.length > 0) {
-                await this.handleResourceClick(this.resources[0]);
-            }
-        },
-        handleHover(mode: 'append' | 'reset' | null, event: Event) {
-            // 检查事件目标是否在按钮内
-            const target = event.target as HTMLElement;
-            const button = target.closest('button');
-            if (!button) return;
-
-            // 如果是dragleave事件，检查是否真的离开了按钮
-            if (event.type === 'dragleave') {
-                const rect = button.getBoundingClientRect();
-                const mouseEvent = event as MouseEvent;
-                if (
-                    mouseEvent.clientX >= rect.left &&
-                    mouseEvent.clientX <= rect.right &&
-                    mouseEvent.clientY >= rect.top &&
-                    mouseEvent.clientY <= rect.bottom
-                ) {
-                    return;
-                }
-            }
-
-            this.hoverMode = mode;
-        },
-
-        handleMainDragOver(event: DragEvent) {
-            const target = event.target as HTMLElement;
-            if (!target.closest('button')) {
-                this.hoverMode = null;
-            }
-        },
-
-        handleMainDragLeave(event: DragEvent) {
-            // 检查是否真的离开了整个拖拽区域
-            const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
-            if (
-                event.clientX <= rect.left ||
-                event.clientX >= rect.right ||
-                event.clientY <= rect.top ||
-                event.clientY >= rect.bottom
-            ) {
-                this.hoverMode = null;
-            }
-        },
-
-        handleResourceDoubleClick(resource: LogFile) {
+        handleResourceDoubleClick(_resource: LogFile) {
             // 双击资源的处理逻辑（留空）
         },
         
-        handleResourceMouseEnter(resource: LogFile) {
+        handleResourceMouseEnter(_resource: LogFile) {
             // 鼠标进入资源项时立即显示title（留空）
         },
     },
@@ -551,6 +705,7 @@ export default defineComponent({
         window.addEventListener('dragover', this.handleDragOver);
         window.addEventListener('dragleave', this.handleDragLeave);
         window.addEventListener('drop', this.handleDrop);
+        window.addEventListener('paste', this.handlePaste);
 
         proxyProvider.subscribe({
             onChange: () => {
@@ -569,6 +724,7 @@ export default defineComponent({
         window.removeEventListener('dragover', this.handleDragOver);
         window.removeEventListener('dragleave', this.handleDragLeave);
         window.removeEventListener('drop', this.handleDrop);
+        window.removeEventListener('paste', this.handlePaste);
     }
 });
 </script>

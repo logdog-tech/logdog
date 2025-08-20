@@ -9,6 +9,7 @@
                         <AsyncLogLineItem :index="index" :selected-line="selectedline" :animation-key="animationKey"
                             :is-auto-wrap="isAutoWrap" :hash-color-line-index="hashColorLineIndex"
                             :get-item-async="getItemAsync" :render-line-html="renderLogItem" :data-version="dataVersion"
+                            clickable @item-click="onClickLogItem"
                             :default-tooltip-text="$t('logdogEditor.clickToMark')" @toggle-mark="toggleLineMarked"
                             @text-mouseup="handleTextSelection" />
                     </template>
@@ -23,7 +24,7 @@
                     @update:searchTerm="handleSearchInput" @toggleHistory="toggleHistory"
                     @changeDisplayMode="changeDisplayMode" @toggleCaseSensitive="toggleCaseSensitive" />
 
-                <HugeList :version="dataVersion" :rowCount="searchCount"
+                <HugeList :wrap="isAutoWrap" :version="dataVersion" :rowCount="searchCount"
                     class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px] pb-10"
                     style="flex-grow:1" ref="logSearchView">
                     <template #default="{ index }">
@@ -52,8 +53,12 @@
     </Splitter>
 
     <!-- Floating helpers -->
-    <ColorSelecter @picked="handleColorPicked" :show="showColorSelecter" :x="selectionRect?.right"
-        :y="selectionRect?.top" />
+    <ColorSelecter @picked="handleColorPicked" :show="showColorSelecter" 
+        :x="selectionRect ? selectionRect.left + selectionRect.width / 2 : 0"
+        :y="selectionRect?.top || 0" 
+        :current-style="sessionColors[selectedText]"
+        :selected-text="selectedText"
+        :all-session-colors="sessionColors" />
     <EncodingSelector @update:show="showEncodingSelector = $event" @update:encoding="handleEncodingChange"
         :show="showEncodingSelector" :encoding="currentEncoding" />
     <FeedbackModal :showFeedbackModal="showFeedbackModal" @update:showFeedbackModal="showFeedbackModal = $event" />
@@ -82,12 +87,8 @@ import { useToast } from 'primevue/usetoast';
 
 type StyleObject = Record<string, string>;
 
-export interface LogViewRef {
-    scrollToTop: () => void;
-    flush: () => void;
-    scrollToIndex: (index: number) => void;
-    scroolToBottomIfNecessary: () => void;
-}
+// 使用 HugeList 组件的真实类型
+type HugeListRef = InstanceType<typeof HugeList>;
 
 export default defineComponent({
     name: "LogdogEditor",
@@ -125,8 +126,6 @@ export default defineComponent({
     data() {
         return {
             searchTerm: "",
-            logFullView: HugeList,
-            logSearchView: HugeList,
             selectedline: -1 as number,
             selectionRect: null as DOMRect | null,
             showColorSelecter: false,
@@ -139,7 +138,7 @@ export default defineComponent({
             animationKey: 0,
             currentEncoding: "utf8",
             showEncodingSelector: false,
-            showCaseSensitive: true,
+            showCaseSensitive: false,
             showBookmark: DisplayMode.MARK_AND_SEARCH,
             showFeedbackModal: false,
             isAutoWrap: false,
@@ -155,21 +154,32 @@ export default defineComponent({
                 this.dataVersion++;
             },
             onChange: async () => {
-                const logFullView = this.$refs.logFullView as LogViewRef;
-                const logSearchView = this.$refs.logSearchView as LogViewRef;
-
                 this.totalCount = await proxyProvider.getTotalLineCount();
                 this.searchCount = await proxyProvider.getFilteredLineCount();
                 this.searchProgress = await proxyProvider.getSearchProcess();
-                logFullView.flush();
-                logSearchView.flush();
+                this.dataVersion++;
             }
         } as Observer;
         proxyProvider.subscribe(myObserver);
         this.currentEncoding = (await settingsTableHelper.getDefaultEncoding() as string) || "utf-8";
         proxyProvider.useEncoding(this.currentEncoding);
+
+        // 监听选择变化，当没有选中内容时隐藏颜色选择器
+        document.addEventListener('selectionchange', this.handleSelectionChange);
+    },
+    beforeUnmount() {
+        // 移除事件监听器
+        document.removeEventListener('selectionchange', this.handleSelectionChange);
     },
     methods: {
+        // 辅助方法：安全地获取组件引用
+        getLogSearchViewRef(): HugeListRef {
+            return this.$refs.logSearchView as HugeListRef;
+        },
+        getLogFullViewRef(): HugeListRef {
+            return this.$refs.logFullView as HugeListRef;
+        },
+
         // 直接返回 Promise，不做缓存
         getItemAsync(index: number): Promise<BaseLine> {
             return Promise.resolve(proxyProvider.getLine(index));
@@ -181,11 +191,17 @@ export default defineComponent({
         hashColorLineIndex(filename: string) {
             return hashColor(filename, 80, 35);
         },
+        onClickLogItem(item: BaseLine) {
+            this.selectedline = item.line;
+            this.animationKey++;  // 增加key触发新动画
+        },
+        
         onClickSearchItem(item: BaseLine) {
             this.selectedline = item.line;
             this.animationKey++;  // 增加key触发新动画
-            const logFullView = this.$refs.logFullView as LogViewRef;
-            logFullView.scrollToIndex(item.line - 8);
+            // 单行模式下居中显示，换行模式下顶部显示
+            const alignment = this.isAutoWrap ? "start" : "center";
+            this.getLogFullViewRef().scrollToIndex(item.line, alignment);
         },
         renderLogItem(line: BaseLine) {
             const functions = this.functions.filter((f) => f._checked);
@@ -213,10 +229,16 @@ export default defineComponent({
 
             return result;
         },
-        handleColorPicked(style: StyleObject) {
-            this.sessionColors[this.selectedText] = style;
+        handleColorPicked(style: StyleObject, text?: string) {
+            // 使用传递的文字参数，如果没有则使用当前选中的文字
+            const targetText = text || this.selectedText;
+            
+            // 如果是删除操作（style为null）
             if (!style) {
-                delete this.sessionColors[this.selectedText];
+                delete this.sessionColors[targetText];
+            } else {
+                // 正常的颜色设置操作
+                this.sessionColors[targetText] = style;
             }
         },
         handleTextSelection(event: Event) {
@@ -233,13 +255,62 @@ export default defineComponent({
             }
             const range = selection.getRangeAt(0);
             const rect = range.getBoundingClientRect();
-            this.selectionRect = rect ?? null;
+            
+            // 如果是鼠标事件，使用鼠标位置；否则使用选中区域位置
+            if (event instanceof MouseEvent) {
+                this.selectionRect = {
+                    left: event.clientX,
+                    top: event.clientY,
+                    right: event.clientX,
+                    bottom: event.clientY,
+                    width: 0,
+                    height: 0,
+                    x: event.clientX,
+                    y: event.clientY,
+                    toJSON: () => ({})
+                } as DOMRect;
+            } else {
+                this.selectionRect = rect ?? null;
+            }
+            
             this.selectedText = selection.toString() ?? "";
             this.showColorSelecter = !!this.selectedText;
         },
+        
+        handleSelectionChange() {
+            // 如果颜色选择器正在显示，不要因为选择变化而隐藏它
+            if (this.showColorSelecter) {
+                return;
+            }
+            
+            const selection = window.getSelection();
+            if (!selection || selection.rangeCount === 0 || selection.toString().trim() === '') {
+                this.selectedText = '';
+                this.showColorSelecter = false;
+            }
+        },
 
-        toggleAutoWrap() {
+        async toggleAutoWrap() {
             this.isAutoWrap = !this.isAutoWrap;
+            console.log("Auto wrap toggled:", this.isAutoWrap);
+            // 如果有选中的行，需要在搜索视图中找到对应的索引并滚动
+            if (this.selectedline >= 0) {
+                const searchCount = await proxyProvider.getFilteredLineCount();
+
+                // 在搜索结果中查找与selectedline匹配的项的索引
+                for (let i = 0; i < searchCount; i++) {
+                    const item = await proxyProvider.getFilteredLine(i);
+                    if (item.line === this.selectedline) {
+                        // 使用安全的辅助方法
+                        const logSearchView = this.getLogSearchViewRef();
+                        if (logSearchView) {
+                            logSearchView.scrollToIndex(i, "start");
+                            console.log(`Scrolled to search result index: ${i} for line: ${this.selectedline}`);
+                        }
+                        break;
+                    }
+                }
+            }
         },
 
         /**
@@ -284,13 +355,15 @@ export default defineComponent({
             for (const keyword of autoHashHightlightByKeyworkds) {
                 useColors.push({ pattern: keyword, style: { color: hashColor(keyword) } } as { pattern: string | RegExp; style: StyleObject });
             }
-            // 直接使用完整的搜索词作为正则表达式
+            // 直接使用完整的搜索词作为正则表达式，考虑大小写敏感设置
             if (this.searchTerm) {
                 this.searchTerm.split("|").forEach((f) => {
                     if (f) {
                         try {
-                            new RegExp(f);
-                            useColors.push({ pattern: f, style: { "background-color": hashColor(f) } });
+                            // 根据大小写敏感设置创建正则表达式
+                            const flags = this.showCaseSensitive ? 'g' : 'gi';
+                            new RegExp(f, flags);
+                            useColors.push({ pattern: new RegExp(f, flags), style: { "background-color": hashColor(f) } });
                         } catch (error) {
                             console.error(`Error in regex "${f}":`, error)
                         }
@@ -299,7 +372,7 @@ export default defineComponent({
             }
 
             // TODO 添加临时高亮规则
-            useColors.push(...Object.entries(this.sessionColors).map(([text, style]) => ({ pattern: escapeRegExp(text), style: style })));
+            useColors.push(...Object.entries(this.sessionColors).map(([text, style]) => ({ pattern: escapeRegExp(text), style: style as StyleObject })));
 
 
             return highlightIt(content + " ", useColors);
@@ -339,7 +412,6 @@ export default defineComponent({
             console.log("Searching for:", this.searchTerm);
 
             await proxyProvider.useFilter(this.searchTerm, { caseSensitive: this.showCaseSensitive, displayMode: this.showBookmark });
-            const logSearchView = this.$refs.logSearchView as LogViewRef;
 
             // 重新搜索后，使用二分法找到最近的匹配项
             if (previousLine >= 0) {
@@ -372,13 +444,12 @@ export default defineComponent({
                     const nearestItem = await proxyProvider.getFilteredLine(nearestIndex);
                     this.selectedline = nearestItem.line;
                     this.animationKey++;
-                    logSearchView.scrollToIndex(nearestIndex - 4);
+                    this.getLogSearchViewRef().scrollToIndex(nearestIndex, "start");
                     return;
                 }
             }
 
-            logSearchView.scrollToTop();
-            logSearchView.flush();
+            this.getLogSearchViewRef().scrollToIndex(0, "start");
         },
 
         async handleUserToggleItems(type: string, item: Rule) {
@@ -424,8 +495,9 @@ export default defineComponent({
                 // 如果找到了文件的起始行，直接滚动到该行
                 this.selectedline = startLine;
                 this.animationKey++; // 触发动画
-                const logFullView = this.$refs.logFullView as LogViewRef;
-                logFullView.scrollToIndex(startLine);
+                // 单行模式下居中显示，换行模式下顶部显示
+                const alignment = this.isAutoWrap ? "start" : "center";
+                this.getLogFullViewRef().scrollToIndex(startLine, alignment);
                 return;
             }
         }
