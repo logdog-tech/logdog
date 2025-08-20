@@ -227,7 +227,7 @@ export default defineComponent({
 /* 选中行样式 - 使用黄色系表示当前选中 */
 .log-item.selected-line {
   background-color: rgba(254, 249, 195, 0.9) !important;
-  box-shadow: inset 0 0 4px rgba(245, 158, 11, 0.3);
+  /* box-shadow: inset 0 0 4px rgba(245, 158, 11, 0.3); */
 }
 
 .log-item.selected-line .line-number-cell {
@@ -320,7 +320,7 @@ export default defineComponent({
 }
 .log-item.marked-line {
   background-color: #dbeafe !important;
-  box-shadow: inset 0 0 4px rgba(59, 130, 246, 0.4);
+  /* box-shadow: inset 0 0 4px rgba(59, 130, 246, 0.4); */
 }
 .log-item.marked-line .line-number-cell {
   background-color: #dbeafe !important;
