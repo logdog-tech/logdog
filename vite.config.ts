@@ -5,7 +5,6 @@ import wasm from "vite-plugin-wasm";
 import topLevelAwait from "vite-plugin-top-level-await";
 import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
-import vueDevTools from 'vite-plugin-vue-devtools'
 import { VitePWA } from 'vite-plugin-pwa'
 import { resolve } from 'path';
 
@@ -17,7 +16,6 @@ export default defineConfig({
         topLevelAwait(),
     vue(),
     vueJsx(),
-    vueDevTools(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'logo.svg', 'logo-fill.svg', 'linuxdo-icon.png'],
