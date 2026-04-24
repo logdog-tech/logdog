@@ -132,12 +132,15 @@ export class BrowserProvider implements Provider {
     }
 
     async appendToLines(logFile: LogFile, rawFile: ExtendedFile, path: string, binaryData: Uint8Array) {
-
         const finalFinalExt = path.split('.').pop();
         if (finalFinalExt === 'gz') {
             binaryData = await decompress(binaryData, 'gzip');
         } else if (finalFinalExt === 'zst') {
-            binaryData = await decompress(binaryData, 'zstd');
+            const decompressed = await decompress(binaryData, 'zstd');
+            if (!decompressed || decompressed.length === 0) {
+                throw new Error(`Zstd 解压失败或结果为空: ${path}`);
+            }
+            binaryData = decompressed;
         }
 
         const rawLines = this.splitLinesFromBinarySupportLargeFile(binaryData);
@@ -481,4 +484,3 @@ export class BrowserProvider implements Provider {
 
 export const browserProvider = new BrowserProvider();
 browserProvider.setup(howToUseFile); // 打开示例
-

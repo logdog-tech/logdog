@@ -22,6 +22,7 @@
     "@vueuse/core": "^10.9.0",
     "date-fns": "^4.1.0",
     "date-parser": "file:wasm/pkg",
+    "fzstd": "^0.1.1",
     "jszip": "^3.10.1",
     "libarchive.js": "^2.0.2",
     "pinia": "^2.2.4",
