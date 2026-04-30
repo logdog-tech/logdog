@@ -70,4 +70,21 @@ app.use(PrimeVue, {
 app.use(ToastService);
 app.use(VueTolgee, { tolgee });
 
+const shouldBlockHorizontalGesture = (event: WheelEvent) => {
+    if (event.defaultPrevented) return false;
+    if (event.ctrlKey) return false;
+
+    const absDeltaX = Math.abs(event.deltaX);
+    const absDeltaY = Math.abs(event.deltaY);
+
+    return absDeltaX > absDeltaY && absDeltaX > 0;
+};
+
+const blockBrowserHorizontalSwipe = (event: WheelEvent) => {
+    if (!shouldBlockHorizontalGesture(event)) return;
+    event.preventDefault();
+};
+
+window.addEventListener('wheel', blockBrowserHorizontalSwipe, { passive: false, capture: true });
+
 app.mount('#app')

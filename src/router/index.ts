@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { requestRouteConfirmation, shouldConfirmRouteChange } from '@/utils/navigationGuard';
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -24,5 +25,13 @@ const router = createRouter({
         },
     ],
 })
+
+router.beforeEach((to, from) => {
+    if (shouldConfirmRouteChange(to) && !to.meta?.skipLeaveConfirm) {
+        requestRouteConfirmation(to);
+        return false;
+    }
+    return true;
+});
 
 export default router
