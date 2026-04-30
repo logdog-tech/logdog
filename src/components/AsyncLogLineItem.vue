@@ -322,6 +322,14 @@ export default defineComponent({
   border-left: 3px solid var(--log-hover-border);
 }
 
+.log-item:hover .line-number-cell {
+  box-shadow: inset 0 0 0 999px var(--log-hover-overlay);
+}
+
+:global(html.dark) .log-item:hover .line-number-cell {
+  box-shadow: inset 0 0 0 999px var(--log-hover-overlay);
+}
+
 /* 覆盖默认的 hover 效果，避免冲突 */
 .log-item.semi-marked-line:hover:not(.glow-border)::before {
   display: none;
