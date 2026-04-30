@@ -1,5 +1,5 @@
 <template>
-    <Splitter class="logdog-editor" layout="vertical">
+    <Splitter class="logdog-editor" layout="vertical" @wheel.capture="hideColorSelecter" @pointerdown.capture="hideColorSelecter" @scroll.capture="hideColorSelecter">
         <!-- Left: Full log list -->
         <SplitterPanel style="width:100%;height:100%;min-height:100px">
             <div class="h-full flex flex-col">
@@ -275,6 +275,10 @@ export default defineComponent({
             
             this.selectedText = selection.toString() ?? "";
             this.showColorSelecter = !!this.selectedText;
+        },
+
+        hideColorSelecter() {
+            this.showColorSelecter = false;
         },
         
         handleSelectionChange() {
