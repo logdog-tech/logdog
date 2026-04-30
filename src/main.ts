@@ -91,7 +91,15 @@ const shouldBlockHorizontalGesture = (event: WheelEvent) => {
     return absDeltaX > absDeltaY && absDeltaX > 0;
 };
 
+const isInsideHorizontalScrollRegion = (event: WheelEvent) => {
+    const target = event.target;
+    if (!(target instanceof Element)) return false;
+
+    return !!target.closest('.hl-hscroll');
+};
+
 const blockBrowserHorizontalSwipe = (event: WheelEvent) => {
+    if (isInsideHorizontalScrollRegion(event)) return;
     if (!shouldBlockHorizontalGesture(event)) return;
     event.preventDefault();
 };
