@@ -167,11 +167,16 @@ export default defineComponent({
   --log-hover-shadow: rgba(100, 116, 139, 0.4);
   --log-hover-border: rgba(100, 116, 139, 0.7);
   --log-hover-overlay: rgba(0, 0, 0, 0.1);
-  --log-selected-bg: rgba(254, 249, 195, 0.9);
-  --log-selected-line-bg: rgba(254, 249, 195, 1);
-  --log-selected-border: rgba(245, 158, 11, 0.8);
-  --log-marked-bg: #dbeafe;
-  --log-marked-border: #3b82f6;
+  --log-selected-bg: #fde68a;
+  --log-selected-line-bg: #fcd34d;
+  --log-selected-border: #d97706;
+  --log-selected-shadow: rgba(217, 119, 6, 0.42);
+  --log-marked-bg: #bfdbfe;
+  --log-marked-border: #2563eb;
+  --log-marked-shadow: rgba(37, 99, 235, 0.34);
+  --log-marked-selected-bg: #facc15;
+  --log-marked-selected-line-bg: #f59e0b;
+  --log-marked-selected-border: #b45309;
   --log-filtered-color: #333333;
   --log-filtered-shadow: rgba(0, 0, 0, 0.1);
   --log-skeleton-bg: #ececec;
@@ -193,11 +198,16 @@ export default defineComponent({
   --log-hover-shadow: rgba(148, 163, 184, 0.22);
   --log-hover-border: rgba(148, 163, 184, 0.62);
   --log-hover-overlay: rgba(255, 255, 255, 0.08);
-  --log-selected-bg: rgba(113, 63, 18, 0.72);
-  --log-selected-line-bg: rgba(113, 63, 18, 0.9);
-  --log-selected-border: rgba(251, 191, 36, 0.92);
-  --log-marked-bg: rgba(30, 64, 175, 0.52);
-  --log-marked-border: #60a5fa;
+  --log-selected-bg: rgba(146, 64, 14, 0.88);
+  --log-selected-line-bg: rgba(180, 83, 9, 0.96);
+  --log-selected-border: #fbbf24;
+  --log-selected-shadow: rgba(251, 191, 36, 0.46);
+  --log-marked-bg: rgba(29, 78, 216, 0.7);
+  --log-marked-border: #93c5fd;
+  --log-marked-shadow: rgba(147, 197, 253, 0.36);
+  --log-marked-selected-bg: rgba(161, 98, 7, 0.95);
+  --log-marked-selected-line-bg: rgba(202, 138, 4, 0.98);
+  --log-marked-selected-border: #fde047;
   --log-filtered-color: #f8fafc;
   --log-filtered-shadow: rgba(255, 255, 255, 0.18);
   --log-skeleton-bg: #1f2937;
@@ -220,11 +230,16 @@ export default defineComponent({
     --log-hover-shadow: rgba(148, 163, 184, 0.22);
     --log-hover-border: rgba(148, 163, 184, 0.62);
     --log-hover-overlay: rgba(255, 255, 255, 0.08);
-    --log-selected-bg: rgba(113, 63, 18, 0.72);
-    --log-selected-line-bg: rgba(113, 63, 18, 0.9);
-    --log-selected-border: rgba(251, 191, 36, 0.92);
-    --log-marked-bg: rgba(30, 64, 175, 0.52);
-    --log-marked-border: #60a5fa;
+    --log-selected-bg: rgba(146, 64, 14, 0.88);
+    --log-selected-line-bg: rgba(180, 83, 9, 0.96);
+    --log-selected-border: #fbbf24;
+    --log-selected-shadow: rgba(251, 191, 36, 0.46);
+    --log-marked-bg: rgba(29, 78, 216, 0.7);
+    --log-marked-border: #93c5fd;
+    --log-marked-shadow: rgba(147, 197, 253, 0.36);
+    --log-marked-selected-bg: rgba(161, 98, 7, 0.95);
+    --log-marked-selected-line-bg: rgba(202, 138, 4, 0.98);
+    --log-marked-selected-border: #fde047;
     --log-filtered-color: #f8fafc;
     --log-filtered-shadow: rgba(255, 255, 255, 0.18);
     --log-skeleton-bg: #1f2937;
@@ -276,7 +291,7 @@ export default defineComponent({
 .log-item.odd-row .line-number-cell {
   background-image: none !important;
 }
-.log-item:hover:not(.glow-border)::before {
+.log-item:hover::before {
   content: '';
   position: absolute;
   inset: 0;
@@ -286,12 +301,12 @@ export default defineComponent({
   background-color: var(--log-hover-overlay);
 }
 
-:global(html.dark) .log-item:hover:not(.glow-border)::before {
+:global(html.dark) .log-item:hover::before {
   mix-blend-mode: screen;
 }
 
 @media (prefers-color-scheme: dark) {
-  .log-item:hover:not(.glow-border)::before {
+  .log-item:hover::before {
     mix-blend-mode: screen;
   }
 }
@@ -314,13 +329,17 @@ export default defineComponent({
 
 /* 选中行样式 - 使用黄色系表示当前选中 */
 .log-item.selected-line {
-  background-color: var(--log-selected-bg) !important;
-  /* box-shadow: inset 0 0 4px rgba(245, 158, 11, 0.3); */
+  background: var(--log-selected-bg) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--log-selected-shadow),
+    inset 5px 0 0 var(--log-selected-border);
 }
 
 .log-item.selected-line .line-number-cell {
   background-color: var(--log-selected-line-bg) !important;
-  border-left: 3px solid var(--log-selected-border);
+  border-left: 6px solid var(--log-selected-border);
+  color: var(--log-filtered-color) !important;
+  font-weight: 700;
 }
 
 /* 隐藏选中行的动画边框，使用新的背景样式替代 */
@@ -417,12 +436,28 @@ export default defineComponent({
   text-shadow: 0 0 0.5px var(--log-filtered-shadow);
 }
 .log-item.marked-line {
-  background-color: var(--log-marked-bg) !important;
-  /* box-shadow: inset 0 0 4px rgba(59, 130, 246, 0.4); */
+  background: var(--log-marked-bg) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--log-marked-shadow),
+    inset 4px 0 0 var(--log-marked-border);
 }
 .log-item.marked-line .line-number-cell {
   background-color: var(--log-marked-bg) !important;
-  border-left: 3px solid var(--log-marked-border);
+  border-left: 6px solid var(--log-marked-border);
+  color: var(--log-filtered-color) !important;
+  font-weight: 700;
+}
+
+.log-item.marked-line.selected-line {
+  background: var(--log-marked-selected-bg) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--log-selected-shadow),
+    inset 6px 0 0 var(--log-marked-selected-border);
+}
+
+.log-item.marked-line.selected-line .line-number-cell {
+  background-color: var(--log-marked-selected-line-bg) !important;
+  border-left: 6px solid var(--log-marked-selected-border);
 }
 /* Skeleton */
 .log-item-skeleton .line-number-cell {
