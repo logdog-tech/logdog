@@ -70,6 +70,17 @@ app.use(PrimeVue, {
 app.use(ToastService);
 app.use(VueTolgee, { tolgee });
 
+const darkModeMedia = window.matchMedia('(prefers-color-scheme: dark)');
+
+const syncSystemTheme = () => {
+    const isDark = darkModeMedia.matches;
+    document.documentElement.classList.toggle('dark', isDark);
+    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+};
+
+syncSystemTheme();
+darkModeMedia.addEventListener('change', syncSystemTheme);
+
 const shouldBlockHorizontalGesture = (event: WheelEvent) => {
     if (event.defaultPrevented) return false;
     if (event.ctrlKey) return false;

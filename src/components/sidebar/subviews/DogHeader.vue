@@ -3,54 +3,54 @@
         <div style="display: grid; grid-template-columns: 44px 1fr 30px 30px 40px; align-items: center;">
             <div @click="toggleFileMode"><img src="@/assets/logo-fill.svg" alt="LogDog" class="w-10 mx-4  rounded-full p-1 ">
             </div>
-            <div class="text-lg font-bold text-gray-800">
-                <span @click="isOpen = !isOpen" :class="{ 'bg-gray-200': isOpen }"
-                    class="hover:cursor-pointer hover:bg-gray-200 rounded-md p-2">
+            <div class="text-lg font-bold text-gray-800 dark:text-gray-100">
+                <span @click="isOpen = !isOpen" :class="{ 'bg-gray-200 dark:bg-gray-700': isOpen }"
+                    class="hover:cursor-pointer hover:bg-gray-200 rounded-md p-2 dark:hover:bg-gray-800">
                     <span>{{ currentWorkspace.workspace_name || $t('dogHeader.selectWorkspace') }}</span>
                     <i class="pi pi-chevron-down p-2"></i>
                 </span>
             </div>
             <div v-if="currentWorkspace.id && !currentWorkspace._is_local" @click="showMemberManagement"
                 :title="$t('dogHeader.manageMembers')">
-                <i class="pi pi-users m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md"
+                <i class="pi pi-users m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md dark:text-gray-300 dark:hover:bg-gray-800"
                     style="font-size: 16px;"></i>
             </div>
             <div v-else></div>
             <div @click="toggleFullscreen" :title="isFullscreen ? $t('dogHeader.exitFullscreen') : $t('dogHeader.enterFullscreen')">
                 <i :class="isFullscreen ? 'pi pi-window-minimize' : 'pi pi-window-maximize'" 
-                   class="m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md"
+                   class="m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md dark:text-gray-300 dark:hover:bg-gray-800"
                    style="font-size: 16px;"></i>
             </div>
             <div @click="clickMenuButton">
-                <i class="pi pi-bars m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md"
+                <i class="pi pi-bars m-2 p-2 hover:cursor-pointer text-gray-600 hover:bg-gray-200 rounded-md dark:text-gray-300 dark:hover:bg-gray-800"
                     style="font-size: 16px;"></i>
             </div>
         </div>
 
         <!-- 工作区下拉菜单 -->
-        <div v-if="isOpen" class="absolute bg-white shadow-lg rounded-md mt-2 w-64 z-50 ml-4 border border-gray-200">
+        <div v-if="isOpen" class="absolute z-50 ml-4 mt-2 w-64 rounded-md border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
             <div class="p-2">
-                <button @click="createWorkspace" class="w-full text-left p-2 hover:bg-gray-100 rounded-md">
+                <button @click="createWorkspace" class="w-full rounded-md p-2 text-left hover:bg-gray-100 dark:hover:bg-gray-800">
                     <i class="pi pi-plus mr-2"></i>{{ $t('dogHeader.newWorkspace') }}
                 </button>
             </div>
             <div v-for="workspace in myWorkspaces" :key="workspace.id" class="p-2 flex justify-between items-center">
                 <div @click="selectWorkspace(workspace)"
-                    class="flex-grow p-2 hover:bg-gray-100 rounded-md cursor-pointer">
+                    class="flex-grow cursor-pointer rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-800">
                     {{ workspace.workspace_name }}
                 </div>
                 <i v-if="canDeleteWorkspace(workspace)" @click="deleteWorkspace(workspace)"
-                    class="pi pi-trash p-2 hover:bg-gray-100 rounded-md cursor-pointer"
+                    class="pi pi-trash cursor-pointer rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-800"
                     :title="$t('dogHeader.deleteWorkspace')"></i>
             </div>
         </div>
 
         <!-- 添加成员管理对话框 -->
-        <div v-if="showMemberDialog" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white rounded-lg p-6 w-[480px]">
+        <div v-if="showMemberDialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div class="w-[480px] rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-900">
                 <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold">{{ $t('dogHeader.memberManagement') }}</h3>
-                    <button @click="showMemberDialog = false" class="text-gray-500 hover:text-gray-700">
+                    <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">{{ $t('dogHeader.memberManagement') }}</h3>
+                    <button @click="showMemberDialog = false" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
                         <i class="pi pi-times text-lg"></i>
                     </button>
                 </div>
@@ -59,17 +59,17 @@
                 <div v-if="isWorkspaceAdmin()" class="mb-6">
                     <div class="relative">
                         <div
-                            class="flex items-center border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-blue-500">
-                            <i class="pi pi-search text-gray-400 mx-3"></i>
+                            class="flex items-center overflow-hidden rounded-lg border border-gray-200 focus-within:ring-2 focus-within:ring-blue-500 dark:border-gray-700">
+                            <i class="pi pi-search mx-3 text-gray-400 dark:text-gray-500"></i>
                             <input v-model="searchQuery" type="text" :placeholder="$t('dogHeader.searchPlaceholder')"
-                                @input="handleSearch" class="flex-1 p-3 outline-none border-none">
+                                @input="handleSearch" class="flex-1 border-none p-3 outline-none bg-transparent text-gray-900 dark:text-gray-100">
                         </div>
 
                         <!-- 搜索结果下拉框 -->
                         <div v-if="searchResults.length > 0"
-                            class="absolute z-50 w-full bg-white border rounded-lg shadow-lg mt-1 overflow-hidden">
+                            class="absolute z-50 mt-1 w-full overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-gray-900">
                             <div v-for="user in searchResults" :key="user.id" @click="selectUser(user)"
-                                class="p-3 hover:bg-gray-50 cursor-pointer flex items-center border-b last:border-b-0">
+                                class="flex cursor-pointer items-center border-b border-gray-100 p-3 hover:bg-gray-50 dark:border-gray-800 dark:hover:bg-gray-800 last:border-b-0">
                                 <div v-if="user.avatar" class="w-10 h-10 rounded-full overflow-hidden mr-3">
                                     <img :src="user.avatar" :alt="user.nickname" @error="handleAvatarError"
                                         class="w-full h-full object-cover">
@@ -79,31 +79,31 @@
                                     <span class="text-lg font-medium">{{ getAvatarText(user) }}</span>
                                 </div>
                                 <div>
-                                    <div class="font-medium">{{ user.nickname }}</div>
-                                    <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                        <div class="font-medium text-gray-900 dark:text-gray-100">{{ user.nickname }}</div>
+                                        <div class="text-sm text-gray-500 dark:text-gray-400">{{ user.email }}</div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
                     </div>
                 </div>
 
                 <!-- 添加邀请链接按钮 -->
                 <div class="mt-4">
                     <button @click="generateInvitation"
-                        class="flex items-center px-4 py-2 text-sm text-blue-600 bg-blue-50 rounded-md hover:bg-blue-100">
+                        class="flex items-center rounded-md bg-blue-50 px-4 py-2 text-sm text-blue-600 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300 dark:hover:bg-blue-900/50">
                         <i class="pi pi-link mr-2"></i>{{ $t('dogHeader.generateInviteLink') }}
                     </button>
                 </div>
 
                 <!-- 显示邀请链接 -->
-                <div v-if="invitationLink" class="mt-2 p-4 bg-gray-50 rounded-md">
+                <div v-if="invitationLink" class="mt-2 rounded-md bg-gray-50 p-4 dark:bg-gray-800">
                     <div class="flex items-center justify-between">
-                        <div class="text-sm text-gray-600">{{ $t('dogHeader.inviteLinkValid') }}</div>
-                        <button @click="copyInvitationLink" class="text-blue-600 hover:text-blue-800">
+                        <div class="text-sm text-gray-600 dark:text-gray-400">{{ $t('dogHeader.inviteLinkValid') }}</div>
+                        <button @click="copyInvitationLink" class="text-blue-600 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200">
                             <i class="pi pi-copy"></i>
                         </button>
                     </div>
-                    <div class="mt-2 text-sm break-all">
+                    <div class="mt-2 break-all text-sm text-gray-700 dark:text-gray-200">
                         {{ invitationLink }}
                     </div>
                 </div>
@@ -111,7 +111,7 @@
                 <!-- 成员列表 -->
                 <div class="max-h-[400px] overflow-y-auto">
                     <div v-for="member in currentWorkspace.members" :key="member.user_id"
-                        class="flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg group">
+                        class="group flex items-center justify-between rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800">
                         <div class="flex items-center">
                             <div v-if="member.avatar" class="w-10 h-10 rounded-full overflow-hidden mr-3">
                                 <img :src="member.avatar" :alt="member.nickname" @error="handleAvatarError"
@@ -122,14 +122,14 @@
                                 <span class="text-lg font-medium">{{ getAvatarText(member) }}</span>
                             </div>
                             <div>
-                                <div class="font-medium">
+                                <div class="font-medium text-gray-900 dark:text-gray-100">
                                     {{ member.nickname || $t('dogHeader.localWorkspace') }}
                                 </div>
                                 <div class="text-sm">
                                     <span class="px-2 py-1 rounded-full text-xs" :class="{
-                                        'bg-blue-100 text-blue-800': member.role === 'owner',
-                                        'bg-green-100 text-green-800': member.role === 'admin',
-                                        'bg-gray-100 text-gray-800': member.role === 'member'
+                                        'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300': member.role === 'owner',
+                                        'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300': member.role === 'admin',
+                                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200': member.role === 'member'
                                     }">
                                         {{ getRoleText(member.role) }}
                                     </span>

@@ -38,15 +38,15 @@ export default function LoginModal(props: {
   if (!props.modelValue) return null;
 
   return (
-    <div class="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50" onClick={closeModal}>
-      <div class="bg-white rounded-xl p-8 w-full max-w-md relative animate-[modal-appear_0.3s_ease-out]" onClick={(e) => e.stopPropagation()}>
-        <button class="absolute top-4 right-4 text-gray-500 hover:text-gray-700 text-2xl border-none bg-transparent cursor-pointer p-2" onClick={closeModal}>
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={closeModal}>
+      <div class="relative w-full max-w-md animate-[modal-appear_0.3s_ease-out] rounded-xl border border-gray-200 bg-white p-8 dark:border-gray-700 dark:bg-gray-900" onClick={(e) => e.stopPropagation()}>
+        <button class="absolute right-4 top-4 cursor-pointer border-none bg-transparent p-2 text-2xl text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onClick={closeModal}>
           ×
         </button>
 
         <div class="text-center">
-          <h2 class="text-xl font-semibold text-gray-800 m-0 mb-1">{$t('login.title')}</h2>
-          <p class="text-gray-500 text-sm mb-8">{$t('login.subtitle')}</p>
+          <h2 class="m-0 mb-1 text-xl font-semibold text-gray-800 dark:text-gray-100">{$t('login.title')}</h2>
+          <p class="mb-8 text-sm text-gray-500 dark:text-gray-400">{$t('login.subtitle')}</p>
 
           <div class="flex flex-col mb-6">
             <button 
@@ -58,10 +58,10 @@ export default function LoginModal(props: {
             </button>
           </div>
 
-          <div class="flex items-center my-6">
-            <div class="flex-1 h-px bg-gray-200"></div>
-            <span class="px-3 text-sm text-gray-500">{$t('login.other_login')}</span>
-            <div class="flex-1 h-px bg-gray-200"></div>
+            <div class="flex items-center my-6">
+            <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
+            <span class="px-3 text-sm text-gray-500 dark:text-gray-400">{$t('login.other_login')}</span>
+            <div class="flex-1 h-px bg-gray-200 dark:bg-gray-700"></div>
           </div>
 
           <div class="flex justify-center gap-4 my-6">
@@ -73,7 +73,7 @@ export default function LoginModal(props: {
               <img src={githubIcon} alt="GitHub" class="w-5 h-5" />
             </button>
             <button 
-              class="w-10 h-10 rounded-full flex items-center justify-center border border-gray-200 hover:bg-gray-50 transition-colors" 
+              class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 hover:bg-gray-50 transition-colors dark:border-gray-700 dark:hover:bg-gray-800" 
               onClick={handleLinuxdoLogin} 
               title={$t('login.linuxdo')}
             >
@@ -81,10 +81,10 @@ export default function LoginModal(props: {
             </button>
           </div>
 
-          <p class="text-xs text-gray-500 mt-6">
+          <p class="mt-6 text-xs text-gray-500 dark:text-gray-400">
             {$t('login.terms_prefix')}
-            <a href="#" class="text-blue-500 hover:underline">{$t('login.terms')}</a> {$t('login.and')}
-            <a href="#" class="text-blue-500 hover:underline">{$t('login.privacy')}</a>
+            <a href="#" class="text-blue-500 hover:underline dark:text-blue-300">{$t('login.terms')}</a> {$t('login.and')}
+            <a href="#" class="text-blue-500 hover:underline dark:text-blue-300">{$t('login.privacy')}</a>
           </p>
         </div>
       </div>

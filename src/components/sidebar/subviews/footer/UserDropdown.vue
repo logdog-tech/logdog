@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="flex justify-start flex-col w-[260px] bg-white border border-gray-200 shadow-lg rounded-md p-4">
+        <div class="flex w-[260px] flex-col justify-start rounded-md border border-gray-200 bg-white p-4 shadow-lg dark:border-gray-700 dark:bg-gray-900">
             <!-- <div class="flex items-center gap-2 p-3"><i class="pi pi-user" /> My Profile</div>
         <div class="flex items-center gap-2 p-3"><i class="pi pi-cog" /> Preferences</div>
         <div class="flex items-center gap-2 p-3"><i class="pi pi-phone" /> Support</div>
@@ -18,27 +18,27 @@
         </div>
         <div class="h-[1px] bg-gray-200" /> -->
             <div class="flex items-center justify-between p-2">
-                <span>
+                <span class="text-gray-800 dark:text-gray-100">
                     <i class="pi pi-language pr-2" />{{ $t('userdropdown.language') }}</span>
                 <select :value="tolgee.getLanguage()" @change="changeLanguage"
-                    class="border border-gray-200 rounded-md px-2 py-1">
+                    class="rounded-md border border-gray-200 bg-white px-2 py-1 text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
                     <option v-for="lang in allLanguageCodes" :key="lang" :value="lang">
                         {{ getLanguageDisplayName(lang) }}
                     </option>
                 </select>
             </div>
-            <div class="h-[1px] bg-gray-200" />
-            <div class="p-2 flex items-center hover:cursor-pointer hover:bg-gray-100 rounded-md"
+            <div class="h-[1px] bg-gray-200 dark:bg-gray-700" />
+            <div class="p-2 flex items-center rounded-md hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                 @click="showFeedbackModal = true">
                 <i class="pi pi-comments pr-2" />{{ $t('userdropdown.feedback') }}
             </div>
-            <div class="h-[1px] bg-gray-200" />
+            <div class="h-[1px] bg-gray-200 dark:bg-gray-700" />
             <template v-if="isLoggedIn">
-                <div class="p-2 text-red-500 flex items-center mt-2 hover:cursor-pointer hover:bg-gray-100 rounded-md"
+                <div class="p-2 text-red-500 flex items-center mt-2 rounded-md hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                     @click="logout"><i class="pi pi-sign-out pr-2" />{{ $t('userdropdown.logout') }}</div>
             </template>
             <template v-else>
-                <div class="p-2 text-blue-500 flex items-center mt-2 hover:cursor-pointer hover:bg-gray-100 rounded-md"
+                <div class="p-2 text-blue-500 flex items-center mt-2 rounded-md hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                     @click="showLoginModal = true">
                     <i class="pi pi-sign-in pr-2" />{{ $t('userdropdown.login') }}
                 </div>

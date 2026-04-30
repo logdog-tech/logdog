@@ -4,7 +4,7 @@
         <SplitterPanel style="width:100%;height:100%;min-height:100px">
             <div class="h-full flex flex-col">
                 <HugeList :wrap="isAutoWrap" :overscanRowCount="10" :version="dataVersion" :rowCount="totalCount"
-                    ref="logFullView" class="border border-surface-200 dark:border-surface-700 rounded m-[4px] pb-10">
+                    ref="logFullView" class="log-list-panel border border-surface-200 dark:border-surface-700 rounded m-[4px] pb-10">
                     <template #default="{ index }">
                         <AsyncLogLineItem :index="index" :selected-line="selectedline" :animation-key="animationKey"
                             :is-auto-wrap="isAutoWrap" :hash-color-line-index="hashColorLineIndex"
@@ -25,7 +25,7 @@
                     @changeDisplayMode="changeDisplayMode" @toggleCaseSensitive="toggleCaseSensitive" />
 
                 <HugeList :wrap="isAutoWrap" :version="dataVersion" :rowCount="searchCount"
-                    class="border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px] pb-10"
+                    class="log-list-panel border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px] pb-10"
                     style="flex-grow:1" ref="logSearchView">
                     <template #default="{ index }">
                         <AsyncLogLineItem :index="index" :selected-line="selectedline" :animation-key="animationKey"
@@ -509,11 +509,19 @@ export default defineComponent({
     height: 100%;
     width: 100%;
     display: flex;
+    background: var(--color-background);
+    color: var(--color-text);
+}
+
+.log-list-panel {
+    background: var(--color-background);
 }
 
 .bottom-status-bar {
     height: 20px;
-    background-color: #f0f0f0;
+    background-color: var(--color-background-soft);
+    color: var(--color-text);
+    border-top: 1px solid var(--color-border);
     padding: 0 8px;
     display: grid;
     grid-template-columns: 120px 1fr 80px 1fr 200px;
@@ -523,6 +531,10 @@ export default defineComponent({
 .bottom-status-bar .encoding-selector {
     cursor: pointer;
     text-align: center;
+}
+
+.bottom-status-bar a {
+    color: var(--color-link);
 }
 
 .virtual-scroller {

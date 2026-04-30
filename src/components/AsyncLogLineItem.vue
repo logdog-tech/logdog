@@ -156,6 +156,83 @@ export default defineComponent({
 <style scoped>
 .log-item-container {
   position: relative;
+  --log-row-bg: #ffffff;
+  --log-row-alt: #e2e8f0;
+  --log-row-alt-transparent: rgba(255, 255, 255, 0);
+  --log-content-color: #1f2937;
+  --log-line-number-bg: #f3f3f3;
+  --log-line-number-border: rgba(0, 0, 0, 0.1);
+  --log-hover-bg: rgba(226, 232, 240, 0.8);
+  --log-hover-line-bg: rgba(226, 232, 240, 1);
+  --log-hover-shadow: rgba(100, 116, 139, 0.4);
+  --log-hover-border: rgba(100, 116, 139, 0.7);
+  --log-hover-overlay: rgba(0, 0, 0, 0.1);
+  --log-selected-bg: rgba(254, 249, 195, 0.9);
+  --log-selected-line-bg: rgba(254, 249, 195, 1);
+  --log-selected-border: rgba(245, 158, 11, 0.8);
+  --log-marked-bg: #dbeafe;
+  --log-marked-border: #3b82f6;
+  --log-filtered-color: #333333;
+  --log-filtered-shadow: rgba(0, 0, 0, 0.1);
+  --log-skeleton-bg: #ececec;
+  --log-skeleton-start: #eeeeee;
+  --log-skeleton-mid: #dddddd;
+  --log-tooltip-bg: rgba(0, 0, 0, 0.8);
+  --log-tooltip-color: #ffffff;
+}
+
+:global(html.dark) .log-item-container {
+  --log-row-bg: #0f172a;
+  --log-row-alt: rgba(30, 41, 59, 0.72);
+  --log-row-alt-transparent: rgba(15, 23, 42, 0);
+  --log-content-color: #e5e7eb;
+  --log-line-number-bg: #111827;
+  --log-line-number-border: rgba(148, 163, 184, 0.22);
+  --log-hover-bg: rgba(51, 65, 85, 0.82);
+  --log-hover-line-bg: rgba(51, 65, 85, 0.95);
+  --log-hover-shadow: rgba(148, 163, 184, 0.22);
+  --log-hover-border: rgba(148, 163, 184, 0.62);
+  --log-hover-overlay: rgba(255, 255, 255, 0.08);
+  --log-selected-bg: rgba(113, 63, 18, 0.72);
+  --log-selected-line-bg: rgba(113, 63, 18, 0.9);
+  --log-selected-border: rgba(251, 191, 36, 0.92);
+  --log-marked-bg: rgba(30, 64, 175, 0.52);
+  --log-marked-border: #60a5fa;
+  --log-filtered-color: #f8fafc;
+  --log-filtered-shadow: rgba(255, 255, 255, 0.18);
+  --log-skeleton-bg: #1f2937;
+  --log-skeleton-start: #1f2937;
+  --log-skeleton-mid: #334155;
+  --log-tooltip-bg: rgba(15, 23, 42, 0.96);
+  --log-tooltip-color: #f8fafc;
+}
+
+@media (prefers-color-scheme: dark) {
+  .log-item-container {
+    --log-row-bg: #0f172a;
+    --log-row-alt: rgba(30, 41, 59, 0.72);
+    --log-row-alt-transparent: rgba(15, 23, 42, 0);
+    --log-content-color: #e5e7eb;
+    --log-line-number-bg: #111827;
+    --log-line-number-border: rgba(148, 163, 184, 0.22);
+    --log-hover-bg: rgba(51, 65, 85, 0.82);
+    --log-hover-line-bg: rgba(51, 65, 85, 0.95);
+    --log-hover-shadow: rgba(148, 163, 184, 0.22);
+    --log-hover-border: rgba(148, 163, 184, 0.62);
+    --log-hover-overlay: rgba(255, 255, 255, 0.08);
+    --log-selected-bg: rgba(113, 63, 18, 0.72);
+    --log-selected-line-bg: rgba(113, 63, 18, 0.9);
+    --log-selected-border: rgba(251, 191, 36, 0.92);
+    --log-marked-bg: rgba(30, 64, 175, 0.52);
+    --log-marked-border: #60a5fa;
+    --log-filtered-color: #f8fafc;
+    --log-filtered-shadow: rgba(255, 255, 255, 0.18);
+    --log-skeleton-bg: #1f2937;
+    --log-skeleton-start: #1f2937;
+    --log-skeleton-mid: #334155;
+    --log-tooltip-bg: rgba(15, 23, 42, 0.96);
+    --log-tooltip-color: #f8fafc;
+  }
 }
 .log-item,
 .log-item-skeleton {
@@ -165,6 +242,7 @@ export default defineComponent({
   width: 100%;
   display: table;
   table-layout: fixed;
+  color: var(--log-content-color);
 }
 .auto-wrap {
   white-space: break-spaces;
@@ -176,19 +254,19 @@ export default defineComponent({
 .log-item.even-row {
   background: linear-gradient(
     45deg,
-    #e2e8f0 25%,
-    transparent 25%,
-    transparent 50%,
-    #e2e8f0 50%,
-    #e2e8f0 75%,
-    transparent 75%,
-    transparent
+    var(--log-row-alt) 25%,
+    var(--log-row-alt-transparent) 25%,
+    var(--log-row-alt-transparent) 50%,
+    var(--log-row-alt) 50%,
+    var(--log-row-alt) 75%,
+    var(--log-row-alt-transparent) 75%,
+    var(--log-row-alt-transparent)
   );
   background-size: 3px 3px;
 }
 
 .log-item.odd-row {
-  background-color: #ffffff;
+  background-color: var(--log-row-bg);
 }
 
 .log-item.even-row .line-number-cell {
@@ -205,18 +283,28 @@ export default defineComponent({
   pointer-events: none;
   z-index: 9;
   mix-blend-mode: multiply;
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--log-hover-overlay);
+}
+
+:global(html.dark) .log-item:hover:not(.glow-border)::before {
+  mix-blend-mode: screen;
+}
+
+@media (prefers-color-scheme: dark) {
+  .log-item:hover:not(.glow-border)::before {
+    mix-blend-mode: screen;
+  }
 }
 
 /* 半标记状态的 hover 效果 - 增强可见性，使用更明显的灰蓝色 */
 .log-item.semi-marked-line:hover:not(.glow-border):not(.marked-line) {
-  background-color: rgba(226, 232, 240, 0.8) !important;
-  box-shadow: inset 0 0 4px rgba(100, 116, 139, 0.4);
+  background-color: var(--log-hover-bg) !important;
+  box-shadow: inset 0 0 4px var(--log-hover-shadow);
 }
 
 .log-item.semi-marked-line:hover:not(.glow-border):not(.marked-line) .line-number-cell {
-  background-color: rgba(226, 232, 240, 1.0) !important;
-  border-left: 3px solid rgba(100, 116, 139, 0.7);
+  background-color: var(--log-hover-line-bg) !important;
+  border-left: 3px solid var(--log-hover-border);
 }
 
 /* 覆盖默认的 hover 效果，避免冲突 */
@@ -226,13 +314,13 @@ export default defineComponent({
 
 /* 选中行样式 - 使用黄色系表示当前选中 */
 .log-item.selected-line {
-  background-color: rgba(254, 249, 195, 0.9) !important;
+  background-color: var(--log-selected-bg) !important;
   /* box-shadow: inset 0 0 4px rgba(245, 158, 11, 0.3); */
 }
 
 .log-item.selected-line .line-number-cell {
-  background-color: rgba(254, 249, 195, 1.0) !important;
-  border-left: 3px solid rgba(245, 158, 11, 0.8);
+  background-color: var(--log-selected-line-bg) !important;
+  border-left: 3px solid var(--log-selected-border);
 }
 
 /* 隐藏选中行的动画边框，使用新的背景样式替代 */
@@ -245,7 +333,17 @@ export default defineComponent({
   pointer-events: none;
   z-index: 10;
   mix-blend-mode: multiply;
-  background-color: rgba(0, 0, 0, 0.1);
+  background-color: var(--log-hover-overlay);
+}
+
+:global(html.dark) .border-animation {
+  mix-blend-mode: screen;
+}
+
+@media (prefers-color-scheme: dark) {
+  .border-animation {
+    mix-blend-mode: screen;
+  }
 }
 @keyframes borderPulse {
   0% {
@@ -275,13 +373,13 @@ export default defineComponent({
   padding-left: 8px;
   color: gray;
   font-family: monospace;
-  background-color: #f3f3f3;
+  background-color: var(--log-line-number-bg);
   user-select: none;
   z-index: 10;
   cursor: pointer;
   vertical-align: top;
   border-left: 3px solid transparent;
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: 1px solid var(--log-line-number-border);
 }
 .line-number-cell .filename-tooltip {
   display: none;
@@ -289,9 +387,9 @@ export default defineComponent({
   left: 30%;
   top: -120%;
   transform: translateY(-50%);
-  background: rgba(0, 0, 0, 0.8);
+  background: var(--log-tooltip-bg);
   text-align: left;
-  color: white;
+  color: var(--log-tooltip-color);
   padding: 4px 8px;
   border-radius: 4px;
   font-size: 12px;
@@ -315,28 +413,28 @@ export default defineComponent({
 }
 .filtered-line {
   font-weight: 700;
-  color: #333;
-  text-shadow: 0 0 0.5px rgba(0, 0, 0, 0.1);
+  color: var(--log-filtered-color);
+  text-shadow: 0 0 0.5px var(--log-filtered-shadow);
 }
 .log-item.marked-line {
-  background-color: #dbeafe !important;
+  background-color: var(--log-marked-bg) !important;
   /* box-shadow: inset 0 0 4px rgba(59, 130, 246, 0.4); */
 }
 .log-item.marked-line .line-number-cell {
-  background-color: #dbeafe !important;
-  border-left: 3px solid #3b82f6;
+  background-color: var(--log-marked-bg) !important;
+  border-left: 3px solid var(--log-marked-border);
 }
 /* Skeleton */
 .log-item-skeleton .line-number-cell {
   display: table-cell;
   width: 66px;
-  background: #ececec;
+  background: var(--log-skeleton-bg);
   position: sticky;
   left: 0;
   z-index: 10;
   vertical-align: top;
   border-left: 3px solid transparent;
-  border-right: 1px solid rgba(0, 0, 0, 0.1);
+  border-right: 1px solid var(--log-line-number-border);
 }
 .log-item-skeleton .content-cell {
   display: table-cell;
@@ -346,7 +444,7 @@ export default defineComponent({
 .skeleton-block {
   width: 66px;
   height: 1em;
-  background: linear-gradient(90deg, #eee, #ddd, #eee);
+  background: linear-gradient(90deg, var(--log-skeleton-start), var(--log-skeleton-mid), var(--log-skeleton-start));
   background-size: 200% 100%;
   animation: pulse 1.2s infinite;
 }
@@ -354,7 +452,7 @@ export default defineComponent({
   width: 80%;
   height: 1em;
   margin-left: 8px;
-  background: linear-gradient(90deg, #eee, #ddd, #eee);
+  background: linear-gradient(90deg, var(--log-skeleton-start), var(--log-skeleton-mid), var(--log-skeleton-start));
   background-size: 200% 100%;
   animation: pulse 1.2s infinite;
 }

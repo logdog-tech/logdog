@@ -2,22 +2,22 @@
     <div>
         <div class="grid grid-cols-2 h-[48px] hover:cursor-pointer px-2" @click="handleClick"
             style="grid-template-columns: 40px 1fr 48px; grid-template-rows: 1px 1fr; align-items: center; ">
-            <div class="h-[1px] bg-gray-200" style="grid-column: 1 / 4" />
+            <div class="h-[1px] bg-gray-200 dark:bg-gray-700" style="grid-column: 1 / 4" />
             <div class="rounded-full bg-blue-500 p-2 w-10 h-10 flex items-center justify-center text-white font-medium">
                 {{ avatarText }}
             </div>
             <div class="">
                 <template v-if="isLoggedIn">
-                    <div class="text">{{ userInfo?.nickname }}</div>
-                    <div class="text-xs text-gray-500 max-w-[120px] truncate">{{ userInfo?.email }}</div>
+                    <div class="text-gray-900 dark:text-gray-100">{{ userInfo?.nickname }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 max-w-[120px] truncate">{{ userInfo?.email }}</div>
                 </template>
                 <template v-else>
-                    <div class="text-sm">{{ $t('loginInfo.notLoggedIn') }}</div>
-                    <div class="text-xs text-gray-500 max-w-[140px] truncate">{{ $t('loginInfo.moreFeatures') }}</div>
+                    <div class="text-sm text-gray-900 dark:text-gray-100">{{ $t('loginInfo.notLoggedIn') }}</div>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 max-w-[140px] truncate">{{ $t('loginInfo.moreFeatures') }}</div>
                 </template>
             </div>
             <div>
-                <i v-if="false" class="pi pi-bell p-2 border border-gray-200 rounded-md"
+                <i v-if="false" class="pi pi-bell p-2 border border-gray-200 rounded-md dark:border-gray-700"
                     @click="toggleNotifications"></i>
             </div>
         </div>

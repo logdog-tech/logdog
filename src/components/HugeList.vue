@@ -387,7 +387,28 @@ onBeforeUnmount(() => {
   user-select: text;
   /* 允许原生横向手势，禁止原生纵向手势，避免与自绘冲突 */
   touch-action: pan-x;
-  background: transparent;
+  background: var(--color-background);
+  color: var(--color-text);
+  --hl-scrollbar-bg: rgba(0, 0, 0, 0.01);
+  --hl-scrollbar-border: rgba(0, 0, 0, 0.1);
+  --hl-thumb-bg: rgba(0, 0, 0, 0.16);
+  --hl-thumb-hover-bg: rgba(0, 0, 0, 0.34);
+}
+
+:global(html.dark) .huge-list {
+  --hl-scrollbar-bg: rgba(255, 255, 255, 0.03);
+  --hl-scrollbar-border: rgba(148, 163, 184, 0.22);
+  --hl-thumb-bg: rgba(148, 163, 184, 0.34);
+  --hl-thumb-hover-bg: rgba(203, 213, 225, 0.55);
+}
+
+@media (prefers-color-scheme: dark) {
+  .huge-list {
+    --hl-scrollbar-bg: rgba(255, 255, 255, 0.03);
+    --hl-scrollbar-border: rgba(148, 163, 184, 0.22);
+    --hl-thumb-bg: rgba(148, 163, 184, 0.34);
+    --hl-thumb-hover-bg: rgba(203, 213, 225, 0.55);
+  }
 }
 
 .hl-viewport {
@@ -444,15 +465,15 @@ onBeforeUnmount(() => {
     -webkit-user-select: none;
     -moz-user-select: none;
     user-select: none;
-    background-color: rgba(0, 0, 0, 0.01);
-    border-left-color: rgba(0, 0, 0, 0.1);
+    background-color: var(--hl-scrollbar-bg);
+    border-left-color: var(--hl-scrollbar-border);
     border-left-width: 0.5px;
 }
 .hl-thumb {
     position: absolute;
     left: 0;
     width: 100%;
-    background: rgba(0, 0, 0, 0.1);
+    background: var(--hl-thumb-bg);
     cursor: pointer;
     transition: background 0.15s ease;
     -webkit-user-select: none;
@@ -460,6 +481,6 @@ onBeforeUnmount(() => {
     user-select: none;
 }
 .hl-thumb:hover {
-  background: rgba(0, 0, 0, 0.3);
+  background: var(--hl-thumb-hover-bg);
 }
 </style>

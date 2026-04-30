@@ -18,16 +18,16 @@ const { showConfirm } = useNavigationGuardState();
         <RouterView />
 
         <div v-if="showConfirm" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
-            <div class="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
-                <h2 class="text-lg font-semibold text-gray-900">确认离开当前页面？</h2>
-                <p class="mt-3 text-sm text-gray-600">
+            <div class="w-full max-w-md rounded-xl border border-gray-200 bg-white p-6 shadow-2xl dark:border-gray-700 dark:bg-gray-900">
+                <h2 class="text-lg font-semibold text-gray-900 dark:text-gray-100">确认离开当前页面？</h2>
+                <p class="mt-3 text-sm text-gray-600 dark:text-gray-400">
                     你正在触发浏览器路由跳转。为避免误触，我们先确认一次。
                 </p>
                 <div class="mt-6 flex justify-end gap-3">
-                    <button class="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50" @click="cancelRouteChange">
+                    <button class="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:text-gray-200 dark:hover:bg-gray-800" @click="cancelRouteChange">
                         取消
                     </button>
-                    <button class="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700" @click="acceptRouteChange">
+                    <button class="rounded-md bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-400" @click="acceptRouteChange">
                         继续
                     </button>
                 </div>
