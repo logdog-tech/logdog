@@ -1,27 +1,29 @@
 # LogDog
 
-高性能日志分析工具，支持海量日志文件的实时浏览、搜索和高亮标记。
+A high-performance log viewer for massive log files, with real-time browsing, search, and highlighting.
 
-## 在线体验
+[中文文档](./README.zh-CN.md)
 
-**LogDog** 同时提供完整的 SaaS 版本，无需本地部署即可使用全部功能：**[logdog.tech](https://logdog.tech)**
+## Online
 
-本仓库为 LogDog 的前端部分，包含完整的日志查看、搜索过滤、高亮规则、时间排序等核心交互能力。
+**LogDog** is also available as a fully-managed SaaS platform — no deployment needed: **[logdog.tech](https://logdog.tech)**
 
-## 功能特性
+This repository contains the LogDog frontend, providing the full log viewing, searching, filtering, highlighting, and time-sorting experience.
 
-- 亿级日志行流畅滚动，基于虚拟列表的 HugeList 组件
-- 正则搜索与区分大小写切换
-- 自定义高亮规则，支持颜色标记和预过滤器
-- 多文件拖拽加载，自动按时间排序
-- 多编码支持，自动检测文件编码
-- 支持 ZIP / RAR / TAR / 7z 等压缩包直接加载
-- 日志行选中、复制、导出
-- WebAssembly 加速的日期解析
-- 暗色模式
-- PWA 支持，可离线使用
+## Features
 
-## 技术栈
+- Smooth scrolling through billions of log lines via the HugeList virtual list component
+- Regex search with case-sensitivity toggle
+- Custom highlight rules with color markers and pre-filters
+- Multi-file drag-and-drop, auto-sorted by timestamp
+- Multi-encoding support with automatic detection
+- Direct loading of ZIP, RAR, TAR, 7z, and other archive formats
+- Log line selection, copy, and export
+- WebAssembly-accelerated date parsing
+- Dark mode
+- PWA support for offline use
+
+## Tech Stack
 
 - Vue 3 + TypeScript
 - Vite
@@ -30,40 +32,40 @@
 - Rust / WebAssembly (wasm-pack)
 - Pinia
 
-## 快速开始
+## Getting Started
 
 ```bash
-# 安装依赖
+# Install dependencies
 npm install
 
-# 启动开发服务器
+# Start dev server
 npm run dev
 
-# 生产构建
+# Production build
 npm run build
 ```
 
-### 构建 WASM
+### Build WASM
 
 ```bash
-# 需要预先安装 wasm-pack
+# Requires wasm-pack
 # curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh
 
 npm run build:wasm
 ```
 
-## 项目结构
+## Project Structure
 
 ```
 src/
-├── api/          # API 接口层
-├── components/   # Vue 组件
-├── modules/      # 业务模块
-├── router/       # 路由配置
-├── utils/        # 工具函数
-└── views/        # 页面视图
-public/           # 静态资源
-wasm/             # Rust WASM 模块
+├── api/          # API layer
+├── components/   # Vue components
+├── modules/      # Business modules
+├── router/       # Route config
+├── utils/        # Utility functions
+└── views/        # Page views
+public/           # Static assets
+wasm/             # Rust WASM module
 ```
 
 ## License
