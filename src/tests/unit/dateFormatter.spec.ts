@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { parseDate } from '@/utils/dateFormatter';
 
 // Mock the WASM module
-vi.mock('@/../wasm/pkg', () => ({
+vi.mock('date-parser', () => ({
   default: vi.fn(),
   parse_datetime: vi.fn((input: string, format: string) => {
     // Simple mock implementation

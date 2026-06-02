@@ -1,4 +1,4 @@
-import init, { parse_datetime } from '../../wasm/pkg';
+import init, { parse_datetime } from 'date-parser';
 
 let wasmInitialized = false;
 let initPromise: Promise<void> | null = null;

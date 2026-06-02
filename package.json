@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:wasm": "cd wasm/date-parser && wasm-pack build --target web --out-dir ../pkg",
+    "build:wasm": "cd ../wasm/date-parser && wasm-pack build --target web --out-dir ../pkg",
     "copy:libarchive": "mkdir -p public/libarchive.js && cp -r node_modules/libarchive.js/dist public/libarchive.js/",
     "dev": "vite",
     "build": "npm run copy:libarchive && npm run build:wasm && run-p type-check \"build-only {@}\" --",
@@ -21,7 +21,7 @@
     "@tolgee/vue": "^6.0.0",
     "@vueuse/core": "^10.9.0",
     "date-fns": "^4.1.0",
-    "date-parser": "file:wasm/pkg",
+    "date-parser": "file:../wasm/pkg",
     "fzstd": "^0.1.1",
     "jszip": "^3.10.1",
     "libarchive.js": "^2.0.2",
