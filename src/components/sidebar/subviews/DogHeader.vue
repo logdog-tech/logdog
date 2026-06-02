@@ -148,10 +148,10 @@
 </template>
 
 <script lang="ts">
-import type { Workspace } from '../../../modules/base';
-import type { User } from '../../../modules/base';
-import { workspaceApi } from '../../../api';
-import { settingsTableHelper, workspaceTableHelper } from '../../../utils/db';
+import type { Workspace } from '@/modules/base';
+import type { User } from '@/modules/base';
+import { workspaceApi } from '@/api';
+import { settingsTableHelper, workspaceTableHelper } from '@/utils/db';
 import type { PropType } from 'vue';
 
 export interface UserInfo {

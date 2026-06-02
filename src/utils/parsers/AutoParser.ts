@@ -1,4 +1,4 @@
-import { formatTimestamp, init } from "../dataFormater";
+import { formatTimestamp, init } from "@/utils/dataFormatter";
 
 interface FormatConfig {
     title: string;

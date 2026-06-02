@@ -29,10 +29,10 @@
 
 <script lang="ts">
 import { defineComponent, ref } from 'vue';
-import HugeList from '../components/HugeList.vue';
+import HugeList from '@/components/HugeList.vue';
 
 export default defineComponent({
-  name: 'LogViewerExample',
+  name: 'HugeListDemo',
   components: { HugeList },
   setup() {
     const ROW_COUNT = 1000;

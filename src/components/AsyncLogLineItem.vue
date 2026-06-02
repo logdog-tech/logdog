@@ -57,7 +57,7 @@ import {
   onMounted,
   onBeforeUnmount
 } from 'vue'
-import type { BaseLine } from '../modules/base'
+import type { BaseLine } from '@/modules/base'
 
 export default defineComponent({
   name: 'AsyncLogLineItem',

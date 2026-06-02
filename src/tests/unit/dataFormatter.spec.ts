@@ -1,14 +1,14 @@
 import { describe, it, expect, vi } from 'vitest';
-import { formatTimestamp, init } from '@/utils/dataFormater';
-import { parseDate, ensureWasmInitialized } from '@/utils/date-formatter';
+import { formatTimestamp, init } from '@/utils/dataFormatter';
+import { parseDate, ensureWasmInitialized } from '@/utils/dateFormatter';
 
 // Mock the dependencies
-vi.mock('@/utils/date-formatter', () => ({
+vi.mock('@/utils/dateFormatter', () => ({
   parseDate: vi.fn().mockResolvedValue(1640995200000), // A fixed timestamp
   ensureWasmInitialized: vi.fn().mockResolvedValue(undefined)
 }));
 
-describe('dataFormater', () => {
+describe('dataFormatter', () => {
   describe('init', () => {
     it('should call ensureWasmInitialized', async () => {
       await init();

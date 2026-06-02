@@ -1,8 +1,8 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { AutoParser } from '@/utils/parsers/AutoParser';
 
-// Mock the dataFormater module
-vi.mock('@/utils/dataFormater', () => ({
+// Mock the dataFormatter module
+vi.mock('@/utils/dataFormatter', () => ({
   formatTimestamp: vi.fn().mockResolvedValue(1640995200000), // A fixed timestamp
   init: vi.fn()
 }));

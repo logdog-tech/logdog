@@ -1,4 +1,4 @@
-import { parseDate, ensureWasmInitialized } from './date-formatter';
+import { parseDate, ensureWasmInitialized } from './dateFormatter';
 
 export async function init() {
     await ensureWasmInitialized();

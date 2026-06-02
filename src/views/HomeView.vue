@@ -35,18 +35,18 @@
 </template>
 
 <script lang="ts">
-import DataProvider from "../components/DataProvider.vue";
-import LogdogEditor from "../components/LogdogEditor.vue";
-import LoginInfo from "../components/sidebar/subviews/LoginInfo.vue";
+import DataProvider from "@/components/DataProvider.vue";
+import LogdogEditor from "@/components/LogdogEditor.vue";
+import LoginInfo from "@/components/sidebar/subviews/LoginInfo.vue";
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
-import type { User, LogFile } from "../modules/base";
+import type { User, LogFile } from "@/modules/base";
 
-import DogHeader from "../components/sidebar/subviews/DogHeader.vue";
-import DogRulers from "../components/sidebar/subviews/DogRulers.vue";
-import type { Workspace, Rule } from '../modules/base';
+import DogHeader from "@/components/sidebar/subviews/DogHeader.vue";
+import DogRulers from "@/components/sidebar/subviews/DogRulers.vue";
+import type { Workspace, Rule } from '@/modules/base';
 import { defineComponent } from 'vue';
-import { init } from "../utils/dataFormater";
+import { init } from "@/utils/dataFormatter";
 
 export default defineComponent({
     name: 'HomeView',

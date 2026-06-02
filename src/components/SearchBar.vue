@@ -72,11 +72,11 @@ import InputText from "primevue/inputtext";
 import Button from "primevue/button";
 import InputGroup from "primevue/inputgroup";
 import InputGroupAddon from "primevue/inputgroupaddon";
-import { searchTableHelper } from "../utils/db";
+import { searchTableHelper } from "@/utils/db";
 import CascadeSelect from 'primevue/cascadeselect';
 import type { CascadeSelectChangeEvent } from 'primevue/cascadeselect';
 
-import { DisplayMode } from "../modules/base";
+import { DisplayMode } from "@/modules/base";
 
 export interface HistoryItem {
     uuid: string;

@@ -125,7 +125,7 @@ function setLogicalScroll(y: number) {
     rowCount.value - 1,
     Math.max(0, Math.floor(clamped / estimatedRowHeight.value))
   )
-  let prefix = estimatePrefixBefore(i)
+  const prefix = estimatePrefixBefore(i)
   let offset = clamped - prefix
 
   while (offset < 0 && i > 0) {

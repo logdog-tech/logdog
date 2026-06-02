@@ -384,11 +384,12 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import HighlightText from './HighlightText';
-import { proxyProvider } from '../utils/providers/ProxyProvider';
+import { proxyProvider } from '@/utils/providers/ProxyProvider';
 import type { LogFile } from '@/modules/base';
 import { hashColor } from '@/utils/colors';
 
 export default defineComponent({
+    name: 'DataProvider',
     components: {
         HighlightText
     },

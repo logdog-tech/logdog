@@ -35,7 +35,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { User } from "@/modules/base"
-import { userApi, handleApiError } from "../../../api"
+import { userApi, handleApiError } from "@/api"
 import Notifications from './Notifications.vue'
 import UserDropdown from './footer/UserDropdown.vue'
 import LoginModal from '@/components/LoginModal'

@@ -545,8 +545,8 @@
 
 <script lang="ts">
 import type { PropType } from 'vue';
-import type { Rule, User, Workspace } from '../../../../modules/base';
-import { generateColorSchemes, type ColorScheme } from '../../../../utils/colors';
+import type { Rule, User, Workspace } from '@/modules/base';
+import { generateColorSchemes, type ColorScheme } from '@/utils/colors';
 import { ruleTableHelper } from '@/utils/db';
 import { ruleApi } from '@/api';
 import { useToast } from 'primevue/usetoast';

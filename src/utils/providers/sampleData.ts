@@ -22,7 +22,7 @@ const how_to_use_data = `
 `.replace(/\'/g, '`');
 const blob = new Blob([how_to_use_data], { type: 'text/plain' });
 
-export const howToUseFile = new File([blob], 'how-to-use.log', {
+export const howToUseFile = new File([blob], 'sample-data.log', {
     type: 'text/plain',
     lastModified: Date.now(),
 });

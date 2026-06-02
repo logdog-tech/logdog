@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { parseDate } from '@/utils/date-formatter';
+import { parseDate } from '@/utils/dateFormatter';
 
 // Mock the WASM module
 vi.mock('@/../wasm/pkg', () => ({
@@ -13,7 +13,7 @@ vi.mock('@/../wasm/pkg', () => ({
   })
 }));
 
-describe('date-formatter', () => {
+describe('dateFormatter', () => {
   it('should parse datetime correctly', async () => {
     const timestamp = await parseDate('2023-01-01 12:00:00', '%Y-%m-%d %H:%M:%S');
     expect(timestamp).toBe(new Date('2023-01-01T12:00:00').getTime());

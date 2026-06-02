@@ -1,5 +1,5 @@
 <template>
-    <Splitter class="logdog-editor" layout="vertical" @wheel.capture="hideColorSelecter" @pointerdown.capture="hideColorSelecter" @scroll.capture="hideColorSelecter">
+    <Splitter class="logdog-editor" layout="vertical" @wheel.capture="hideColorSelector" @pointerdown.capture="hideColorSelector" @scroll.capture="hideColorSelector">
         <!-- Left: Full log list -->
         <SplitterPanel style="width:100%;height:100%;min-height:100px">
             <div class="h-full flex flex-col">
@@ -53,7 +53,7 @@
     </Splitter>
 
     <!-- Floating helpers -->
-    <ColorSelecter @picked="handleColorPicked" :show="showColorSelecter" 
+    <ColorSelector @picked="handleColorPicked" :show="showColorSelector" 
         :x="selectionRect ? selectionRect.left + selectionRect.width / 2 : 0"
         :y="selectionRect?.top || 0" 
         :current-style="sessionColors[selectedText]"
@@ -68,21 +68,21 @@
 import Splitter from "primevue/splitter";
 import SplitterPanel from "primevue/splitterpanel";
 import HugeList from "./HugeList.vue";
-import ColorSelecter from "./ColorSelecter.vue";
+import ColorSelector from "./ColorSelector.vue";
 import SearchBar from "./SearchBar.vue";
 import EncodingSelector from "./EncodingSelector.vue";
 import FeedbackModal from "./sidebar/subviews/FeedbackModal.vue";
 import AsyncLogLineItem from "./AsyncLogLineItem.vue";
 
 import { defineComponent, type PropType } from "vue";
-import type { BaseLine, Rule, LogFile } from "../modules/base";
-import { DisplayMode } from "../modules/base";
-import { proxyProvider } from "../utils/providers/ProxyProvider";
-import { type Observer } from "../utils/providers/define";
-import { hashColor } from "../utils/colors";
-import { highlightIt } from "../utils/highlighter";
-import { escapeRegExp } from "../utils/regex";
-import { settingsTableHelper } from "../utils/db";
+import type { BaseLine, Rule, LogFile } from "@/modules/base";
+import { DisplayMode } from "@/modules/base";
+import { proxyProvider } from "@/utils/providers/ProxyProvider";
+import { type Observer } from "@/utils/providers/define";
+import { hashColor } from "@/utils/colors";
+import { highlightIt } from "@/utils/highlighter";
+import { escapeRegExp } from "@/utils/regex";
+import { settingsTableHelper } from "@/utils/db";
 import { useToast } from 'primevue/usetoast';
 
 type StyleObject = Record<string, string>;
@@ -96,7 +96,7 @@ export default defineComponent({
         Splitter,
         SplitterPanel,
         HugeList,
-        ColorSelecter,
+        ColorSelector,
         SearchBar,
         EncodingSelector,
         FeedbackModal,
@@ -128,7 +128,7 @@ export default defineComponent({
             searchTerm: "",
             selectedline: -1 as number,
             selectionRect: null as DOMRect | null,
-            showColorSelecter: false,
+            showColorSelector: false,
             selectedText: "",
             sessionColors: {} as Record<string, StyleObject>,
             totalCount: 0,
@@ -211,9 +211,15 @@ export default defineComponent({
             // s1, 执行所有预处理任务, TODO 将该方法向provider前移
             for (const func of functions) {
                 try {
-                    // eslint-disable-next-line no-new-func
-                    const mem_func = new Function('' + func.custom_function)();
-                    result = mem_func(line.filename, line.line, result);
+                    const code = String(func.custom_function);
+                    // Validate: reject potentially dangerous code
+                    if (/eval\b|Function\b|import\b|fetch\b|XMLHttpRequest|document\b|window\b|localStorage|sessionStorage|WebSocket|Worker\b/i.test(code)) {
+                        console.error(`Blocked potentially unsafe function: "${func.custom_function}"`);
+                        continue;
+                    }
+                     
+                    const memFunc = new Function(code)();
+                    result = memFunc(line.filename, line.line, result);
                 } catch (error) {
                     console.error(`Error in function "${func.custom_function}":`, error);
                 }
@@ -243,14 +249,14 @@ export default defineComponent({
         },
         handleTextSelection(event: Event) {
             if (event.type !== "mouseup") {
-                this.showColorSelecter = false;
+                this.showColorSelector = false;
                 return;
             }
 
             // 获取选中文字的坐标
             const selection = window.getSelection();
             if (!selection || selection.rangeCount === 0) {
-                this.showColorSelecter = false;
+                this.showColorSelector = false;
                 return;
             }
             const range = selection.getRangeAt(0);
@@ -274,23 +280,23 @@ export default defineComponent({
             }
             
             this.selectedText = selection.toString() ?? "";
-            this.showColorSelecter = !!this.selectedText;
+            this.showColorSelector = !!this.selectedText;
         },
 
-        hideColorSelecter() {
-            this.showColorSelecter = false;
+        hideColorSelector() {
+            this.showColorSelector = false;
         },
         
         handleSelectionChange() {
             // 如果颜色选择器正在显示，不要因为选择变化而隐藏它
-            if (this.showColorSelecter) {
+            if (this.showColorSelector) {
                 return;
             }
             
             const selection = window.getSelection();
             if (!selection || selection.rangeCount === 0 || selection.toString().trim() === '') {
                 this.selectedText = '';
-                this.showColorSelecter = false;
+                this.showColorSelector = false;
             }
         },
 
@@ -348,7 +354,7 @@ export default defineComponent({
          * @param {string} content - 需要处理的原始文本内容
          * @returns {string} - 添加了高亮样式的HTML字符串
          */
-        highlights(content: string, autoHashHightlightByKeyworkds: string[] = []): string {
+        highlights(content: string, autoHashHighlightByKeywords: string[] = []): string {
             const useColors = [] as { pattern: string | RegExp; style: StyleObject }[]
 
             const colorItems = this.colors.filter((c) => c._checked)
@@ -356,7 +362,7 @@ export default defineComponent({
                 useColors.push({ pattern: c.pattern, style: { color: c.fg_color, "background-color": c.bg_color } } as { pattern: string | RegExp; style: StyleObject });
             }
 
-            for (const keyword of autoHashHightlightByKeyworkds) {
+            for (const keyword of autoHashHighlightByKeywords) {
                 useColors.push({ pattern: keyword, style: { color: hashColor(keyword) } } as { pattern: string | RegExp; style: StyleObject });
             }
             // 直接使用完整的搜索词作为正则表达式，考虑大小写敏感设置

@@ -10,7 +10,7 @@ decompressors.set("zstd", new ZstdDecompressor());
 decompressors.set("gzip", new GzipDecompressor());
 decompressors.set("zip", new ZipDecompressor());
 
-async function getUnit8Array(input: Uint8Array | File): Promise<Uint8Array> {
+async function getUint8Array(input: Uint8Array | File): Promise<Uint8Array> {
   if (input instanceof File) {
     const reader = new FileReader();
     reader.readAsArrayBuffer(input);
@@ -25,7 +25,7 @@ async function getUnit8Array(input: Uint8Array | File): Promise<Uint8Array> {
 }
 
 export async function decompress(input: Uint8Array | File, type: "zip" | "gzip" | "zstd", innerPath?: string): Promise<Uint8Array> {
-  const data = await getUnit8Array(input);
+  const data = await getUint8Array(input);
 
   const decompressor = decompressors.get(type);
   if (!decompressor) {

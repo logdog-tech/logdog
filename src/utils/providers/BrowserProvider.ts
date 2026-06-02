@@ -1,15 +1,15 @@
 import type { BaseLine, LogFile } from "@/modules/base";
 import { SimpleLogFile } from "@/modules/base";
 import type { Observer, Provider } from "./define";
-import { decompress } from "../extractors";
-import { AutoParser } from "../parsers/AutoParser";
+import { decompress } from "@/utils/extractors";
+import { AutoParser } from "@/utils/parsers/AutoParser";
 import { DisplayMode } from "@/modules/base";
 
 // archiveHandler.js
 import { createArchiveHandler, type ArchiveCallback } from './archiveHandler';
-import { isLogFile } from "../binaryCheck";
-import { logMemoryCompressor } from '../memory';
-import { howToUseFile } from './how-to-use';
+import { isLogFile } from "@/utils/binaryCheck";
+import { logMemoryCompressor } from '@/utils/memory';
+import { howToUseFile } from './sampleData';
 
 interface ExtendedFile extends File {
     path?: string;
@@ -57,8 +57,8 @@ export class BrowserProvider implements Provider {
     fileIds = new Set<string>();
 
     status: string = "";
-    searchSearchProcess: number = 100; // 检索进度
-    setuped: boolean = false
+    searchProgress: number = 100; // 检索进度
+    isSetup: boolean = false
     filterVersion: number = 0; // 用于记录当前活跃的过滤器的版本号号
 
     // 添加文件索引映射
@@ -66,12 +66,12 @@ export class BrowserProvider implements Provider {
 
     // 计算进度
     getSetupProgress(): string {
-        if (this.setuped) {
+        if (this.isSetup) {
             return "";
         }
         const totalFiles = this.files.length;
-        const setupedFiles = this.files.filter(f => f.status === "extracted").length;
-        return `${setupedFiles}/${totalFiles}`
+        const setupFiles = this.files.filter(f => f.status === "extracted").length;
+        return `${setupFiles}/${totalFiles}`
     }
 
     /**
@@ -185,7 +185,7 @@ export class BrowserProvider implements Provider {
         this.publishOnChange();
     }
 
-    setupedRawFiles: ExtendedFile[] = [];
+    setupRawFiles: ExtendedFile[] = [];
 
     async setup(input: ExtendedFile[] | ExtendedFile | string, reset = false): Promise<void> {
         if (typeof input === 'string') {
@@ -193,17 +193,17 @@ export class BrowserProvider implements Provider {
             return;
         }
 
-        if (this.setupedRawFiles.length === 1 && this.setupedRawFiles[0] === howToUseFile) {
+        if (this.setupRawFiles.length === 1 && this.setupRawFiles[0] === howToUseFile) {
             console.warn("发现示例文件，强制改为重置模式");
             reset = true;
         }
 
         if (reset) {
-            this.setupedRawFiles = [];
+            this.setupRawFiles = [];
         }
-        this.setupedRawFiles.push(...Array.isArray(input) ? input : [input]);
+        this.setupRawFiles.push(...Array.isArray(input) ? input : [input]);
 
-        this.setuped = false;
+        this.isSetup = false;
         this.status = "正在解析文件"
 
 
@@ -311,7 +311,7 @@ export class BrowserProvider implements Provider {
 
 
         this.status = "ready"
-        this.setuped = true;
+        this.isSetup = true;
         for (const observer of this.observers) {
             observer.onLoaded?.();
         }
@@ -409,7 +409,7 @@ export class BrowserProvider implements Provider {
             // 1. 每隔1000次，则把主线程让出一次，
             // 2. 但又为了避免让出的过于频繁，设置让出的最短间隔为50ms，即保证20的帧率
             if (i % 1000 === 0) {
-                this.searchSearchProcess = Math.floor(i / this.allLines.length * 100);
+                this.searchProgress = Math.floor(i / this.allLines.length * 100);
                 const now = Date.now();
                 if (now - lastDelayTime >= 50) {
                     await new Promise(resolve => setTimeout(resolve, 0));
@@ -419,12 +419,12 @@ export class BrowserProvider implements Provider {
             }
         }
 
-        this.searchSearchProcess = 100;
+        this.searchProgress = 100;
         this.publishOnChange();
     }
 
     async getTotalLineCount(): Promise<number> {
-        if (!this.setuped) {
+        if (!this.isSetup) {
             return 1;
         }
         return this.allLines.length;
@@ -434,7 +434,7 @@ export class BrowserProvider implements Provider {
     }
 
     async getLine(index: number): Promise<BaseLine> {
-        if (!this.setuped) {
+        if (!this.isSetup) {
             const line = new CompressLine();
             line.line = index;
             line.filename = '';
@@ -449,12 +449,12 @@ export class BrowserProvider implements Provider {
     }
 
     async getSearchProcess(): Promise<number> {
-        return this.searchSearchProcess;
+        return this.searchProgress;
     }
 
     async useEncoding(encoding: string): Promise<void> {
         this.encoding = encoding;
-        return await this.setup(this.setupedRawFiles, true);
+        return await this.setup(this.setupRawFiles, true);
     }
 
     subscribe(observer: Observer): void {

@@ -4,20 +4,20 @@ import { remoteProvider } from "./RemoteProvider";
 import type { BaseLine, LogFile } from "@/modules/base";
 import { DisplayMode } from "@/modules/base";
 
-export interface NamedPrivider {
+export interface NamedProvider {
     name: string,
     provider: Provider
 }
 
 class ProxyProvider implements Provider {
-    private currentProvider: NamedPrivider;
+    private currentProvider: NamedProvider;
     private observers: Set<Observer> = new Set();
 
     constructor() {
         this.currentProvider = this.availableProviders()[0];
     }
 
-    availableProviders(): NamedPrivider[] {
+    availableProviders(): NamedProvider[] {
         return [
             {
                 name: "fileLog",

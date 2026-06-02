@@ -78,7 +78,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue'
 import { useRouter } from 'vue-router'
-import { workspaceApi, userApi } from '../api'
+import { workspaceApi, userApi } from '@/api'
 
 interface ApiError {
   detail: string;

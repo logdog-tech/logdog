@@ -3,7 +3,7 @@ import type {
     Workspace,
     Rule,
     User
-} from '../modules/base'
+} from '@/modules/base'
 // 统一的请求配置
 const defaultConfig = {
   credentials: 'include',
@@ -12,7 +12,7 @@ const defaultConfig = {
   } as Record<string, string>
 } 
 
-if (config.DEBUG) {
+if (config.DEBUG && config.DEBUG_TOKEN) {
       defaultConfig.headers['Authorization'] = `Bearer ${config.DEBUG_TOKEN}`
 }
 

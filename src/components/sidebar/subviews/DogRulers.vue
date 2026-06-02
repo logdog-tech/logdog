@@ -74,8 +74,8 @@
 <script lang="ts">
 import type { PropType } from 'vue';
 import RuleList from './rulelist/RuleList.vue';
-import type { User, Workspace } from '../../../modules/base';
-import { ruleTableHelper, ruleStatusTableHelper } from '../../../utils/db';
+import type { User, Workspace } from '@/modules/base';
+import { ruleTableHelper, ruleStatusTableHelper } from '@/utils/db';
 import type { Rule } from '@/modules/base';
 import { ruleApi } from '@/api';
 
