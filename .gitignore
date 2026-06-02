@@ -36,3 +36,7 @@ venv
 
 target
 logdog.db
+
+# 环境变量（含密钥，勿提交）
+.env
+terminal
