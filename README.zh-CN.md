@@ -1,5 +1,9 @@
 # LogDog
 
+[![Build and Test](https://github.com/logdog-tech/logdog/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/logdog-tech/logdog/actions/workflows/build.yml)
+![License](https://img.shields.io/github/license/logdog-tech/logdog)
+![Version](https://img.shields.io/github/package-json/v/logdog-tech/logdog)
+
 高性能日志分析工具，支持海量日志文件的实时浏览、搜索和高亮标记。
 
 [English](./README.md)

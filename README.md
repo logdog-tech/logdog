@@ -1,5 +1,9 @@
 # LogDog
 
+[![Build and Test](https://github.com/logdog-tech/logdog/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/logdog-tech/logdog/actions/workflows/build.yml)
+![License](https://img.shields.io/github/license/logdog-tech/logdog)
+![Version](https://img.shields.io/github/package-json/v/logdog-tech/logdog)
+
 A high-performance log viewer for massive log files, with real-time browsing, search, and highlighting.
 
 [中文文档](./README.zh-CN.md)
