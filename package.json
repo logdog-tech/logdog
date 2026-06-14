@@ -59,7 +59,6 @@
     "vite-plugin-top-level-await": "^1.4.4",
     "vite-plugin-vue-devtools": "^7.5.3",
     "vite-plugin-wasm": "^3.4.1",
-    "vue-tsc": "^2.1.6",
-    "wasm-pack": "^0.14.0"
+    "vue-tsc": "^2.1.6"
   }
 }
