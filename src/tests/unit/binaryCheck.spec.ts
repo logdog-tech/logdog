@@ -41,6 +41,34 @@ describe('binaryCheck', () => {
   });
 
   describe('isLogFile', () => {
+    it('should return true for supported plain text log formats', () => {
+      const supportedTextFormats = [
+        'app.log',
+        'error.txt',
+        'events.json',
+        'config.xml',
+        'metrics.csv',
+        'notes.md',
+        'service.conf',
+        'syslog',
+      ];
+
+      for (const filename of supportedTextFormats) {
+        expect(isLogFile(filename), filename).toBe(true);
+      }
+    });
+
+    it('should return true for supported compressed log formats', () => {
+      const supportedCompressedFormats = [
+        'app.log.gz',
+        'app.log.zst',
+      ];
+
+      for (const filename of supportedCompressedFormats) {
+        expect(isLogFile(filename), filename).toBe(true);
+      }
+    });
+
     it('should return false for binary files', () => {
       expect(isLogFile('file.exe')).toBe(false);
       expect(isLogFile('file.jpg')).toBe(false);
