@@ -38,7 +38,7 @@
 
                 <div class="bottom-status-bar">
                     <a class="feedback-button text-red-500 cursor-pointer text-center"
-                        href="https://github.com/logdog-tech/logdog-issues" target="_blank">{{
+                        href="https://github.com/logdog-tech/logdog" target="_blank">{{
                             $t('userdropdown.feedback')
                         }}</a>
                     <span>{{ $t('logdogEditor.totalCount', { totalCount, searchCount, searchProgress }) }}</span>

@@ -149,7 +149,7 @@ export default {
         },
     },
     async mounted() {
-        // 重要!!! initCopyHandler 函数用于修复"双击复制文本时自动添加多余空格的问题，详见：https://github.com/jasper9w/logdog/issues/21
+        // 重要!!! initCopyHandler 函数用于修复"双击复制文本时自动添加多余空格的问题，详见：https://github.com/logdog-tech/logdog/issues/21
         this.initCopyHandler();
 
         // 添加Ctrl+F键盘事件监听器
