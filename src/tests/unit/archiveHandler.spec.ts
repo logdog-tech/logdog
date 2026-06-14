@@ -8,9 +8,11 @@ vi.mock('libarchive.js', () => ({
 }));
 
 describe('ArchiveHandlerImpl', () => {
+  const workerScriptPath = 'libarchive.js/dist/worker-bundle.js';
+
   it('should recognize all archive formats supported by the browser provider', async () => {
     const { ArchiveHandlerImpl } = await import('@/utils/providers/archiveHandler');
-    const handler = new ArchiveHandlerImpl();
+    const handler = new ArchiveHandlerImpl(workerScriptPath);
 
     const supportedArchiveFormats = [
       'logs.zip',
@@ -29,7 +31,7 @@ describe('ArchiveHandlerImpl', () => {
 
   it('should not treat direct compressed log files as libarchive archives', async () => {
     const { ArchiveHandlerImpl } = await import('@/utils/providers/archiveHandler');
-    const handler = new ArchiveHandlerImpl();
+    const handler = new ArchiveHandlerImpl(workerScriptPath);
 
     expect(handler.isArchiveFile('app.log.gz')).toBe(false);
     expect(handler.isArchiveFile('app.log.zst')).toBe(false);
@@ -37,7 +39,9 @@ describe('ArchiveHandlerImpl', () => {
 
   it('should skip common system-generated archive entries', async () => {
     const { ArchiveHandlerImpl } = await import('@/utils/providers/archiveHandler');
-    const handler = new ArchiveHandlerImpl();
+    const handler = new ArchiveHandlerImpl(workerScriptPath) as unknown as {
+      isSystemFile(path: string): boolean;
+    };
 
     const systemEntries = [
       '__MACOSX/app.log',
