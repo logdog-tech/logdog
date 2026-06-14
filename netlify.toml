@@ -1,5 +1,5 @@
 [build]
-  command = "curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh && export PATH=\"$HOME/.cargo/bin:$PATH\" && npm run build"
+  command = "rustup default stable && rustup target add wasm32-unknown-unknown && curl https://rustwasm.github.io/wasm-pack/installer/init.sh -sSf | sh && export PATH=\"$HOME/.cargo/bin:$PATH\" && npm run build"
   publish = "dist"
 
 [build.environment]
