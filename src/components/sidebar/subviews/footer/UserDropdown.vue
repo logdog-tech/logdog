@@ -28,6 +28,10 @@
                 </select>
             </div>
             <div class="h-[1px] bg-gray-200 dark:bg-gray-700" />
+            <a href="/docs/" target="_blank" rel="noopener noreferrer"
+                class="p-2 flex items-center rounded-md text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800">
+                <i class="pi pi-book pr-2" aria-hidden="true" />{{ tolgee.getLanguage()?.startsWith('zh') ? '使用文档' : 'Documentation' }}
+            </a>
             <div class="p-2 flex items-center rounded-md hover:cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-800"
                 @click="showFeedbackModal = true">
                 <i class="pi pi-comments pr-2" />{{ $t('userdropdown.feedback') }}
