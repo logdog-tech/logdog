@@ -25,6 +25,7 @@
     "fzstd": "^0.1.1",
     "jszip": "^3.10.1",
     "libarchive.js": "^2.0.2",
+    "markdown-it": "^15.0.2",
     "pinia": "^2.2.4",
     "primeicons": "^7.0.0",
     "primevue": "^4.2.1",
@@ -36,6 +37,7 @@
   "devDependencies": {
     "@tsconfig/node20": "^20.1.4",
     "@types/jsdom": "^21.1.7",
+    "@types/markdown-it": "^14.2.0",
     "@types/node": "^20.17.0",
     "@types/pako": "^2.0.3",
     "@vitejs/plugin-vue": "^5.1.4",

@@ -14,6 +14,10 @@ A high-performance log viewer for massive log files, with real-time browsing, se
 
 This repository contains the LogDog frontend, providing the full log viewing, searching, filtering, highlighting, and time-sorting experience.
 
+## Documentation
+
+The Chinese documentation is available at `/docs/` on a running instance (for example, `http://localhost:5175/docs/`). It covers file import, search, selection and export, rules, local pipelines, and deployment. Source pages are maintained in `src/docs/pages/`.
+
 ## Features
 
 - Smooth scrolling through billions of log lines via the HugeList virtual list component

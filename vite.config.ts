@@ -41,6 +41,7 @@ export default defineConfig({
         ]
       },
       workbox: {
+        navigateFallbackDenylist: [/^\/docs(?:\/|$)/],
         globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm}'],
         runtimeCaching: [
           {
@@ -72,6 +73,7 @@ export default defineConfig({
         rollupOptions: {
             input: {
                 main: resolve(__dirname, 'index.html'),
+                docs: resolve(__dirname, 'docs/index.html'),
             },
             output: {
                 manualChunks: {
