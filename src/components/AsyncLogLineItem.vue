@@ -6,6 +6,7 @@
       class="log-item"
       :class="rootClasses"
       @click="handleRootClick"
+      @contextmenu.prevent="handleContextMenu"
     >
     <div
       v-if="stateItem.line === selectedLine"
@@ -81,9 +82,12 @@ export default defineComponent({
     },
     tooltipTextCustom: { type: String, default: '' },
     defaultTooltipText: { type: String, default: '点击标记该行' },
-    dataVersion: { type: Number, default: 0 }
+    dataVersion: { type: Number, default: 0 },
+    selectedLines: { type: Object as PropType<Set<number>>, default: () => new Set<number>() },
+    allLinesSelected: { type: Boolean, default: false },
+    deselectedLines: { type: Object as PropType<Set<number>>, default: () => new Set<number>() }
   },
-  emits: ['toggle-mark', 'item-click', 'text-mouseup'],
+  emits: ['toggle-mark', 'item-click', 'context-menu', 'text-mouseup'],
   setup(props, { emit }) {
     const stateItem = ref<BaseLine | null>(null)
     let currentReqId = 0
@@ -124,22 +128,27 @@ export default defineComponent({
 
     const rootClasses = computed(() => ({
       'glow-border': stateItem.value?.line === props.selectedLine,
+      'current-line': stateItem.value?.line === props.selectedLine,
       'even-row': props.index % 2 === 0,
       'odd-row': props.index % 2 === 1,
       'auto-wrap': props.isAutoWrap,
       'marked-line': stateItem.value?.isMarked,
       'semi-marked-line': !stateItem.value?.isMarked, // 只在未标记时添加半标记hover效果
-      'selected-line': stateItem.value?.line === props.selectedLine, // 选中行样式
+      'selected-line': stateItem.value?.line === props.selectedLine || (props.allLinesSelected ? !props.deselectedLines.has(props.index) : props.selectedLines.has(props.index)), // 选中行样式
     }))
 
     const toggleMark = () => {
       if (stateItem.value) emit('toggle-mark', stateItem.value)
     }
 
-    const handleRootClick = () => {
+    const handleRootClick = (event: MouseEvent) => {
       if (props.clickable && stateItem.value) {
-        emit('item-click', stateItem.value)
+        emit('item-click', stateItem.value, event, props.index)
       }
+    }
+
+    const handleContextMenu = (event: MouseEvent) => {
+      if (stateItem.value) emit('context-menu', stateItem.value, event, props.index)
     }
 
     return {
@@ -147,7 +156,8 @@ export default defineComponent({
       contentHtml,
       rootClasses,
       toggleMark,
-      handleRootClick
+      handleRootClick,
+      handleContextMenu
     }
   }
 })
@@ -167,10 +177,14 @@ export default defineComponent({
   --log-hover-shadow: rgba(100, 116, 139, 0.4);
   --log-hover-border: rgba(100, 116, 139, 0.7);
   --log-hover-overlay: rgba(0, 0, 0, 0.1);
-  --log-selected-bg: #fde68a;
-  --log-selected-line-bg: #fcd34d;
-  --log-selected-border: #d97706;
-  --log-selected-shadow: rgba(217, 119, 6, 0.42);
+  --log-selected-bg: #dbeafe;
+  --log-selected-line-bg: #bfdbfe;
+  --log-selected-border: #2563eb;
+  --log-selected-shadow: rgba(37, 99, 235, 0.28);
+  --log-current-bg: rgba(148, 163, 184, 0.22);
+  --log-current-line-bg: #cbd5e1;
+  --log-current-border: #64748b;
+  --log-current-shadow: rgba(100, 116, 139, 0.24);
   --log-marked-bg: #bfdbfe;
   --log-marked-border: #2563eb;
   --log-marked-shadow: rgba(37, 99, 235, 0.34);
@@ -198,10 +212,14 @@ export default defineComponent({
   --log-hover-shadow: rgba(148, 163, 184, 0.22);
   --log-hover-border: rgba(148, 163, 184, 0.62);
   --log-hover-overlay: rgba(255, 255, 255, 0.08);
-  --log-selected-bg: rgba(146, 64, 14, 0.88);
-  --log-selected-line-bg: rgba(180, 83, 9, 0.96);
-  --log-selected-border: #fbbf24;
-  --log-selected-shadow: rgba(251, 191, 36, 0.46);
+  --log-selected-bg: rgba(30, 64, 175, 0.52);
+  --log-selected-line-bg: rgba(37, 99, 235, 0.72);
+  --log-selected-border: #93c5fd;
+  --log-selected-shadow: rgba(147, 197, 253, 0.32);
+  --log-current-bg: rgba(71, 85, 105, 0.58);
+  --log-current-line-bg: #475569;
+  --log-current-border: #94a3b8;
+  --log-current-shadow: rgba(148, 163, 184, 0.28);
   --log-marked-bg: rgba(29, 78, 216, 0.7);
   --log-marked-border: #93c5fd;
   --log-marked-shadow: rgba(147, 197, 253, 0.36);
@@ -230,10 +248,14 @@ export default defineComponent({
     --log-hover-shadow: rgba(148, 163, 184, 0.22);
     --log-hover-border: rgba(148, 163, 184, 0.62);
     --log-hover-overlay: rgba(255, 255, 255, 0.08);
-    --log-selected-bg: rgba(146, 64, 14, 0.88);
-    --log-selected-line-bg: rgba(180, 83, 9, 0.96);
-    --log-selected-border: #fbbf24;
-    --log-selected-shadow: rgba(251, 191, 36, 0.46);
+    --log-selected-bg: rgba(30, 64, 175, 0.52);
+    --log-selected-line-bg: rgba(37, 99, 235, 0.72);
+    --log-selected-border: #93c5fd;
+    --log-selected-shadow: rgba(147, 197, 253, 0.32);
+    --log-current-bg: rgba(71, 85, 105, 0.58);
+    --log-current-line-bg: #475569;
+    --log-current-border: #94a3b8;
+    --log-current-shadow: rgba(148, 163, 184, 0.28);
     --log-marked-bg: rgba(29, 78, 216, 0.7);
     --log-marked-border: #93c5fd;
     --log-marked-shadow: rgba(147, 197, 253, 0.36);
@@ -335,7 +357,7 @@ export default defineComponent({
   display: none;
 }
 
-/* 选中行样式 - 使用黄色系表示当前选中 */
+/* 选中行样式 - 使用蓝色系表示选中状态 */
 .log-item.selected-line {
   background: var(--log-selected-bg) !important;
   box-shadow:
@@ -466,6 +488,25 @@ export default defineComponent({
 .log-item.marked-line.selected-line .line-number-cell {
   background-color: var(--log-marked-selected-line-bg) !important;
   border-left: 6px solid var(--log-marked-selected-border);
+}
+
+/* 当前定位行使用低对比度中性色，避免抢过日志内容的注意力。 */
+.log-item.current-line {
+  background: var(--log-current-bg) !important;
+  box-shadow:
+    inset 0 0 0 1px var(--log-current-shadow),
+    inset 4px 0 0 var(--log-current-border);
+}
+
+.log-item.current-line .line-number-cell {
+  background-color: var(--log-current-line-bg) !important;
+  border-left: 5px solid var(--log-current-border);
+  color: var(--log-content-color) !important;
+  font-weight: 700;
+}
+
+.log-item.current-line .border-animation {
+  display: none;
 }
 /* Skeleton */
 .log-item-skeleton .line-number-cell {

@@ -1,15 +1,19 @@
 <template>
-    <Splitter class="logdog-editor" layout="vertical" @wheel.capture="hideColorSelector" @pointerdown.capture="hideColorSelector" @scroll.capture="hideColorSelector">
+    <div class="logdog-editor-shell" @click="closeContextMenu">
+        <Splitter class="logdog-editor" layout="vertical" @wheel.capture="hideColorSelector" @pointerdown.capture="hideColorSelector" @scroll.capture="hideColorSelector">
         <!-- Left: Full log list -->
         <SplitterPanel style="width:100%;height:100%;min-height:100px">
-            <div class="h-full flex flex-col">
+            <div class="log-view-container h-full flex flex-col">
                 <HugeList :wrap="isAutoWrap" :overscanRowCount="10" :version="dataVersion" :rowCount="totalCount"
                     ref="logFullView" class="log-list-panel border border-surface-200 dark:border-surface-700 rounded m-[4px] pb-10">
                     <template #default="{ index }">
                         <AsyncLogLineItem :index="index" :selected-line="selectedline" :animation-key="animationKey"
+                            :selected-lines="fullSelectedLines" :all-lines-selected="fullAllLinesSelected"
+                            :deselected-lines="fullDeselectedLines"
                             :is-auto-wrap="isAutoWrap" :hash-color-line-index="hashColorLineIndex"
                             :get-item-async="getItemAsync" :render-line-html="renderLogItem" :data-version="dataVersion"
                             clickable @item-click="onClickLogItem"
+                            @context-menu="openFullContextMenu"
                             :default-tooltip-text="$t('logdogEditor.clickToMark')" @toggle-mark="toggleLineMarked"
                             @text-mouseup="handleTextSelection" />
                     </template>
@@ -19,19 +23,24 @@
 
         <!-- Right: Search results -->
         <SplitterPanel style="width:100%;height:100%;min-height:100px">
-            <div class="h-full flex flex-col">
-                <SearchBar :searchTerm="searchTerm" @search="searchLogs" @toggleAutoWrap="toggleAutoWrap"
-                    @update:searchTerm="handleSearchInput" @toggleHistory="toggleHistory"
-                    @changeDisplayMode="changeDisplayMode" @toggleCaseSensitive="toggleCaseSensitive" />
+            <div class="log-view-container h-full flex flex-col">
+                <div class="search-view-header">
+                    <SearchBar :searchTerm="searchTerm" @search="searchLogs" @toggleAutoWrap="toggleAutoWrap"
+                        @update:searchTerm="handleSearchInput" @toggleHistory="toggleHistory"
+                        @changeDisplayMode="changeDisplayMode" @toggleCaseSensitive="toggleCaseSensitive" />
+                </div>
 
                 <HugeList :wrap="isAutoWrap" :version="dataVersion" :rowCount="searchCount"
                     class="log-list-panel border border-surface-200 dark:border-surface-700 rounded mx-[4px] mb-[4px] pb-10"
                     style="flex-grow:1" ref="logSearchView">
                     <template #default="{ index }">
                         <AsyncLogLineItem :index="index" :selected-line="selectedline" :animation-key="animationKey"
+                            :selected-lines="searchSelectedLines" :all-lines-selected="searchAllLinesSelected"
+                            :deselected-lines="searchDeselectedLines"
                             :is-auto-wrap="isAutoWrap" :hash-color-line-index="hashColorLineIndex"
                             :get-item-async="getSearchItemAsync" :render-line-html="renderLogItem"
                             :data-version="dataVersion" clickable @item-click="onClickSearchItem"
+                            @context-menu="openSearchContextMenu"
                             @toggle-mark="toggleLineMarked" @text-mouseup="handleTextSelection" />
                     </template>
                 </HugeList>
@@ -50,7 +59,20 @@
                 </div>
             </div>
         </SplitterPanel>
-    </Splitter>
+        </Splitter>
+
+        <div v-if="contextMenu.visible" class="log-context-menu" :style="contextMenuStyle" @click.stop>
+            <button type="button" class="context-action" @click="copySelectedLines(activeSelectionView)" :disabled="!activeCanCopySelection">
+                <i class="pi pi-copy" aria-hidden="true"></i>
+                <span>复制选中日志</span>
+            </button>
+            <button type="button" class="context-action" @click="exportSelectedLines(activeSelectionView)" :disabled="activeSelectedLineCount === 0">
+                <i class="pi pi-download" aria-hidden="true"></i>
+                <span>导出选中日志</span>
+            </button>
+            <div v-if="!activeCanCopySelection && activeSelectedLineCount > 0" class="context-hint">日志量较大，请导出为文件</div>
+        </div>
+    </div>
 
     <!-- Floating helpers -->
     <ColorSelector @picked="handleColorPicked" :show="showColorSelector" 
@@ -86,6 +108,8 @@ import { settingsTableHelper } from "@/utils/db";
 import { useToast } from 'primevue/usetoast';
 
 type StyleObject = Record<string, string>;
+type SelectionScope = 'full' | 'search';
+const MAX_CLIPBOARD_LINES = 1000;
 
 // 使用 HugeList 组件的真实类型
 type HugeListRef = InstanceType<typeof HugeList>;
@@ -142,8 +166,51 @@ export default defineComponent({
             showBookmark: DisplayMode.MARK_AND_SEARCH,
             showFeedbackModal: false,
             isAutoWrap: false,
-            dataVersion: 0 as number
+            dataVersion: 0 as number,
+            fullSelectedLines: new Set<number>(),
+            fullDeselectedLines: new Set<number>(),
+            fullAllLinesSelected: false,
+            searchSelectedLines: new Set<number>(),
+            searchDeselectedLines: new Set<number>(),
+            searchAllLinesSelected: false,
+            activeSelectionView: 'full' as SelectionScope,
+            selectionAnchorIndices: { full: -1, search: -1 } as Record<SelectionScope, number>,
+            contextMenu: {
+                visible: false,
+                x: 0,
+                y: 0,
+            },
         };
+    },
+    computed: {
+        fullSelectedLineCount(): number {
+            return this.fullAllLinesSelected
+                ? Math.max(0, this.totalCount - this.fullDeselectedLines.size)
+                : this.fullSelectedLines.size;
+        },
+        searchSelectedLineCount(): number {
+            return this.searchAllLinesSelected
+                ? Math.max(0, this.searchCount - this.searchDeselectedLines.size)
+                : this.searchSelectedLines.size;
+        },
+        fullCanCopySelection(): boolean {
+            return this.fullSelectedLineCount > 0 && this.fullSelectedLineCount <= MAX_CLIPBOARD_LINES;
+        },
+        searchCanCopySelection(): boolean {
+            return this.searchSelectedLineCount > 0 && this.searchSelectedLineCount <= MAX_CLIPBOARD_LINES;
+        },
+        activeSelectedLineCount(): number {
+            return this.activeSelectionView === 'full' ? this.fullSelectedLineCount : this.searchSelectedLineCount;
+        },
+        activeCanCopySelection(): boolean {
+            return this.activeSelectionView === 'full' ? this.fullCanCopySelection : this.searchCanCopySelection;
+        },
+        contextMenuStyle(): Record<string, string> {
+            return {
+                left: `${this.contextMenu.x}px`,
+                top: `${this.contextMenu.y}px`,
+            };
+        },
     },
     async mounted() {
         const myObserver = {
@@ -152,6 +219,8 @@ export default defineComponent({
                 this.searchCount = await proxyProvider.getFilteredLineCount();
                 this.searchProgress = 100;
                 this.dataVersion++;
+                this.clearLineSelection('full');
+                this.clearLineSelection('search');
             },
             onChange: async () => {
                 this.totalCount = await proxyProvider.getTotalLineCount();
@@ -166,10 +235,12 @@ export default defineComponent({
 
         // 监听选择变化，当没有选中内容时隐藏颜色选择器
         document.addEventListener('selectionchange', this.handleSelectionChange);
+        document.addEventListener('keydown', this.handleGlobalKeydown);
     },
     beforeUnmount() {
         // 移除事件监听器
         document.removeEventListener('selectionchange', this.handleSelectionChange);
+        document.removeEventListener('keydown', this.handleGlobalKeydown);
     },
     methods: {
         // 辅助方法：安全地获取组件引用
@@ -191,17 +262,188 @@ export default defineComponent({
         hashColorLineIndex(filename: string) {
             return hashColor(filename, 80, 35);
         },
-        onClickLogItem(item: BaseLine) {
+        onClickLogItem(item: BaseLine, event: MouseEvent, index: number) {
+            this.updateLineSelection(index, event, 'full');
             this.selectedline = item.line;
             this.animationKey++;  // 增加key触发新动画
         },
         
-        onClickSearchItem(item: BaseLine) {
+        onClickSearchItem(item: BaseLine, event: MouseEvent, index: number) {
+            this.updateLineSelection(index, event, 'search');
             this.selectedline = item.line;
             this.animationKey++;  // 增加key触发新动画
             // 单行模式下居中显示，换行模式下顶部显示
             const alignment = this.isAutoWrap ? "start" : "center";
             this.getLogFullViewRef().scrollToIndex(item.line, alignment);
+        },
+        isLineSelected(index: number, scope: SelectionScope): boolean {
+            const allSelected = scope === 'full' ? this.fullAllLinesSelected : this.searchAllLinesSelected;
+            const selectedLines = scope === 'full' ? this.fullSelectedLines : this.searchSelectedLines;
+            const deselectedLines = scope === 'full' ? this.fullDeselectedLines : this.searchDeselectedLines;
+            return allSelected ? !deselectedLines.has(index) : selectedLines.has(index);
+        },
+        updateLineSelection(index: number, event: MouseEvent, scope: SelectionScope) {
+            this.activeSelectionView = scope;
+            const allSelected = scope === 'full' ? this.fullAllLinesSelected : this.searchAllLinesSelected;
+            const selectedLines = scope === 'full' ? this.fullSelectedLines : this.searchSelectedLines;
+            const deselectedLines = scope === 'full' ? this.fullDeselectedLines : this.searchDeselectedLines;
+            const anchorIndex = this.selectionAnchorIndices[scope];
+            if (event.shiftKey && anchorIndex >= 0 && !allSelected) {
+                const start = Math.min(anchorIndex, index);
+                const end = Math.max(anchorIndex, index);
+                const next = new Set(selectedLines);
+                for (let index = start; index <= end; index++) next.add(index);
+                if (scope === 'full') this.fullSelectedLines = next;
+                else this.searchSelectedLines = next;
+                return;
+            }
+
+            if (event.metaKey || event.ctrlKey) {
+                if (allSelected) {
+                    const next = new Set(deselectedLines);
+                    if (next.has(index)) next.delete(index);
+                    else next.add(index);
+                    if (scope === 'full') this.fullDeselectedLines = next;
+                    else this.searchDeselectedLines = next;
+                } else {
+                    const next = new Set(selectedLines);
+                    if (next.has(index)) next.delete(index);
+                    else next.add(index);
+                    if (scope === 'full') this.fullSelectedLines = next;
+                    else this.searchSelectedLines = next;
+                }
+                return;
+            }
+
+            if (scope === 'full') {
+                this.fullAllLinesSelected = false;
+                this.fullDeselectedLines = new Set();
+                this.fullSelectedLines = new Set([index]);
+            } else {
+                this.searchAllLinesSelected = false;
+                this.searchDeselectedLines = new Set();
+                this.searchSelectedLines = new Set([index]);
+            }
+            this.selectionAnchorIndices[scope] = index;
+        },
+        selectAllLines(scope: SelectionScope) {
+            const count = scope === 'full' ? this.totalCount : this.searchCount;
+            if (count === 0) return;
+            this.activeSelectionView = scope;
+            if (scope === 'full') {
+                this.fullAllLinesSelected = true;
+                this.fullSelectedLines = new Set();
+                this.fullDeselectedLines = new Set();
+            } else {
+                this.searchAllLinesSelected = true;
+                this.searchSelectedLines = new Set();
+                this.searchDeselectedLines = new Set();
+            }
+            this.selectedline = 0;
+            this.closeContextMenu();
+        },
+        clearLineSelection(scope: SelectionScope) {
+            if (scope === 'full') {
+                this.fullAllLinesSelected = false;
+                this.fullSelectedLines = new Set();
+                this.fullDeselectedLines = new Set();
+            } else {
+                this.searchAllLinesSelected = false;
+                this.searchSelectedLines = new Set();
+                this.searchDeselectedLines = new Set();
+            }
+            this.selectionAnchorIndices[scope] = -1;
+            if (this.activeSelectionView === scope) this.selectedline = -1;
+        },
+        openContextMenu(item: BaseLine, event: MouseEvent, index: number, scope: SelectionScope) {
+            this.activeSelectionView = scope;
+            if (!this.isLineSelected(index, scope)) {
+                this.clearLineSelection(scope);
+                if (scope === 'full') this.fullSelectedLines = new Set([index]);
+                else this.searchSelectedLines = new Set([index]);
+                this.selectedline = item.line;
+            }
+            this.contextMenu = {
+                visible: true,
+                x: Math.min(event.clientX, window.innerWidth - 220),
+                y: Math.min(event.clientY, window.innerHeight - 110),
+            };
+        },
+        openFullContextMenu(item: BaseLine, event: MouseEvent, index: number) {
+            this.openContextMenu(item, event, index, 'full');
+        },
+        openSearchContextMenu(item: BaseLine, event: MouseEvent, index: number) {
+            this.openContextMenu(item, event, index, 'search');
+        },
+        closeContextMenu() {
+            this.contextMenu.visible = false;
+        },
+        async getSelectedLineText(scope: SelectionScope): Promise<string> {
+            const lines: string[] = [];
+            const count = scope === 'full' ? this.totalCount : this.searchCount;
+            for (let index = 0; index < count; index++) {
+                if (!this.isLineSelected(index, scope)) continue;
+                const line = scope === 'full'
+                    ? await proxyProvider.getLine(index)
+                    : await proxyProvider.getFilteredLine(index);
+                lines.push(line.content);
+                if (index % 1000 === 0) await new Promise(resolve => setTimeout(resolve, 0));
+            }
+            return lines.join('\n');
+        },
+        async copySelectedLines(scope: SelectionScope) {
+            this.activeSelectionView = scope;
+            this.closeContextMenu();
+            const canCopy = scope === 'full' ? this.fullCanCopySelection : this.searchCanCopySelection;
+            const count = scope === 'full' ? this.fullSelectedLineCount : this.searchSelectedLineCount;
+            if (!canCopy) {
+                if (count > MAX_CLIPBOARD_LINES) {
+                    this.toast.add({
+                        severity: 'warn',
+                        summary: '日志行数过多',
+                        detail: `超过 ${MAX_CLIPBOARD_LINES} 行时只能导出为文件`,
+                        life: 3000,
+                    });
+                }
+                return;
+            }
+            if (!navigator.clipboard?.writeText) return;
+            const text = await this.getSelectedLineText(scope);
+            await navigator.clipboard.writeText(text);
+            this.toast.add({ severity: 'success', summary: '复制成功', detail: `已复制 ${count} 行`, life: 2000 });
+        },
+        async exportSelectedLines(scope: SelectionScope) {
+            this.activeSelectionView = scope;
+            this.closeContextMenu();
+            const count = scope === 'full' ? this.fullSelectedLineCount : this.searchSelectedLineCount;
+            if (count === 0) return;
+            const text = await this.getSelectedLineText(scope);
+            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = `logdog-selection-${new Date().toISOString().replace(/[:.]/g, '-')}.txt`;
+            anchor.click();
+            window.setTimeout(() => URL.revokeObjectURL(url), 0);
+        },
+        handleGlobalKeydown(event: KeyboardEvent) {
+            const target = event.target as HTMLElement | null;
+            const tagName = target?.tagName;
+            if (tagName === 'INPUT' || tagName === 'TEXTAREA' || target?.isContentEditable) return;
+
+            if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'a') {
+                event.preventDefault();
+                this.selectAllLines(this.activeSelectionView);
+            } else if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'c') {
+                // 保留日志内容原生文字选区的复制行为，行选择则走 LogDog 的复制逻辑。
+                if (window.getSelection()?.toString()) return;
+                const count = this.activeSelectedLineCount;
+                if (count === 0) return;
+                event.preventDefault();
+                void this.copySelectedLines(this.activeSelectionView);
+            } else if (event.key === 'Escape') {
+                this.closeContextMenu();
+            }
         },
         renderLogItem(line: BaseLine) {
             const functions = this.functions.filter((f) => f._checked);
@@ -515,8 +757,90 @@ export default defineComponent({
 });
 </script>
 <style scoped>
-.logdog-editor {
+.logdog-editor-shell {
+    position: relative;
     height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    background: var(--color-background);
+}
+
+.log-view-container {
+    position: relative;
+    min-height: 0;
+}
+
+.search-view-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 4px;
+}
+
+.search-view-header :deep(.search-container) {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.context-action {
+    display: inline-flex;
+    align-items: center;
+}
+
+.context-action {
+    gap: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background: var(--color-background);
+    color: var(--color-text);
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1;
+    padding: 6px 8px;
+}
+
+.context-action:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.context-action:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.log-context-menu {
+    position: fixed;
+    z-index: 1000;
+    min-width: 190px;
+    padding: 6px;
+    border: 1px solid var(--color-border);
+    border-radius: 5px;
+    background: var(--color-background);
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.2);
+}
+
+.context-action {
+    width: 100%;
+    justify-content: flex-start;
+    border: 0;
+    background: transparent;
+}
+
+.context-hint {
+    padding: 6px 8px 4px;
+    color: var(--color-text-soft);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.logdog-editor {
+    height: auto;
+    flex: 1;
+    min-height: 0;
     width: 100%;
     display: flex;
     background: var(--color-background);
