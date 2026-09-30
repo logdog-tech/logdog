@@ -24,8 +24,7 @@ jobs:
       - run: npm run build:docs
         env:
           DOCS_BASE_PATH: /logdog/
-          VITE_DOCS_STANDALONE: 'true'
-      - run: mv dist-docs/docs/index.html dist-docs/index.html
+          VITE_SITE_ORIGIN: https://logdog-tech.github.io
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist-docs

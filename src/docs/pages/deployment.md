@@ -14,7 +14,7 @@ npm ci
 npm run dev -- --port 5175
 ```
 
-分析器在 `/`，本文档在 `/docs/`。文档使用独立入口，和前端一起构建；Markdown 正文位于 `src/docs/pages/`。
+分析器在 `/`，本文档在 `/docs/`。文档使用独立静态构建，正文在构建阶段生成 HTML；Markdown 正文位于 `src/docs/pages/`。
 
 开发模式使用已有的 WASM 包。修改 Rust 源码后，需要执行 `npm run build:wasm` 重新生成。
 
@@ -26,16 +26,16 @@ npm run dev -- --port 5175
 rustup default stable
 rustup target add wasm32-unknown-unknown
 cargo install wasm-pack --locked
-npm run build
+npm run build:site
 ```
 
-`npm run build` 会复制 libarchive 资源、构建 WASM，并执行类型检查和 Vite 打包。输出目录为 `dist/`。只执行 `build-only` 会跳过前置步骤，不应替代完整发布构建。
+`npm run build` 会复制 libarchive 资源、构建 WASM，并执行类型检查和 Vite 打包。`npm run build:site` 在完整产品构建后加入静态文档和抓取配置，输出目录为 `dist/`。只执行 `build-only` 会跳过前置步骤，不应替代完整发布构建。
 
 ## 静态托管
 
 部署完整 `dist/` 目录，并确保 `.wasm` 使用 `application/wasm` MIME 类型，脚本、字体、Worker 文件可正常访问。通过 HTTP(S) 提供页面，不要直接以本地文件协议打开生产产物。
 
-应用路由需要回退到 `index.html`，但真实的 `/docs/index.html` 与静态资源应优先返回。文档内部使用哈希路由，不需要为每篇文档添加服务器规则。
+应用路由需要回退到 `index.html`，但真实的 `/docs/index.html` 与静态资源应优先返回。文档每篇文章使用真实目录路径，静态目录必须优先命中；不存在的文档返回 404，不能回退到产品首页。现有哈希链接仍兼容访问。主站配置示例和回滚说明见仓库 `deployment/SEO.md`。
 
 ## Netlify 预览
 
@@ -48,7 +48,7 @@ npm run build
 ```bash
 npm run type-check
 npm run test:unit
-npm run build
+npm run build:site
 ```
 
 推送 main 会触发 Build and Test 工作流。推送 `v*` 标签会触发 Release 工作流，构建后生成 ZIP 与 tar.gz 文件。发布标签之前应确认提交内容与版本号，普通推送不会自动生成 Release。

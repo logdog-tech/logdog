@@ -277,3 +277,18 @@ kbd { font: 11px ui-monospace, SFMono-Regular, Consolas, monospace; border: 1px 
   .search-footer { font-size: 10px; padding: 12px; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+
+/* Static content remains navigable when scripting is unavailable. */
+html:not(.docs-ready) .search-trigger,
+html:not(.docs-ready) .header-tools button,
+html:not(.docs-ready) .code-header button { visibility: hidden; }
+@media (max-width: 700px) {
+  .icon-button, .search-trigger { min-width: 44px; min-height: 44px; }
+  .example-toolbar button { min-height: 44px; }
+  .code-header button { width: 44px; height: 44px; }
+  html:not(.docs-ready) .mobile-bar { display: none; }
+  html:not(.docs-ready) .sidebar { display: block; position: static; width: 100%; border-right: 0; border-bottom: 1px solid var(--line); padding: 0; }
+  html:not(.docs-ready) .sidebar-content { max-height: none; }
+  html:not(.docs-ready) .sidebar-label, html:not(.docs-ready) .sidebar-github { display: none; }
+  html:not(.docs-ready) .nav-group { margin: 16px 0; }
+}
