@@ -1,4 +1,5 @@
 import MarkdownIt from 'markdown-it'
+import { docPath, docsBase } from './routes'
 
 export interface DocPage {
   slug: string
@@ -11,6 +12,7 @@ export interface DocPage {
 export const pages: DocPage[] = [
   { slug: 'introduction', title: '认识 LogDog', description: '从海量日志中，找到真正有用的信息。', group: '开始使用', icon: 'pi-compass' },
   { slug: 'quick-start', title: '快速开始', description: '打开一份日志，完成第一次搜索与导出。', group: '开始使用', icon: 'pi-bolt' },
+  { slug: 'about', title: '产品介绍与使用边界', description: '了解 LogDog 的使用场景、开源部署和本地日志处理边界。', group: '开始使用', icon: 'pi-info-circle' },
   { slug: 'importing', title: '导入文件与压缩包', description: '文件、目录、压缩包，以及字符编码。', group: '开始使用', icon: 'pi-folder-open' },
   { slug: 'search', title: '搜索与筛选', description: '用关键词和正则表达式缩小排查范围。', group: '分析日志', icon: 'pi-search' },
   { slug: 'bookmarks', title: '标记与高亮', description: '留下关键证据，建立可读的上下文。', group: '分析日志', icon: 'pi-bookmark' },
@@ -18,6 +20,9 @@ export const pages: DocPage[] = [
   { slug: 'rules', title: '自定义规则与函数', description: '把重复的筛选和显示处理保存为规则。', group: '进阶指南', icon: 'pi-sliders-h' },
   { slug: 'pipeline', title: '实时管道与 Logcat', description: '将终端输出接入本地日志分析视图。', group: '进阶指南', icon: 'pi-desktop' },
   { slug: 'workspaces', title: '工作区与数据边界', description: '了解本地处理、规则保存与共享工作区。', group: '进阶指南', icon: 'pi-shield' },
+  { slug: 'large-log-files', title: '大日志文件怎么打开', description: '通过文件大小、编码与筛选范围，逐步定位大文件分析的瓶颈。', group: '实战教程', icon: 'pi-file' },
+  { slug: 'request-tracing', title: '追踪一次超时请求', description: '从错误记录回到请求上下文，整理可复核的排查证据。', group: '实战教程', icon: 'pi-search' },
+  { slug: 'compressed-logs', title: '分析压缩与多文件日志', description: '在保留来源信息的前提下，处理压缩包与跨文件排查。', group: '实战教程', icon: 'pi-folder-open' },
   { slug: 'deployment', title: '开发与部署', description: '从源码运行，构建并托管静态站点。', group: '开发与维护', icon: 'pi-code' },
   { slug: 'troubleshooting', title: '常见问题', description: '从乱码到构建失败，按现象定位问题。', group: '开发与维护', icon: 'pi-question-circle' },
   { slug: 'contributing', title: '反馈与贡献', description: '提交可复现的问题，或参与项目改进。', group: '开发与维护', icon: 'pi-github' },
@@ -35,11 +40,16 @@ markdown.renderer.rules.fence = (tokens, index) => {
 }
 markdown.renderer.rules.link_open = (tokens, index, options, env, self) => {
   const href = String(tokens[index].attrGet('href') || '')
+  if (href === '/') tokens[index].attrSet('href', 'https://logdog.tech/')
+  if (href.startsWith('#/')) {
+    const [slug, ...anchor] = href.slice(2).split('#')
+    tokens[index].attrSet('href', `${docsBase}${docPath(slug).slice(1)}${anchor.length ? `#${anchor.join('#')}` : ''}`)
+  }
   if (href.startsWith('https://') || href === '/') {
     tokens[index].attrSet('target', '_blank')
     tokens[index].attrSet('rel', 'noopener noreferrer')
   }
-  if (href.startsWith('/docs-assets/')) tokens[index].attrSet('href', `${import.meta.env.BASE_URL}${href.slice(1)}`)
+  if (href.startsWith('/docs-assets/')) tokens[index].attrSet('href', `${docsBase}${href.slice(1)}`)
   if (href.endsWith('.log')) tokens[index].attrSet('download', '')
   return self.renderToken(tokens, index, options)
 }

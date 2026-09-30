@@ -7,19 +7,21 @@
     "build:wasm": "cd wasm/date-parser && wasm-pack build --target web --out-dir ../pkg",
     "copy:libarchive": "mkdir -p public/libarchive.js && cp -r node_modules/libarchive.js/dist public/libarchive.js/",
     "dev": "vite",
-    "build": "npm run copy:libarchive && npm run build:wasm && run-p type-check \"build-only {@}\" --",
+    "build": "npm run copy:libarchive && npm run build:wasm && run-p type-check \"build-only {@}\" -- && npm run build:docs && node scripts/assemble-site.mjs",
     "preview": "npm run build:wasm && vite preview",
     "test:unit": "vitest --watch=false",
     "build-only": "vite build",
     "type-check": "vue-tsc --build --force",
     "lint": "eslint . --fix",
     "format": "prettier --write src/",
-    "build:docs": "vite build --config vite.docs.config.ts"
+    "build:docs": "node scripts/build-docs.mjs",
+    "build:site": "npm run build"
   },
   "dependencies": {
     "@js-temporal/polyfill": "^0.4.4",
     "@primevue/themes": "^4.2.1",
     "@tolgee/vue": "^6.0.0",
+    "@vue/server-renderer": "3.5.12",
     "@vueuse/core": "^10.9.0",
     "date-fns": "^4.1.0",
     "date-parser": "file:wasm/pkg",

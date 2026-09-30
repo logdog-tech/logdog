@@ -83,3 +83,5 @@ wasm/             # Rust WASM 模块
 ## 文档站点发布
 
 在线文档：https://logdog-tech.github.io/logdog/ 。`static-docs` 分支由 GitHub Actions 使用 `npm run build:docs` 构建后发布，Pages 的发布来源应选择 GitHub Actions。文档以独立入口部署，使用 `/logdog/` 资源前缀和哈希路由。
+
+文档静态化：`npm run build:docs` 输出 `dist-docs/`；`npm run build:site` 将文档和抓取配置加入完整产品构建。主站接入与回滚见 [deployment/SEO.md](deployment/SEO.md)。

@@ -4,7 +4,8 @@ import { resolve } from 'node:path'
 
 export default defineConfig({
   plugins: [vue()],
-  base: process.env.DOCS_BASE_PATH || '/',
+  publicDir: false,
+  base: process.env.DOCS_BASE_PATH || '/docs/',
   build: {
     outDir: 'dist-docs',
     rollupOptions: { input: resolve(__dirname, 'docs/index.html') },
