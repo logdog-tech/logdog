@@ -14,6 +14,10 @@
 
 本仓库为 LogDog 的前端部分，包含完整的日志查看、搜索过滤、高亮规则、时间排序等核心交互能力。
 
+## 使用文档
+
+启动项目后访问 `/docs/`（例如 `http://localhost:5175/docs/`），阅读文件导入、搜索筛选、选择导出、自定义规则、管道日志与部署指南。文档源文件位于 `src/docs/pages/`，与前端一起构建发布。
+
 ## 功能特性
 
 - 亿级日志行流畅滚动，基于虚拟列表的 HugeList 组件
@@ -75,3 +79,9 @@ wasm/             # Rust WASM 模块
 ## License
 
 [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
+## 文档站点发布
+
+在线文档：https://logdog-tech.github.io/logdog/ 。`static-docs` 分支由 GitHub Actions 使用 `npm run build:docs` 构建后发布，Pages 的发布来源应选择 GitHub Actions。文档以独立入口部署，使用 `/logdog/` 资源前缀和哈希路由。
+
+文档静态化：`npm run build:docs` 输出 `dist-docs/`；`npm run build:site` 将文档和抓取配置加入完整产品构建。主站接入与回滚见 [deployment/SEO.md](deployment/SEO.md)。

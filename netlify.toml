@@ -6,6 +6,21 @@
   NODE_VERSION = "20"
 
 [[redirects]]
+  from = "/docs/*"
+  to = "/docs/404.html"
+  status = 404
+
+[[redirects]]
+  from = "/robots.txt"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
+  from = "/sitemap.xml"
+  to = "/404.html"
+  status = 404
+
+[[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
