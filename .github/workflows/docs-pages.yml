@@ -25,6 +25,8 @@ jobs:
         env:
           DOCS_BASE_PATH: /logdog/
           VITE_SITE_ORIGIN: https://logdog-tech.github.io
+          VITE_CANONICAL_SITE_ORIGIN: https://logdog.tech
+          VITE_CANONICAL_BASE_PATH: /docs/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist-docs

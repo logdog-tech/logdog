@@ -14,6 +14,10 @@ if (location.hash.startsWith('#/')) {
     location.replace(`${docsBase}${docPath(slug || 'introduction').slice(1)}${anchor.length ? `#${anchor.join('#')}` : ''}`)
   }
 }
+if (!redirecting && location.pathname === `${docsBase}index.html`) {
+  redirecting = true
+  location.replace(`${docsBase}${location.search}${location.hash}`)
+}
 if (!redirecting) {
   const router = makeDocsRouter()
   const mount = document.getElementById('docs-app')

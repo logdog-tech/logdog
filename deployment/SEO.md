@@ -12,7 +12,7 @@
 
 `DOCS_BASE_PATH` 必须以斜杠开头和结尾。`VITE_SITE_ORIGIN` 为站点的协议和域名。独立部署时用实际域名构建，避免 canonical 指向其他站点。现有 `#/search` 等链接在客户端自动迁移到真实路径。
 
-GitHub Pages 暂时作为可独立访问的发布站，canonical 指向自身。主站文档确认发布成功后，再将 Pages 的 canonical 改为主站或配置迁移跳转；提前改动会指向尚不存在的内容。
+主站文档已发布。GitHub Pages 继续可独立访问，其工作流使用 `VITE_CANONICAL_SITE_ORIGIN=https://logdog.tech` 与 `VITE_CANONICAL_BASE_PATH=/docs/` 将 canonical 和结构化数据统一到主站；资源路径仍使用 `/logdog/`。避免两份内容竞争主站的主要搜索入口。
 
 ## Nginx 接入与回滚
 

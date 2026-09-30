@@ -1,13 +1,14 @@
 import type { DocPage } from './content'
 import { docPath, docsBase } from './routes'
 
-export const siteOrigin = (import.meta.env.VITE_SITE_ORIGIN || 'https://logdog.tech').replace(/\/$/, '')
+export const siteOrigin = (import.meta.env.VITE_CANONICAL_SITE_ORIGIN || import.meta.env.VITE_SITE_ORIGIN || 'https://logdog.tech').replace(/\/$/, '')
+const canonicalBase = import.meta.env.VITE_CANONICAL_BASE_PATH || docsBase
 export function metadata(page?: DocPage) {
   const path = page ? docPath(page.slug).slice(1) : '404.html'
   return {
     title: page ? `${page.title} · LogDog 日志分析文档` : '页面未找到 · LogDog 文档',
     description: page?.description || '这篇文档不存在，请从目录继续阅读。',
-    canonical: `${siteOrigin}${docsBase}${path}`,
+    canonical: `${siteOrigin}${canonicalBase}${path}`,
   }
 }
 export function updateMetadata(page?: DocPage) {
@@ -30,7 +31,7 @@ export function structuredData(page?: DocPage) {
   return [
     { '@context': 'https://schema.org', '@type': 'TechArticle', headline: page.title, description: page.description, url: data.canonical, inLanguage: 'zh-CN', publisher: { '@type': 'Organization', name: 'LogDog', url: 'https://logdog.tech/' } },
     { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
-      { '@type': 'ListItem', position: 1, name: 'LogDog 文档', item: `${siteOrigin}${docsBase}` },
+      { '@type': 'ListItem', position: 1, name: 'LogDog 文档', item: `${siteOrigin}${canonicalBase}` },
       ...(page.slug === 'introduction' ? [] : [{ '@type': 'ListItem', position: 2, name: page.title, item: data.canonical }]),
     ] },
   ]
