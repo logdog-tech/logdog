@@ -3,6 +3,8 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { pages, renderPage, searchDocs } from './content'
 
+const baseUrl = import.meta.env.BASE_URL
+const docsHome = import.meta.env.VITE_DOCS_STANDALONE === 'true' ? baseUrl : `${baseUrl}docs/`
 const route = useRoute()
 const router = useRouter()
 const slug = computed(() => String(route.params.slug || 'introduction'))
@@ -131,8 +133,8 @@ onBeforeUnmount(() => {
   <a class="skip-link" href="#main-content" @click.prevent="focusMain">跳至正文</a>
   <header class="site-header">
     <div class="header-inner">
-      <a class="brand" href="/docs/" aria-label="LogDog 文档首页">
-        <img src="/logo-fill.svg" alt="" width="30" height="30" />
+      <a class="brand" :href="docsHome" aria-label="LogDog 文档首页">
+        <img :src="`${baseUrl}logo-fill.svg`" alt="" width="30" height="30" />
         <span>LogDog</span><span class="brand-divider">/</span><span class="brand-docs">文档</span>
       </a>
       <nav class="header-nav" aria-label="主导航">
@@ -143,7 +145,7 @@ onBeforeUnmount(() => {
         <button ref="searchTrigger" class="search-trigger" aria-label="搜索文档" @click="openSearch"><i class="pi pi-search" aria-hidden="true" /><span>搜索文档…</span><kbd>⌘ K</kbd></button>
         <a class="icon-button github-link" href="https://github.com/logdog-tech/logdog" target="_blank" rel="noopener noreferrer" aria-label="GitHub 源码" title="GitHub 源码"><i class="pi pi-github" aria-hidden="true" /></a>
         <button class="icon-button" :aria-label="theme === 'light' ? '切换为深色主题' : '切换为浅色主题'" :title="theme === 'light' ? '切换为深色主题' : '切换为浅色主题'" @click="toggleTheme"><i :class="['pi', theme === 'light' ? 'pi-moon' : 'pi-sun']" aria-hidden="true" /></button>
-        <a class="open-app" href="/" target="_blank" rel="noopener">打开 LogDog<i class="pi pi-arrow-up-right" aria-hidden="true" /></a>
+        <a class="open-app" href="https://logdog.tech/" target="_blank" rel="noopener">打开 LogDog<i class="pi pi-arrow-up-right" aria-hidden="true" /></a>
       </div>
     </div>
   </header>
@@ -194,7 +196,7 @@ onBeforeUnmount(() => {
         </template>
 
         <article class="prose" @click="onArticleClick" v-html="rendered.html" />
-        <div class="article-meta"><a :href="`https://github.com/logdog-tech/logdog/blob/main/src/docs/pages/${slug}.md`" target="_blank" rel="noopener noreferrer"><i class="pi pi-pencil" aria-hidden="true" />在 GitHub 上编辑此页</a><span>LogDog 开源文档</span></div>
+        <div class="article-meta"><a :href="`https://github.com/logdog-tech/logdog/blob/static-docs/src/docs/pages/${slug}.md`" target="_blank" rel="noopener noreferrer"><i class="pi pi-pencil" aria-hidden="true" />在 GitHub 上编辑此页</a><span>LogDog 开源文档</span></div>
         <nav class="page-pagination" aria-label="相邻文档">
           <RouterLink v-if="previous" :to="`/${previous.slug}`" class="previous-page"><i class="pi pi-arrow-left" aria-hidden="true" /><span><small>上一篇</small>{{ previous.title }}</span></RouterLink><span v-else />
           <RouterLink v-if="following" :to="`/${following.slug}`" class="next-page"><span><small>下一篇</small>{{ following.title }}</span><i class="pi pi-arrow-right" aria-hidden="true" /></RouterLink>

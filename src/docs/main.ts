@@ -5,7 +5,7 @@ import './style.css'
 import DocsApp from './DocsApp.vue'
 
 const router = createRouter({
-  history: createWebHashHistory('/docs/'),
+  history: createWebHashHistory(import.meta.env.VITE_DOCS_STANDALONE === 'true' ? import.meta.env.BASE_URL : `${import.meta.env.BASE_URL}docs/`),
   routes: [{ path: '/:slug?', component: { render: () => null } }],
   scrollBehavior(to, from, saved) {
     if (saved) return saved

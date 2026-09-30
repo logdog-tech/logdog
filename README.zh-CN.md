@@ -79,3 +79,7 @@ wasm/             # Rust WASM 模块
 ## License
 
 [Apache-2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
+## 文档站点发布
+
+在线文档：https://logdog-tech.github.io/logdog/ 。`static-docs` 分支由 GitHub Actions 使用 `npm run build:docs` 构建后发布，Pages 的发布来源应选择 GitHub Actions。文档以独立入口部署，使用 `/logdog/` 资源前缀和哈希路由。

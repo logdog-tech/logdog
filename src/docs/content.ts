@@ -39,6 +39,7 @@ markdown.renderer.rules.link_open = (tokens, index, options, env, self) => {
     tokens[index].attrSet('target', '_blank')
     tokens[index].attrSet('rel', 'noopener noreferrer')
   }
+  if (href.startsWith('/docs-assets/')) tokens[index].attrSet('href', `${import.meta.env.BASE_URL}${href.slice(1)}`)
   if (href.endsWith('.log')) tokens[index].attrSet('download', '')
   return self.renderToken(tokens, index, options)
 }
